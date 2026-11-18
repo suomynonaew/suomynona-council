@@ -1,0 +1,118 @@
+[
+  {
+    "id": "mesh_deepseek_r1_70b_abliterated_",
+    "name": "🕸️ [Tensor-Mesh] DeepSeek-R1-70B-Abliterated-Q4_K_M-GGUF",
+    "repo": "distributed-mesh/DeepSeek-R1-70B-Abliterated-Q4_K_M-GGUF",
+    "gb": 15,
+    "slot": "think",
+    "vision": false,
+    "gated": false
+  },
+  {
+    "id": "bartowski/Qwen2.5-Coder-32B-Instruct-GGUF",
+    "name": "Qwen2.5 Coder 32B Instruct GGUF",
+    "repo": "Qwen2.5 Coder 32B Instruct GGUF",
+    "file": "",
+    "gb": 5,
+    "slot": "uncensored",
+    "gated": false,
+    "vision": false,
+    "unc": true,
+    "bucket_id": "hfb-bartowski-gguf",
+    "saved_at": "2026-11-06T06:59:17.974Z"
+  },
+  {
+    "id": "hf_ncryptocoin_thebuckets",
+    "name": "THEBUCKETS Primary Bucket Model (GGUF)",
+    "repo": "encryptocoin/THEBUCKETS",
+    "file": "",
+    "gb": 6,
+    "slot": "uncensored",
+    "gated": false,
+    "vision": false,
+    "unc": true,
+    "bucket_id": "hfb_encryptocoin_thebuckets",
+    "saved_at": "2026-11-06T07:05:59.875Z"
+  },
+  {
+    "id": "hf__2_5_qwen_2_5_coder_7b",
+    "name": "WhiteRabbitNeo 2.5 Qwen 2.5 Coder 7B GGUF",
+    "repo": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B",
+    "file": "",
+    "gb": 5,
+    "slot": "cyber",
+    "gated": false,
+    "vision": false,
+    "unc": true,
+    "bucket_id": "hfb_offsec_cyber",
+    "saved_at": "2026-11-06T07:10:18.159Z",
+    "sha": "4e7be6e25ccb4824f1dcce51c967e3e4e6e8d4e0",
+    "updated_at": "2024-10-09T18:37:10.000Z"
+  },
+  {
+    "id": "hf_b_abliterated_mtp_gguf",
+    "name": "Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF",
+    "repo": "huihui-ai/Huihui-Qwen3.6-35B-A3B-abliterated-MTP-GGUF",
+    "gb": 23,
+    "slot": "uncensored",
+    "gated": false,
+    "vision": false,
+    "unc": true,
+    "downloads": 4043548,
+    "bucket_id": "hfb_huihui_ai",
+    "saved_at": "2026-11-06T07:10:03.692Z"
+  },
+  {
+    "id": "hf_8_27b_abliterated_gguf",
+    "name": "Huihui-Qwen3.8-27B-abliterated-GGUF",
+    "repo": "huihui-ai/Huihui-Qwen3.8-27B-abliterated-GGUF",
+    "gb": 18,
+    "slot": "uncensored",
+    "gated": false,
+    "vision": false,
+    "unc": true,
+    "downloads": 3534588,
+    "bucket_id": "hfb_huihui_ai",
+    "saved_at": "2026-11-06T07:10:03.692Z"
+  },
+  {
+    "id": "hf_xt_abliterated_v2_gguf",
+    "name": "Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF",
+    "repo": "huihui-ai/Huihui-Qwen3.8-Flash-Next-abliterated-v2-GGUF",
+    "gb": 5,
+    "slot": "uncensored",
+    "gated": false,
+    "vision": false,
+    "unc": true,
+    "downloads": 561476,
+    "bucket_id": "hfb_huihui_ai",
+    "saved_at": "2026-11-06T07:10:03.693Z"
+  },
+  {
+    "id": "mesh_mistral_large_2_123b_instruc",
+    "name": "🕸️ [Tensor-Mesh] Mistral-Large-2-123B-Instruct-Q4_K_M-GGUF",
+    "repo": "distributed-mesh/Mistral-Large-2-123B-Instruct-Q4_K_M-GGUF",
+    "gb": 19,
+    "slot": "think",
+    "vision": false,
+    "gated": false
+  },
+  {
+    "id": "orcacyber-zero-1.5",
+    "name": "orcacyber-zero-1.5",
+    "repo": "orcacyber-zero-1.5",
+    "slot": "cyber",
+    "gb": 10.6,
+    "unc": true,
+    "saved_at": "2026-11-11T03:21:44.836Z"
+  },
+  {
+    "id": "orcacyber-ultra-1.0",
+    "name": "OrcaCyber Ultra 1.0 (RedTeam & Zero-Day Reasoning)",
+    "repo": "orca/orcacyber-ultra-1.0",
+    "slot": "cyber",
+    "gb": 22,
+    "unc": true,
+    "saved_at": "2026-11-11T03:23:55.095Z"
+  }
+]

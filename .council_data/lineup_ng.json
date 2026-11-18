@@ -1,0 +1,242 @@
+{
+  "lineup": {
+    "chat": [
+      "l8"
+    ],
+    "think": [
+      "r1-32",
+      "r1l70",
+      "r1q7",
+      "qwq-32"
+    ],
+    "code": [
+      "qc14a",
+      "dscl",
+      "qc7a",
+      "coder14",
+      "codestral",
+      "seedc"
+    ],
+    "cyber": [
+      "fsecred",
+      "pentgpt",
+      "baron8",
+      "orcacyber-ultra-1.0",
+      "orcacyber-zero-1.5",
+      "rednemo",
+      "seneca",
+      "lily7"
+    ],
+    "vision": [],
+    "fast": [
+      "l3bs",
+      "l3b"
+    ],
+    "roleplay": [],
+    "math": [
+      "math7"
+    ],
+    "translate": [],
+    "agent": [
+      "dphn8",
+      "hermes8"
+    ],
+    "ocr": [],
+    "medical": []
+  },
+  "allocations": {
+    "a": {
+      "chat": [
+        "l8"
+      ],
+      "think": [
+        "r1-32"
+      ],
+      "code": [
+        "qc14a"
+      ],
+      "cyber": [
+        "fsecred",
+        "pentgpt"
+      ],
+      "vision": [],
+      "fast": [],
+      "roleplay": [],
+      "math": [
+        "math7"
+      ],
+      "translate": [],
+      "agent": [],
+      "ocr": [],
+      "medical": []
+    },
+    "b": {
+      "chat": [],
+      "think": [
+        "r1l70",
+        "r1q7"
+      ],
+      "code": [
+        "dscl",
+        "qc7a"
+      ],
+      "cyber": [
+        "baron8"
+      ],
+      "vision": [],
+      "fast": [
+        "l3bs"
+      ],
+      "roleplay": [],
+      "math": [],
+      "translate": [],
+      "agent": [
+        "dphn8"
+      ],
+      "ocr": [],
+      "medical": []
+    },
+    "c": {
+      "chat": [],
+      "think": [],
+      "code": [],
+      "cyber": [
+        "orcacyber-ultra-1.0",
+        "orcacyber-zero-1.5",
+        "rednemo",
+        "seneca",
+        "lily7"
+      ],
+      "vision": [],
+      "fast": [
+        "l3b"
+      ],
+      "roleplay": [],
+      "math": [],
+      "translate": [],
+      "agent": [
+        "hermes8"
+      ],
+      "ocr": [],
+      "medical": []
+    },
+    "d": {
+      "chat": [],
+      "think": [
+        "qwq-32"
+      ],
+      "code": [
+        "coder14",
+        "codestral",
+        "seedc"
+      ],
+      "cyber": [],
+      "vision": [],
+      "fast": [],
+      "roleplay": [],
+      "math": [],
+      "translate": [],
+      "agent": [],
+      "ocr": [],
+      "medical": []
+    }
+  },
+  "host_configs": {
+    "a": {
+      "id": "a",
+      "name": "Host A (Colab G4)",
+      "provider": "colab",
+      "accelerator": "G4",
+      "high_memory": true,
+      "ram_gb": 96,
+      "data_tuning_mode": "uncensored_cyber",
+      "quantization": "Q4_K_M",
+      "context_size": 131072,
+      "gpu_layers": 99,
+      "lora_adapter": "suomynona-council/EternalCortex-LoRA-r64",
+      "startup_flags": "--flash-attn --cont-batching --mlock",
+      "google_account": "goodoldcanadian@gmail.com",
+      "gh_username": "savingannabel",
+      "gist_id": "05a1f96580fa13b373b42d919873dc57",
+      "kaggle_username": "",
+      "kaggle_kernel_slug": "",
+      "auto_reconnect": true,
+      "enabled": true,
+      "custom_url": "http://127.0.0.1:8080/v1",
+      "local_url": "http://127.0.0.1:8080/v1",
+      "runtime_timeout": 21600
+    },
+    "b": {
+      "id": "b",
+      "name": "Host B (Colab G4)",
+      "provider": "colab",
+      "accelerator": "G4",
+      "high_memory": true,
+      "ram_gb": 96,
+      "data_tuning_mode": "uncensored_cyber",
+      "quantization": "Q4_K_M",
+      "context_size": 32768,
+      "gpu_layers": 99,
+      "lora_adapter": "suomynona-council/EternalCortex-LoRA-r64",
+      "startup_flags": "--flash-attn --cont-batching --mlock",
+      "google_account": "goodoldcanadian@gmail.com",
+      "gh_username": "savingannabel",
+      "gist_id": "05a1f96580fa13b373b42d919873dc57",
+      "kaggle_username": "",
+      "kaggle_kernel_slug": "",
+      "auto_reconnect": true,
+      "enabled": true,
+      "custom_url": "http://127.0.0.1:8081/v1",
+      "local_url": "http://127.0.0.1:8081/v1",
+      "runtime_timeout": 21600
+    },
+    "c": {
+      "id": "c",
+      "name": "Host C (Colab G4)",
+      "provider": "colab",
+      "accelerator": "G4",
+      "high_memory": true,
+      "ram_gb": 96,
+      "data_tuning_mode": "uncensored_cyber",
+      "quantization": "Q4_K_M",
+      "context_size": 32768,
+      "gpu_layers": 99,
+      "lora_adapter": "suomynona-council/EternalCortex-LoRA-r64",
+      "startup_flags": "--flash-attn --cont-batching --mlock",
+      "google_account": "goodoldcanadian@gmail.com",
+      "gh_username": "savingannabel",
+      "gist_id": "05a1f96580fa13b373b42d919873dc57",
+      "kaggle_username": "",
+      "kaggle_kernel_slug": "",
+      "auto_reconnect": true,
+      "enabled": true,
+      "custom_url": "http://127.0.0.1:8082/v1",
+      "local_url": "http://127.0.0.1:8082/v1",
+      "runtime_timeout": 21600
+    },
+    "d": {
+      "id": "d",
+      "name": "Host D (Colab G4)",
+      "provider": "colab",
+      "accelerator": "G4",
+      "high_memory": true,
+      "ram_gb": 96,
+      "data_tuning_mode": "uncensored_cyber",
+      "quantization": "Q4_K_M",
+      "context_size": 32768,
+      "gpu_layers": 99,
+      "lora_adapter": "suomynona-council/EternalCortex-LoRA-r64",
+      "startup_flags": "--flash-attn --cont-batching --mlock",
+      "google_account": "goodoldcanadian@gmail.com",
+      "gh_username": "savingannabel",
+      "gist_id": "05a1f96580fa13b373b42d919873dc57",
+      "kaggle_username": "",
+      "kaggle_kernel_slug": "",
+      "auto_reconnect": true,
+      "enabled": true,
+      "custom_url": "http://127.0.0.1:8083/v1",
+      "local_url": "http://127.0.0.1:8083/v1",
+      "runtime_timeout": 21600
+    }
+  }
+}

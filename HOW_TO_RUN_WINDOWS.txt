@@ -1,0 +1,30 @@
+================================================================================
+  ◈ COUNCIL NG — HOW TO RUN ON WINDOWS AFTER DOWNLOADING ZIP FROM GITHUB
+================================================================================
+
+STEP 1: EXTRACT THE ZIP FILE
+----------------------------
+Right-click the downloaded ZIP file and click "Extract All..." to a folder on
+your Desktop or Documents.
+(Important: Extract the folder first — do not double-click inside a zipped view!)
+
+STEP 2: DOUBLE-CLICK "START_COUNCIL_NG.bat" (or "run.bat")
+----------------------------------------------------------
+Inside the extracted folder, double-click:
+
+    👉  START_COUNCIL_NG.bat   (or run.bat)
+
+What START_COUNCIL_NG.bat does automatically for you:
+  1. Checks if Node.js is installed (and installs Node.js LTS automatically via
+     Windows winget if you don't have it yet).
+  2. Automatically creates your `.env` config file and data folders.
+  3. Automatically runs `npm install` on the first run to download all packages.
+  4. Frees port 3000 if an old process is stuck.
+  5. Starts the Council NG server (`http://localhost:3000`) and automatically
+     opens your web browser to http://localhost:3000!
+
+OPTIONAL STANDALONE REPAIR TERMINAL:
+------------------------------------
+If you ever want to run the standalone self-repair doctor or CLI coding shell:
+  • Double-click `claude_guardian.bat`
+================================================================================

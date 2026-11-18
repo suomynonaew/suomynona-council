@@ -1,0 +1,30 @@
+[
+  {
+    "id": "fw-1793599108156",
+    "ts": "2026-11-02 05:58:28",
+    "redacted_count": 4,
+    "redactions": [
+      {
+        "token": "[REDACTED_SECRET_1]",
+        "category": "API_KEY_SECRET",
+        "preview": "sk-l…def"
+      },
+      {
+        "token": "[REDACTED_IP_2]",
+        "category": "IPV4_ADDRESS",
+        "preview": "10.2…1.9"
+      },
+      {
+        "token": "[REDACTED_EMAIL_3]",
+        "category": "EMAIL_PII",
+        "preview": "sec@….io"
+      },
+      {
+        "token": "[REDACTED_HOST_4]",
+        "category": "INTERNAL_HOSTNAME",
+        "preview": "vaul…nal"
+      }
+    ],
+    "scrubbed_prompt": "Audit [REDACTED_IP_2] on [REDACTED_HOST_4] with [REDACTED_SECRET_1] for [REDACTED_EMAIL_3]"
+  }
+]

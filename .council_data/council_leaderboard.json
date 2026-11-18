@@ -1,0 +1,61 @@
+{
+  "models": {
+    "Model A": {
+      "matches": 2,
+      "wins": 1,
+      "total_score": 17.1,
+      "avg_score": 8.55,
+      "best_score": 9.6
+    },
+    "Model B": {
+      "matches": 2,
+      "wins": 0,
+      "total_score": 16.8,
+      "avg_score": 8.4,
+      "best_score": 9.3
+    },
+    "🔥 Slot 1 · Primary Uncensored": {
+      "matches": 1,
+      "wins": 0,
+      "total_score": 2.4,
+      "avg_score": 2.4,
+      "best_score": 2.4
+    },
+    "⚡ Slot 2 · Fast / Exploit": {
+      "matches": 1,
+      "wins": 1,
+      "total_score": 7.13,
+      "avg_score": 7.13,
+      "best_score": 7.13
+    }
+  },
+  "history": [
+    {
+      "at": 1794137763,
+      "ts": "2026-11-08 11:36:03",
+      "winner": "⚡ Slot 2 · Fast / Exploit",
+      "judge": "Llama 3.1 8B ablit [chat]",
+      "scores": {
+        "🔥 Slot 1 · Primary Uncensored": 2.4,
+        "⚡ Slot 2 · Fast / Exploit": 7.13
+      }
+    },
+    {
+      "at": 1793596041,
+      "ts": "2026-11-02 05:07:21",
+      "winner": "Model A",
+      "judge": "Gemma-3 27B Instruct (vision) [chat]",
+      "scores": {
+        "Model A": 9.6,
+        "Model B": 9.3
+      }
+    },
+    {
+      "at": 1793595929,
+      "ts": "2026-11-02 05:05:29",
+      "winner": "",
+      "judge": "Gemma-3 27B Instruct (vision) [chat]",
+      "scores": {}
+    }
+  ]
+}

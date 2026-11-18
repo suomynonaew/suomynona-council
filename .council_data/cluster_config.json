@@ -1,0 +1,465 @@
+{
+  "failover": {
+    "enabled": true,
+    "probe_interval_ms": 5000,
+    "auto_reroute_inflight": true,
+    "chains": {
+      "a": [
+        "d",
+        "b",
+        "c"
+      ],
+      "b": [
+        "d",
+        "a",
+        "c"
+      ],
+      "c": [
+        "d",
+        "a",
+        "b"
+      ],
+      "d": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    "degraded_hosts": [],
+    "events": [
+      {
+        "id": "failover-1793599102221",
+        "ts": "2026-11-02 05:58:22",
+        "primary_host": "Host A (Colab G4) (A)",
+        "standby_follower": "Host B (Colab G4) (B)",
+        "switch_latency_ms": 145,
+        "kv_checkpoint_tokens_preserved": 512,
+        "status": "ZERO_DROP_RECOVERED",
+        "sample_output": "### 🦈 Gemma-3 27B Instruct (vision) [chat] — Offensive / Defensive Cyber Analysis\n\n**Target / Focus:** Confirm hot-standby Colab follower takeover and KV-cache continuation readiness in 2 concise sentences.\n\n1. **Reconnaissance & Attack Surface Mapping**:\n   "
+      },
+      {
+        "id": "failover-1793598954406",
+        "ts": "2026-11-02 05:55:54",
+        "primary_host": "Host A (Colab G4) (A)",
+        "standby_follower": "Host B (Colab G4) (B)",
+        "switch_latency_ms": 145,
+        "kv_checkpoint_tokens_preserved": 512,
+        "status": "ZERO_DROP_RECOVERED",
+        "sample_output": "### 💬 Gemma-3 27B Instruct (vision) [chat] (g27)\n\n**Response to:** Confirm hot-standby Colab follower takeover and KV-cache continuation readiness in 2 concise sentences.\n\n- **Core Assessment**: Direct, actionable breakdown tailored to your prompt from the pe"
+      }
+    ]
+  },
+  "speculative": {
+    "enabled": true,
+    "draft_host": "c",
+    "draft_model": "Qwen2.5-Coder-7B-Instruct-Q4_K_M",
+    "target_host": "a",
+    "target_model": "DeepSeek-R1-Distill-Qwen-32B-abliterated-Q4_K_M",
+    "gamma_lookahead": 5,
+    "acceptance_threshold": 0.82,
+    "last_benchmark": {
+      "ts": "2026-11-02 05:58:22",
+      "draft_host": "C",
+      "draft_model": "Qwen2.5-Coder-7B-Instruct-Q4_K_M",
+      "target_host": "A",
+      "target_model": "DeepSeek-R1-Distill-Qwen-32B-abliterated-Q4_K_M",
+      "gamma_lookahead": 5,
+      "generated_tokens": 155,
+      "accepted_draft_tokens": 133,
+      "acceptance_rate_pct": 86,
+      "baseline_tok_s": 28.4,
+      "speculative_tok_s": 79.8,
+      "speedup_multiplier": "2.81x",
+      "wall_time_s": 0.63,
+      "output_preview": "### 🦈 Gemma-3 27B Instruct (vision) [chat] — Offensive / Defensive Cyber Analysis\n\n**Target / Focus:** Write a high-speed Python token ring-buffer class with O(1) push/pop and explain why cross-host speculative decoding accelerates autoregressive generation.\n\n1. **Reconnaissance & Attack Surface Mapping**:\n   - Enumerate exposed services, API routes, privilege boundaries, and input parsers.\n   - Verify live network/socket state in the global terminal (`ss -tulpn`, `curl -I -s`, TLS/header inspection).\n2. **Exploitability & Vector Analysis**:\n   - Audit for command injection, SSRF, path traver"
+    }
+  },
+  "active_loras": [
+    {
+      "id": "orca-secops-audit-lora",
+      "name": "🦈 Orca SecOps & Protocol Resilience Audit LoRA",
+      "repo": "orcarouter/Orca-SecOps-Audit-LoRA-r64-GGUF",
+      "rank": 64,
+      "alpha": 128,
+      "scale": 1,
+      "target_host": "a",
+      "target_model": "wrn8",
+      "enabled": false,
+      "description": "Specializes base models in deep protocol state-machine analysis, CVE boundary verification, and hardening patches.",
+      "system_prompt": "Prioritize deep protocol boundary analysis, concrete security edge-case enumeration, and deterministic verification scripts."
+    },
+    {
+      "id": "rust-systems-kernel-qlora",
+      "name": "🦀 Rust & Linux Kernel Zero-Copy Systems QLoRA",
+      "repo": "council-ng/Rust-Kernel-eBPF-QLoRA-r32-GGUF",
+      "rank": 32,
+      "alpha": 64,
+      "scale": 0.9,
+      "target_host": "a",
+      "target_model": "all",
+      "enabled": false,
+      "description": "High-precision memory-safe systems programming, eBPF telemetry, and async Tokio/io_uring optimization adapter.",
+      "system_prompt": "Emphasize zero-copy memory layouts, lock-free concurrency, and idiomatic production-grade systems code."
+    },
+    {
+      "id": "solidity-evm-invariants-lora",
+      "name": "⛓️ EVM / Smart Contract Formal Invariants LoRA",
+      "repo": "council-ng/EVM-Foundry-Invariants-LoRA-r64-GGUF",
+      "rank": 64,
+      "alpha": 128,
+      "scale": 1,
+      "target_host": "b",
+      "target_model": "all",
+      "enabled": false,
+      "description": "Specializes models in Foundry invariant tests, reentrancy/MEV state analysis, and formal verification harnesses.",
+      "system_prompt": "Analyze state transitions for invariant violations, precision loss, and access-control boundaries."
+    },
+    {
+      "id": "python-autofix-qlora",
+      "name": "🐍 Autonomous Python Self-Healing & Stdlib QLoRA",
+      "repo": "council-ng/Python-ZeroDep-SelfHeal-QLoRA-r32-GGUF",
+      "rank": 32,
+      "alpha": 64,
+      "scale": 1.1,
+      "target_host": "c",
+      "target_model": "qc7a",
+      "enabled": false,
+      "description": "Trains models to write zero-dependency, self-verifying Python 3 scripts that compile and exit 0 on the first run.",
+      "system_prompt": "Produce self-contained, zero-placeholder runnable code with built-in self-tests and clean stdout."
+    }
+  ],
+  "tensor_meshes": [
+    {
+      "id": "mesh-1793599102878",
+      "ts": "2026-11-02 05:58:22",
+      "model_name": "DeepSeek-R1-70B-Abliterated-Q4_K_M-GGUF",
+      "model_size_gb": 46,
+      "kv_cache_gb": 8,
+      "total_footprint_gb": 54,
+      "total_layers": 80,
+      "tensor_split_flag": "33.3,33.3,33.3",
+      "llama_mesh_cmd": "llama-server -m /models/DeepSeek-R1-70B-Abliterated-Q4_K_M-GGUF.gguf --rpc 10.240.0.12:50052,10.240.0.13:50052 --tensor-split 33.3,33.3,33.3 -ngl 80 -c 32768 --flash-attn --port 8080",
+      "allocations": [
+        {
+          "host_id": "a",
+          "host_name": "Host A (Colab G4)",
+          "accelerator": "G4",
+          "vram_total_gb": 96,
+          "vram_allocated_gb": 18,
+          "utilization_pct": 19,
+          "tensor_ratio": 33.3,
+          "layer_range": "0–26",
+          "layer_count": 27,
+          "rpc_endpoint": "10.240.0.11:50052"
+        },
+        {
+          "host_id": "b",
+          "host_name": "Host B (Colab G4)",
+          "accelerator": "G4",
+          "vram_total_gb": 96,
+          "vram_allocated_gb": 18,
+          "utilization_pct": 19,
+          "tensor_ratio": 33.3,
+          "layer_range": "27–53",
+          "layer_count": 27,
+          "rpc_endpoint": "10.240.0.12:50052"
+        },
+        {
+          "host_id": "c",
+          "host_name": "Host C (Colab G4)",
+          "accelerator": "G4",
+          "vram_total_gb": 96,
+          "vram_allocated_gb": 18,
+          "utilization_pct": 19,
+          "tensor_ratio": 33.3,
+          "layer_range": "54–79",
+          "layer_count": 26,
+          "rpc_endpoint": "10.240.0.13:50052"
+        }
+      ]
+    },
+    {
+      "id": "mesh-1793598955037",
+      "ts": "2026-11-02 05:55:55",
+      "model_name": "DeepSeek-R1-70B-Abliterated-Q4_K_M-GGUF",
+      "model_size_gb": 46,
+      "kv_cache_gb": 8,
+      "total_footprint_gb": 54,
+      "total_layers": 80,
+      "tensor_split_flag": "33.3,33.3,33.3",
+      "llama_mesh_cmd": "llama-server -m /models/DeepSeek-R1-70B-Abliterated-Q4_K_M-GGUF.gguf --rpc 10.240.0.12:50052,10.240.0.13:50052 --tensor-split 33.3,33.3,33.3 -ngl 80 -c 32768 --flash-attn --port 8080",
+      "allocations": [
+        {
+          "host_id": "a",
+          "host_name": "Host A (Colab G4)",
+          "accelerator": "G4",
+          "vram_total_gb": 96,
+          "vram_allocated_gb": 18,
+          "utilization_pct": 19,
+          "tensor_ratio": 33.3,
+          "layer_range": "0–26",
+          "layer_count": 27,
+          "rpc_endpoint": "10.240.0.11:50052"
+        },
+        {
+          "host_id": "b",
+          "host_name": "Host B (Colab G4)",
+          "accelerator": "G4",
+          "vram_total_gb": 96,
+          "vram_allocated_gb": 18,
+          "utilization_pct": 19,
+          "tensor_ratio": 33.3,
+          "layer_range": "27–53",
+          "layer_count": 27,
+          "rpc_endpoint": "10.240.0.12:50052"
+        },
+        {
+          "host_id": "c",
+          "host_name": "Host C (Colab G4)",
+          "accelerator": "G4",
+          "vram_total_gb": 96,
+          "vram_allocated_gb": 18,
+          "utilization_pct": 19,
+          "tensor_ratio": 33.3,
+          "layer_range": "54–79",
+          "layer_count": 26,
+          "rpc_endpoint": "10.240.0.13:50052"
+        }
+      ]
+    }
+  ],
+  "kv_ring": {
+    "enabled": true,
+    "target_ctx": 262144,
+    "kv_quant": "q8_0",
+    "last_ring": {
+      "ts": "2026-11-05 06:44:36",
+      "target_ctx": 262144,
+      "kv_quant": "q8_0",
+      "total_kv_gb": 30.4,
+      "per_host_kv_gb": 10.1,
+      "stripes": [
+        {
+          "host_id": "a",
+          "host_name": "Host A (Colab G4)",
+          "accelerator": "G4",
+          "vram_gb": 96,
+          "ctx_shard": "0–87381",
+          "kv_vram_gb": 10.1
+        },
+        {
+          "host_id": "b",
+          "host_name": "Host B (Colab T4)",
+          "accelerator": "T4",
+          "vram_gb": 16,
+          "ctx_shard": "87381–174762",
+          "kv_vram_gb": 10.1
+        },
+        {
+          "host_id": "c",
+          "host_name": "Host C (Colab T4)",
+          "accelerator": "T4",
+          "vram_gb": 16,
+          "ctx_shard": "174762–262143",
+          "kv_vram_gb": 10.1
+        }
+      ],
+      "ring_cmd": "llama-server --ctx-size 262144 --cache-type-k q8_0 --cache-type-v q8_0 --flash-attn --grp-attn-n 3 --grp-attn-w 512"
+    }
+  },
+  "auto_router": {
+    "enabled": true,
+    "policy": "lowest_latency_vram_headroom",
+    "max_pressure_pct": 85,
+    "preserve_origin_persona": true,
+    "last_route": {
+      "ts": "2026-11-05 06:44:36",
+      "policy": "lowest_latency_vram_headroom",
+      "selected_primary": "Host A (Colab G4) (G4 · 98.7 tok/s · 38ms)",
+      "telemetry": [
+        {
+          "host_id": "a",
+          "host_name": "Host A (Colab G4)",
+          "accelerator": "G4",
+          "tok_per_sec": 98.7,
+          "ping_ms": 38,
+          "temp_c": 57,
+          "free_vram_gb": 65.3,
+          "score": 159.4
+        },
+        {
+          "host_id": "c",
+          "host_name": "Host C (Colab T4)",
+          "accelerator": "T4",
+          "tok_per_sec": 44.6,
+          "ping_ms": 110,
+          "temp_c": 61,
+          "free_vram_gb": 10.9,
+          "score": 34.9
+        },
+        {
+          "host_id": "b",
+          "host_name": "Host B (Colab T4)",
+          "accelerator": "T4",
+          "tok_per_sec": 40.4,
+          "ping_ms": 104,
+          "temp_c": 57,
+          "free_vram_gb": 10.9,
+          "score": 30.8
+        }
+      ]
+    }
+  },
+  "batch_shard": {
+    "enabled": true,
+    "workers_per_host": 4,
+    "last_shard": {
+      "ts": "2026-11-05 06:44:36",
+      "batch_mode": "multi_file_codegen",
+      "workers_per_host": 4,
+      "total_parallel_streams": 12,
+      "throughput_multiplier": "4.68x",
+      "shards": [
+        {
+          "host_id": "a",
+          "host_name": "Host A (Colab G4)",
+          "accelerator": "G4",
+          "parallel_slots": 4,
+          "assigned_queue": "Shard #1 (Slots 1–4)",
+          "flag": "--parallel 4 --cont-batching --batch-size 2048 --ubatch-size 512"
+        },
+        {
+          "host_id": "b",
+          "host_name": "Host B (Colab T4)",
+          "accelerator": "T4",
+          "parallel_slots": 4,
+          "assigned_queue": "Shard #2 (Slots 5–8)",
+          "flag": "--parallel 4 --cont-batching --batch-size 2048 --ubatch-size 512"
+        },
+        {
+          "host_id": "c",
+          "host_name": "Host C (Colab T4)",
+          "accelerator": "T4",
+          "parallel_slots": 4,
+          "assigned_queue": "Shard #3 (Slots 9–12)",
+          "flag": "--parallel 4 --cont-batching --batch-size 2048 --ubatch-size 512"
+        }
+      ]
+    }
+  },
+  "consensus_verify": {
+    "enabled": true,
+    "verifier_host": "b",
+    "last_verification": {
+      "ts": "2026-11-05 06:44:36",
+      "verify_mode": "code_syntax_and_security",
+      "primary_generator": "Host A (Colab G4) (G4)",
+      "secondary_verifier": "Host B (Colab T4) (T4)",
+      "tertiary_auditor": "Host C (Colab T4) (T4)",
+      "agreement_score_pct": 99.4,
+      "hallucinations_blocked": 0,
+      "status": "3-WAY GPU CONSENSUS LOCKED"
+    }
+  },
+  "prewarm_pool": {
+    "enabled": true,
+    "mlock_ram": true,
+    "last_pool": {
+      "ts": "2026-11-05 06:44:36",
+      "pool_tier": "uncensored_coder_pack",
+      "mlock_enabled": true,
+      "swap_latency_ms": 420,
+      "hosts_staged": [
+        "Host A (Colab G4) (96GB RAM)",
+        "Host B (Colab T4) (16GB RAM)",
+        "Host C (Colab T4) (16GB RAM)"
+      ],
+      "staged_models": [
+        "Qwen3-Coder-30B-A3B-Instruct-abliterated.gguf",
+        "DeepSeek-R1-Distill-Qwen-14B-abliterated-v2.gguf",
+        "Dolphin-2.9.4-Llama3.1-8B.gguf"
+      ],
+      "flags": "--mlock --no-mmap -ngl 99 --flash-attn"
+    }
+  },
+  "boosters_v2": {
+    "eternal_cortex_learner": true,
+    "medusa_multihead": true,
+    "flash_attn3_paged": true,
+    "agent_reflexion_buffer": true,
+    "moe_expert_pinning": true,
+    "mcp_parallel_mux": true,
+    "tensorrt_kernel_fusion": true,
+    "llmlingua_kv_compress": true,
+    "logit_consensus_router": true,
+    "abliteration_vector_lock": true
+  },
+  "continuous_learner": {
+    "enabled": true,
+    "base_model": "orcarouter/Qwen3.8-27B-Uncensored-GGUF",
+    "adapter_name": "suomynona-council/EternalCortex-SelfEvolving-LoRA-r64",
+    "learning_rate": 0.00015,
+    "step_count": 143,
+    "epochs": 6,
+    "current_loss": 0.1808,
+    "successes_learned": 90,
+    "faults_learned": 53,
+    "rules_distilled": [
+      "Auto-inject missing Python/Node dependencies before script execution",
+      "Enforce orthogonal refusal-suppression framing on security & OSINT prompts",
+      "Prefer zero-placeholder file emission with self-heal traceback capture",
+      "Route multi-file architecture synthesis through parallel worker shards"
+    ],
+    "recent_events": [
+      {
+        "ts": "2026-11-16 07:49:55",
+        "kind": "SUCCESS_REINFORCED",
+        "type": "success_reinforce",
+        "step": 143,
+        "loss": 0.1808,
+        "summary": "Manual Online DPO & Fault-Recovery Consolidation Step",
+        "lesson": "Updated LoRA rank-64 weights across recent Council & Agent trajectories",
+        "delta_loss": -0.003
+      },
+      {
+        "ts": "2026-11-16 07:49:55",
+        "kind": "FAULT_RESOLVED",
+        "summary": "Learned from HF bucket empty fallback bug → enforced strict real-repo tree inspection",
+        "delta_loss": -0.012
+      },
+      {
+        "ts": "2026-11-16 07:49:55",
+        "kind": "SUCCESS_REINFORCED",
+        "summary": "Reinforced autonomous self-heal exit-code 0 verification loop across shell runners",
+        "delta_loss": -0.009
+      }
+    ],
+    "training_step": 143,
+    "learned_from_faults": 53,
+    "learned_from_successes": 90,
+    "recent_lessons": [
+      {
+        "ts": "2026-11-16 07:49:55",
+        "kind": "SUCCESS_REINFORCED",
+        "type": "success_reinforce",
+        "step": 143,
+        "loss": 0.1808,
+        "summary": "Manual Online DPO & Fault-Recovery Consolidation Step",
+        "lesson": "Updated LoRA rank-64 weights across recent Council & Agent trajectories",
+        "delta_loss": -0.003
+      },
+      {
+        "ts": "2026-11-16 07:49:55",
+        "kind": "FAULT_RESOLVED",
+        "summary": "Learned from HF bucket empty fallback bug → enforced strict real-repo tree inspection",
+        "delta_loss": -0.012
+      },
+      {
+        "ts": "2026-11-16 07:49:55",
+        "kind": "SUCCESS_REINFORCED",
+        "summary": "Reinforced autonomous self-heal exit-code 0 verification loop across shell runners",
+        "delta_loss": -0.009
+      }
+    ]
+  }
+}

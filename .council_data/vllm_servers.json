@@ -1,0 +1,9 @@
+{
+  "model": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+  "args": [
+    "--max-model-len",
+    "8192"
+  ],
+  "started_at": "2026-11-05T10:07:34Z",
+  "gateway_port": 3000
+}

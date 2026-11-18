@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suomynona Council — Detached Desktop CLI</title>
+  <link rel="stylesheet" href="/styles.css?v=55">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #020409;
+      color: #e2e8f0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .detached-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #050811;
+      border-bottom: 1px solid rgba(46, 230, 166, 0.25);
+      padding: 6px 14px;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+    .detached-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .detached-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+    .detached-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94a3b8;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .detached-btn:hover {
+      background: rgba(46, 230, 166, 0.15);
+      border-color: rgba(46, 230, 166, 0.4);
+      color: #2ee6a6;
+    }
+    .detached-btn.pinned {
+      background: rgba(46, 230, 166, 0.22);
+      border-color: #2ee6a6;
+      color: #2ee6a6;
+    }
+    .detached-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 10px 14px 12px;
+      background: #020409;
+    }
+    .standalone-log {
+      flex: 1;
+      background: #010204;
+      border: 1px solid rgba(46, 230, 166, 0.2);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #e2e8f0;
+      margin-bottom: 8px;
+    }
+    .standalone-input-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #060b18;
+      border: 1px solid rgba(46, 230, 166, 0.35);
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+    .standalone-ps1 {
+      font-family: Consolas, monospace;
+      font-size: 12.5px;
+      color: #2ee6a6;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .standalone-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f8fafc;
+      font-family: Consolas, monospace;
+      font-size: 12.5px;
+    }
+    .standalone-suggest-box {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #080f22;
+      border: 1px solid rgba(46, 230, 166, 0.35);
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      z-index: 999;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+    }
+    .standalone-suggest-box.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Desktop Native Window HUD Header -->
+  <header class="detached-topbar">
+    <div class="detached-topbar-left">
+      <span id="detached-icon" style="font-size:15px;color:#2ee6a6">❯_</span>
+      <span class="suomynona-cli-nametag-pill">◈ SUOMYNONA COUNCIL</span>
+      <strong id="detached-title" style="font-size:13px;letter-spacing:0.4px;color:#2ee6a6">CLI Terminal</strong>
+      <span class="cli-popup-status-badge">● NATIVE OS WINDOW</span>
+    </div>
+    <div class="detached-topbar-right">
+      <select id="detached-switcher" class="cli-popup-select" style="font-size:11.5px;padding:3px 8px;background:#0d1527;border:1px solid rgba(46,230,166,0.3);color:#2ee6a6;border-radius:4px" -webkit-app-region="no-drag">
+        <option value="master">❯_ Master Unified Terminal</option>
+        <option value="agents">🤖 Specialist Agent Forge CLI</option>
+        <option value="agent-runner">⚡ Run Specialist Agent Task CLI</option>
+        <option value="compute">⊞ Compute &amp; Models Router CLI</option>
+        <option value="hf-vault">🤗 Hugging Face &amp; Model Vault CLI</option>
+        <option value="boosters">🧬 Eternal Cortex &amp; 19 Boosters CLI</option>
+        <option value="hosts">🖥 Host GPU Slots &amp; Runtimes CLI</option>
+        <option value="auth">🗝 Global Auth &amp; Gist Vault CLI</option>
+        <option value="tuning">🎛 Host Hardware &amp; RAM Tuning CLI</option>
+        <option value="cloud">☁ Cloud &amp; API Endpoints CLI</option>
+        <option value="presets">🗃 Saved Lineup Presets CLI</option>
+        <option value="system">💾 System Core &amp; Output Path CLI</option>
+        <option value="tools">🧰 Custom Agent Tools (10 Types) CLI</option>
+        <option value="mcp">🔌 Connected MCP Servers Hub CLI</option>
+        <option value="a2a">🌐 Health &amp; A2A JSON-RPC Bridge CLI</option>
+      </select>
+      <button id="detached-pin-btn" class="detached-btn" type="button" title="Toggle Always On Top">📌 Pin</button>
+      <button id="detached-main-btn" class="detached-btn" type="button" title="Focus Main Studio Window">◈ Studio</button>
+      <button id="detached-close-btn" class="detached-btn" type="button" style="color:#ff6b8b" title="Close Window">✕</button>
+    </div>
+  </header>
+
+  <!-- Detached CLI Body -->
+  <main class="detached-body">
+    <div id="detached-log" class="standalone-log"></div>
+    <div class="standalone-input-row">
+      <div id="detached-suggest-box" class="standalone-suggest-box hidden"></div>
+      <span id="detached-ps1" class="standalone-ps1">suomynona@council❯</span>
+      <input id="detached-input" class="standalone-input" type="text" autocomplete="off" spellcheck="false" placeholder="Type a command or task (Tab to complete)...">
+      <button id="detached-send-btn" class="detached-btn" type="button" style="background:rgba(46,230,166,0.18);border-color:#2ee6a6;color:#2ee6a6">Send ↵</button>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    let currentKey = params.get("key") || "master";
+
+    const logEl = document.getElementById("detached-log");
+    const inputEl = document.getElementById("detached-input");
+    const ps1El = document.getElementById("detached-ps1");
+    const titleEl = document.getElementById("detached-title");
+    const iconEl = document.getElementById("detached-icon");
+    const switcherEl = document.getElementById("detached-switcher");
+    const suggestBoxEl = document.getElementById("detached-suggest-box");
+    const pinBtn = document.getElementById("detached-pin-btn");
+    const closeBtn = document.getElementById("detached-close-btn");
+    const mainBtn = document.getElementById("detached-main-btn");
+
+    switcherEl.value = currentKey;
+    document.title = `Suomynona Council — [${currentKey.toUpperCase()}] CLI`;
+
+    function appendLine(text, color = "#e2e8f0") {
+      const line = document.createElement("div");
+      line.style.color = color;
+      line.style.marginBottom = "3px";
+      line.textContent = text;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Always on top pin toggle
+    pinBtn.addEventListener("click", async () => {
+      if (window.suomynonaNative?.toggleAlwaysOnTop) {
+        const isPinned = await window.suomynonaNative.toggleAlwaysOnTop();
+        pinBtn.classList.toggle("pinned", !!isPinned);
+        pinBtn.textContent = isPinned ? "📌 Pinned" : "📌 Pin";
+      } else {
+        alert("Always-on-top pinning requires the native desktop .exe environment.");
+      }
+    });
+
+    closeBtn.addEventListener("click", () => {
+      if (window.suomynonaNative?.closeDetachedCli) {
+        window.suomynonaNative.closeDetachedCli(currentKey);
+      } else {
+        window.close();
+      }
+    });
+
+    mainBtn.addEventListener("click", () => {
+      window.open("/", "_blank");
+    });
+
+    switcherEl.addEventListener("change", (e) => {
+      window.location.href = `/cli-standalone.html?key=${encodeURIComponent(e.target.value)}`;
+    });
+
+    // Command history navigation
+    const storageKey = `suomynona_cli_hist_${currentKey || "master"}`;
+    let history = [];
+    try {
+      const raw = localStorage.getItem(storageKey) || localStorage.getItem("suomynona_cli_hist_global");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) history = parsed;
+      }
+    } catch (_) {}
+    let histIdx = -1;
+    let tempDraft = "";
+
+    function pushHistory(cmd) {
+      const c = String(cmd || "").trim();
+      if (!c) return;
+      if (history[0] !== c) {
+        history.unshift(c);
+        if (history.length > 80) history.pop();
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(history.slice(0, 50)));
+          localStorage.setItem("suomynona_cli_hist_global", JSON.stringify(history.slice(0, 50)));
+        } catch (_) {}
+      }
+      histIdx = -1;
+      tempDraft = "";
+    }
+
+    // Auto-focus input
+    inputEl.focus();
+
+    // Send input logic
+    async function handleSend() {
+      const val = inputEl.value.trim();
+      if (!val) return;
+      pushHistory(val);
+      inputEl.value = "";
+      suggestBoxEl.classList.add("hidden");
+      appendLine(`${ps1El.textContent} ${val}`, "#00d4ff");
+
+      const lower = val.toLowerCase();
+      if (lower === "clear" || lower === "cls") {
+        logEl.innerHTML = "";
+        renderWelcome();
+        return;
+      }
+
+      if (val.endsWith(" -h") || val.endsWith(" --help") || val === "-h" || val === "--help" || val === "/?") {
+        const clean = val.replace(/\s+(-h|--help|\/\?)$/i, "").trim();
+        appendLine(`┌── 📖 COMMAND HELP: ${clean.toUpperCase()} ──────────────────────────────`, "#2ee6a6");
+        appendLine(`│ Usage: ${clean} [arguments / options]`, "#2ee6a6");
+        appendLine(`│ Type '/command' to see all commands for this CLI.`, "#2ee6a6");
+        appendLine(`└────────────────────────────────────────────────────────────`, "#2ee6a6");
+        return;
+      }
+
+      if (lower === "/command" || lower === "/commands" || lower === "commands") {
+        appendLine(`┌── ◈ SUOMYNONA COUNCIL [${currentKey.toUpperCase()}] COMMANDS ──────────`, "#2ee6a6");
+        appendLine("│   • <command> -h       — Show usage & parameters for that command", "#2ee6a6");
+        appendLine("│   • /command           — List all commands in this CLI", "#2ee6a6");
+        appendLine("│   • status             — Query active GPU host & models state", "#2ee6a6");
+        appendLine("│   • clear              — Clear terminal output", "#2ee6a6");
+        appendLine("│   • ↑ / ↓ Arrow Keys   — Navigate command history (most recent first)", "#2ee6a6");
+        appendLine("│   • Any shell command or Python snippet to run code directly", "#2ee6a6");
+        appendLine("└────────────────────────────────────────────────────────────", "#2ee6a6");
+        return;
+      }
+
+      // Execute via backend API
+      try {
+        const res = await fetch("/api/cli/execute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cliKey: currentKey, command: val }),
+        }).then(r => r.json()).catch(() => null);
+
+        if (res?.output) {
+          appendLine(res.output, "#2ee6a6");
+        } else if (res?.error) {
+          appendLine(`❌ ${res.error}`, "#ff6b8b");
+        } else {
+          appendLine(`⚡ Executed: ${val}`, "#2ee6a6");
+        }
+      } catch (err) {
+        appendLine(`❌ Error executing command: ${err.message}`, "#ff6b8b");
+      }
+    }
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") {
+        if (!history.length) return;
+        e.preventDefault();
+        if (histIdx === -1) {
+          tempDraft = inputEl.value;
+        }
+        histIdx = Math.min(histIdx + 1, history.length - 1);
+        inputEl.value = history[histIdx];
+        setTimeout(() => {
+          try {
+            inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+          } catch (_) {}
+        }, 0);
+      } else if (e.key === "ArrowDown") {
+        if (histIdx === -1) return;
+        e.preventDefault();
+        if (histIdx > 0) {
+          histIdx--;
+          inputEl.value = history[histIdx];
+        } else {
+          histIdx = -1;
+          inputEl.value = tempDraft || "";
+        }
+        setTimeout(() => {
+          try {
+            inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+          } catch (_) {}
+        }, 0);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+    document.getElementById("detached-send-btn").addEventListener("click", handleSend);
+
+    function renderWelcome() {
+      appendLine(`◈ SUOMYNONA COUNCIL — DETACHED DESKTOP CLI [${currentKey.toUpperCase()}] · Ready`, "#2ee6a6");
+      appendLine("Native multi-monitor window active. (Type '/command' for commands, '<cmd> -h' for help)", "#94a3b8");
+      appendLine("");
+    }
+    renderWelcome();
+  </script>
+</body>
+</html>

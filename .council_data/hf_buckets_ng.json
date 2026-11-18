@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hfb_encryptocoin_buckfuck",
+    "name": "🤗 HF Bucket: encryptocoin/buckfuck",
+    "bucket_uri": "hf://buckets/encryptocoin/buckfuck",
+    "namespace": "encryptocoin",
+    "slot": "auto",
+    "private_bucket": true,
+    "linked_at": "2026-11-06T15:07:01.513Z",
+    "last_synced_at": "2026-11-16T11:00:50.047Z",
+    "scan_source": "hf_api",
+    "models": []
+  },
+  {
+    "id": "hfb__cmds",
+    "name": "/cmds",
+    "bucket_uri": "hf://buckets//cmds",
+    "namespace": "cmds",
+    "slot": "auto",
+    "private_bucket": true,
+    "linked_at": "2026-11-07T18:38:53.713Z",
+    "last_synced_at": "2026-11-16T11:00:51.464Z",
+    "scan_source": "hf_api",
+    "models": []
+  }
+]

@@ -1,0 +1,10 @@
+# SUOMYNONA COUNCIL — REAL QUANTIZED MODELFILE MANIFEST
+# Host: Host A | Quantization: Q4_K_M (4.85 bits/weight) | KV-Cache: Q8_0
+FROM Qwen/Qwen2.5-Coder-32B-Instruct
+PARAMETER num_ctx 32768
+PARAMETER num_gpu 99
+PARAMETER temperature 0.7
+PARAMETER top_p 0.95
+# llama.cpp / llama-quantize execution command:
+# llama-quantize Qwen_Qwen2.5-Coder-32B-Instruct-f16.gguf Qwen_Qwen2.5-Coder-32B-Instruct-Q4_K_M.gguf Q4_K_M
+# llama-server -m model-Q4_K_M.gguf -c 32768 -ngl 99 --cache-type-k q8_0 --cache-type-v q8_0 --flash-attn

@@ -1,0 +1,42 @@
+{
+  "outputDir": "/app/applet/council_outputs/active_merged_workspace",
+  "updatedAt": "2026-11-11T06:15:12.047Z",
+  "files": [
+    {
+      "path": "src/storage.py",
+      "content": "from abc import ABC, abstractmethod\nfrom dataclasses import dataclass\nimport threading\nfrom typing import Dict, Optional, Tuple\n\n@dataclass\nclass TokenBucketState:\n    tokens: float\n    last_updated: float\n\nclass BaseStorage(ABC):\n    @abstractmethod\n    def get_and_update(\n        self,\n        key: str,\n        capacity: float,\n        refill_rate: float,\n        cost: float,\n        current_time: float,\n    ) -> Tuple[bool, float, float]:\n        pass\n\n    @abstractmethod\n    def reset(self, key: Optional[str] = None) -> None:\n        pass\n\nclass MemoryStorage(BaseStorage):\n    def __init__(self) -> None:\n        self._states: Dict[str, TokenBucketState] = {}\n        self._lock = threading.Lock()\n\n    def get_and_update(\n        self,\n        key: str,\n        capacity: float,\n        refill_rate: float,\n        cost: float,\n        current_time: float,\n    ) -> Tuple[bool, float, float]:\n        with self._lock:\n            state = self._states.get(key)\n            if state is None:\n                current_tokens = float(capacity)\n                last_updated = current_time\n            else:\n                elapsed = max(0.0, current_time - state.last_updated)\n                current_tokens = min(float(capacity), state.tokens + (elapsed * refill_rate))\n                last_updated = current_time\n\n            if current_tokens >= cost:\n                new_tokens = current_tokens - cost\n                self._states[key] = TokenBucketState(new_tokens, last_updated)\n                return True, new_tokens, 0.0\n            else:\n                self._states[key] = TokenBucketState(current_tokens, last_updated)\n                retry_after = max(0.0, (cost - current_tokens) / refill_rate)\n                return False, current_tokens, retry_after\n\n    def reset(self, key: Optional[str] = None) -> None:\n        with self._lock:\n            if key:\n                self._states.pop(key, None)\n            else:\n                self._states.clear()\n",
+      "language": "py",
+      "size": 1974,
+      "fromRunId": "run_1794377645859_h3jc",
+      "fromRunLabel": "Swarm Run #1",
+      "fromModelName": "⚡ Core Builder · DeepSeek R1 32B ablit [think]",
+      "fromHost": "Council",
+      "swappedAt": "2026-11-11T06:15:12.047Z",
+      "history": []
+    },
+    {
+      "path": "test_limiter.py",
+      "content": "import time\nimport sys\nimport os\n\n# Ensure the current directory is in sys.path\nsys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))\n\nfrom src.storage import MemoryStorage\nfrom src.limiter import RateLimiter\n\ndef test_limiter():\n    storage = MemoryStorage()\n    limiter = RateLimiter(storage=storage, capacity=2.0, refill_rate=1.0)\n    \n    # Test Burst\n    assert limiter.acquire(\"test\", 1.0) is True\n    assert limiter.acquire(\"test\", 1.0) is True\n    assert limiter.acquire(\"test\", 1.0) is False\n    \n    # Test Refill\n    time.sleep(1.1)\n    assert limiter.acquire(\"test\", 1.0) is True\n    \n    print(\"PASS\")\n\nif __name__ == \"__main__\":\n    test_limiter()\n",
+      "language": "py",
+      "size": 671,
+      "fromRunId": "run_1794377645859_h3jc",
+      "fromRunLabel": "Swarm Run #1",
+      "fromModelName": "☠️ OffSec & Tests · RedTeam Foundation-Sec 8B RT [cyber]",
+      "fromHost": "Host A",
+      "swappedAt": "2026-11-11T06:15:11.872Z",
+      "history": []
+    },
+    {
+      "path": "src/limiter.py",
+      "content": "import time\nfrom src.storage import BaseStorage\n\nclass RateLimiter:\n    def __init__(self, storage: BaseStorage, capacity: float, refill_rate: float):\n        self.storage = storage\n        self.capacity = float(capacity)\n        self.refill_rate = float(refill_rate)\n\n    def acquire(self, key: str, tokens: float = 1.0) -> bool:\n        allowed, _, _ = self.storage.get_and_update(\n            key=key,\n            capacity=self.capacity,\n            refill_rate=self.refill_rate,\n            cost=tokens,\n            current_time=time.time()\n        )\n        return allowed\n",
+      "language": "py",
+      "size": 578,
+      "fromRunId": "run_1794377645859_h3jc",
+      "fromRunLabel": "Swarm Run #1",
+      "fromModelName": "🔬 Entrypoint Surgeon · 🕸️ [Tensor-Mesh] DeepSeek-R1-70B-Abliterated-Q4_K_M-GGUF [math]",
+      "fromHost": "Host A",
+      "swappedAt": "2026-11-11T06:15:11.872Z",
+      "history": []
+    }
+  ]
+}

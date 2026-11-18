@@ -1,0 +1,17 @@
+{
+  "dolphin-mistral:latest": {
+    "size": "4.9 GB",
+    "quant": "Q4_K_M",
+    "pulled_at": "2026-11-05 10:07:34"
+  },
+  "llama3.1:8b-abliterated": {
+    "size": "4.9 GB",
+    "quant": "Q4_K_M",
+    "pulled_at": "2026-11-05 10:07:34"
+  },
+  "qwen2.5-coder:32b": {
+    "size": "19.8 GB",
+    "quant": "Q4_K_M",
+    "family": "qwen2"
+  }
+}

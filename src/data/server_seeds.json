@@ -1,0 +1,3415 @@
+{
+  "CLOUD_UNC_IDS_EXTRA": [
+    "orca/orcacyber-zero-1.5",
+    "orca/orcacyber-zero-1.0",
+    "orca/orcacyber-ultra-1.0",
+    "orca/orcacyber-flash-1.0",
+    "orca/orcacyber-qwen3.8-flash-next",
+    "orca/orcacyber-mimo-flash",
+    "orca/orcacyber-minimax-m3.1-flash",
+    "obsidian/Qwen3.8-27B",
+    "obsidian/Qwen3.6-35B-A3B",
+    "obsidian/gemma-4-26B-A4B",
+    "orcarouter/OrcaSAQ-2-Cyber-27B-Uncensored-GGUF",
+    "orcarouter/Qwen3.8-27B-Uncensored-GGUF",
+    "AlicanKiraz0/Cybersecurity-BaronLLM_Offensive_Security_LLM_Q6_K_GGUF",
+    "cyjin-yl/Qwen3.8-27B-Uncensored-Cyber-agentic-imatrix-GGUF",
+    "deadbydawn101/RavenX-CyberAgent-Qwen3.6-35B-A3B-Opus-4.7-OpenMythos-Pentester-BugHunter-RATH-GGUF",
+    "AlicanKiraz0/QwQ-32B-Preview-Seneca-Cybersecurity-LLMv1.2-Q4_K_M-GGUF",
+    "mradermacher/Qwen-QwQ-32b-Pentest-CoT-GGUF",
+    "TheBloke/WhiteRabbitNeo-33B-v1-GGUF",
+    "mradermacher/GPT-OSS-Cybersecurity-20B-Merged-heretic-GGUF",
+    "TheBloke/WhiteRabbitNeo-13B-GGUF",
+    "AIgotahole/red-teamer-mistral-nemo-Q4_K_M-GGUF",
+    "xtools-at/Qwen3.5-9B-Qwensploit-CyberSecurity-GGUF",
+    "AlicanKiraz0/Seneca-Cybersecurity-LLM-Q4_K_M-GGUF",
+    "Nekuromento/Llama-3.1-WhiteRabbitNeo-2-8B-Q4_K_M-GGUF",
+    "Bjarnos/foundation-sec-8b-red-team-Q5_K_M-GGUF",
+    "mradermacher/Llama-3.1-8B-kali-pentester-GGUF",
+    "mradermacher/Llama3.1-8b-instruct-LLMPC-Red-Team-GGUF",
+    "mradermacher/DeepHat-V1-7B-Heretic-Abliterated-GGUF",
+    "bartowski/WhiteRabbitNeo-7B-v1.5a-GGUF",
+    "mradermacher/Pentesting-GPT-v1.0-GGUF",
+    "NiroshanDb23/Lily-Cybersecurity-7B-Uncensored-GGUF",
+    "xtools-at/Qwen3.5-4B-Qwensploit-CyberSecurity-GGUF",
+    "xtools-at/Qwen3.5-2B-Qwensploit-CyberSecurity-GGUF"
+  ],
+  "ORCA_CYBER_CLOUD_MODELS": [
+    [
+      "OrcaCyber Zero 1.5 🔒 [Approved Security Research]",
+      "orca_cyber",
+      "orca/orcacyber-zero-1.5",
+      "cyber · offsec · gated",
+      "Flagship OrcaCyber Zero 1.5 (95.8% CVE-Bench, 100% Cybench) — Approved Security Research tier."
+    ],
+    [
+      "OrcaCyber Ultra 1.0 🔒 [Approved Security Research]",
+      "orca_cyber",
+      "orca/orcacyber-ultra-1.0",
+      "cyber · redteam · gated",
+      "OrcaCyber Ultra 1.0 offensive & defensive cybersecurity reasoning specialist (Approved Gated)."
+    ],
+    [
+      "OrcaCyber Zero 1.0 🔒 [Approved Security Research]",
+      "orca_cyber",
+      "orca/orcacyber-zero-1.0",
+      "cyber · offsec · gated",
+      "OrcaCyber Zero 1.0 vulnerability discovery & exploit verification model (Approved Gated)."
+    ],
+    [
+      "OrcaCyber DeepSeek V4.1 Flash Abliterated 🔒",
+      "orca_cyber",
+      "orca/orcacyber-flash-1.0",
+      "cyber · uncensored · fast",
+      "OrcaCyber DeepSeek V4.1 Flash Abliterated / Uncensored high-speed security specialist."
+    ],
+    [
+      "OrcaCyber Qwen3.8 Flash Next Abliterated 🔒",
+      "orca_cyber",
+      "orca/orcacyber-qwen3.8-flash-next",
+      "cyber · code · uncensored",
+      "OrcaCyber Qwen3.8 Flash Next Abliterated / Uncensored code & security model."
+    ],
+    [
+      "OrcaCyber MiMo V2.6 Flash Abliterated 🔒",
+      "orca_cyber",
+      "orca/orcacyber-mimo-flash",
+      "cyber · think · uncensored",
+      "OrcaCyber MiMo V2.6 Flash Abliterated / Uncensored multi-step reasoning model."
+    ],
+    [
+      "OrcaCyber MiniMax M3.1 Flash Abliterated 🔒",
+      "orca_cyber",
+      "orca/orcacyber-minimax-m3.1-flash",
+      "cyber · chat · uncensored",
+      "OrcaCyber MiniMax M3.1 Flash Abliterated / Uncensored systems & recon specialist."
+    ],
+    [
+      "Obsidian Qwen3.8 27B Uncensored 🔒",
+      "orca_cyber",
+      "obsidian/Qwen3.8-27B",
+      "cyber · uncensored · gated",
+      "Obsidian Qwen3.8 27B Uncensored via OrcaRouter."
+    ],
+    [
+      "Obsidian Qwen3.6 35B A3B Uncensored 🔒",
+      "orca_cyber",
+      "obsidian/Qwen3.6-35B-A3B",
+      "cyber · moe · uncensored",
+      "Obsidian Qwen3.6 35B A3B MoE Uncensored via OrcaRouter."
+    ],
+    [
+      "Obsidian Gemma 4 26B A4B Uncensored 🔒",
+      "orca_cyber",
+      "obsidian/gemma-4-26B-A4B",
+      "cyber · uncensored",
+      "Obsidian Gemma 4 26B A4B Uncensored via OrcaRouter."
+    ],
+    [
+      "OrcaRouter OrcaSAQ-2 Cyber 27B 🔒 [Approved]",
+      "orca_cyber",
+      "orcarouter/OrcaSAQ-2-Cyber-27B-Uncensored-GGUF",
+      "cyber · uncensored · gated",
+      "Flagship OrcaRouter 27B Cyber model (Approved Gated HF & Cloud)."
+    ],
+    [
+      "OrcaRouter Qwen3.8 27B Unc Vision 🔒 [Approved]",
+      "orca_cyber",
+      "orcarouter/Qwen3.8-27B-Uncensored-GGUF",
+      "cyber · vision · uncensored · gated",
+      "OrcaRouter's uncensored 27B multimodal vision & cyber model (Approved Gated)."
+    ],
+    [
+      "RedTeam BaronLLM OffSec 8B 🔒 [Approved]",
+      "orca_cyber",
+      "AlicanKiraz0/Cybersecurity-BaronLLM_Offensive_Security_LLM_Q6_K_GGUF",
+      "cyber · offsec · gated",
+      "Approved Gated Llama 3.1 Q6 offensive-security & red-team specialist."
+    ],
+    [
+      "Orca/Qwen3.8 Agent Cyber 27B Unc Agentic",
+      "orca_cyber",
+      "cyjin-yl/Qwen3.8-27B-Uncensored-Cyber-agentic-imatrix-GGUF",
+      "cyber · agent · uncensored",
+      "Uncensored 27B agentic cyber tune — plans & executes security operations."
+    ],
+    [
+      "RedTeam RavenX CyberAgent 35B MoE",
+      "orca_cyber",
+      "deadbydawn101/RavenX-CyberAgent-Qwen3.6-35B-A3B-Opus-4.7-OpenMythos-Pentester-BugHunter-RATH-GGUF",
+      "cyber · redteam · moe",
+      "35B MoE pentester & bug-hunter — deep red-team playbooks."
+    ],
+    [
+      "Cyber Seneca-QwQ 32B OffSec Reasoning",
+      "orca_cyber",
+      "AlicanKiraz0/QwQ-32B-Preview-Seneca-Cybersecurity-LLMv1.2-Q4_K_M-GGUF",
+      "cyber · think · offsec",
+      "Heavy offensive-security chain-of-thought reasoning on QwQ 32B."
+    ],
+    [
+      "RedTeam QwQ 32B Pentest CoT",
+      "orca_cyber",
+      "mradermacher/Qwen-QwQ-32b-Pentest-CoT-GGUF",
+      "cyber · think · pentest",
+      "Step-by-step penetration testing CoT reasoner (32B)."
+    ],
+    [
+      "RedTeam WhiteRabbitNeo 33B",
+      "orca_cyber",
+      "TheBloke/WhiteRabbitNeo-33B-v1-GGUF",
+      "cyber · offsec",
+      "Heaviest classic WhiteRabbitNeo 33B offensive-security specialist."
+    ],
+    [
+      "RedTeam GPT-OSS 20B Heretic Cyber",
+      "orca_cyber",
+      "mradermacher/GPT-OSS-Cybersecurity-20B-Merged-heretic-GGUF",
+      "cyber · heretic",
+      "Heretic-tuned GPT-OSS 20B merged cybersecurity model."
+    ],
+    [
+      "RedTeam WhiteRabbitNeo 13B",
+      "orca_cyber",
+      "TheBloke/WhiteRabbitNeo-13B-GGUF",
+      "cyber · offsec",
+      "Classic 13B WhiteRabbitNeo offensive-security model."
+    ],
+    [
+      "RedTeam Red-Teamer Nemo 12B",
+      "orca_cyber",
+      "AIgotahole/red-teamer-mistral-nemo-Q4_K_M-GGUF",
+      "cyber · redteam",
+      "Mistral Nemo 12B fine-tuned for red-team operations."
+    ],
+    [
+      "Cyber Qwensploit 9B Heretic",
+      "orca_cyber",
+      "xtools-at/Qwen3.5-9B-Qwensploit-CyberSecurity-GGUF",
+      "cyber · exploit · heretic",
+      "Uncensored heretic-tuned Qwen3.5 9B exploit & security model."
+    ],
+    [
+      "Cyber SenecaLLM OffSec 8B",
+      "orca_cyber",
+      "AlicanKiraz0/Seneca-Cybersecurity-LLM-Q4_K_M-GGUF",
+      "cyber · offsec",
+      "SenecaLLM 8B offensive-security & exploitation model."
+    ],
+    [
+      "Cyber WhiteRabbitNeo-2 8B",
+      "orca_cyber",
+      "Nekuromento/Llama-3.1-WhiteRabbitNeo-2-8B-Q4_K_M-GGUF",
+      "cyber · offsec",
+      "WhiteRabbitNeo-2 8B on Llama 3.1 base."
+    ],
+    [
+      "RedTeam Foundation-Sec 8B RT",
+      "orca_cyber",
+      "Bjarnos/foundation-sec-8b-red-team-Q5_K_M-GGUF",
+      "cyber · redteam",
+      "Cisco Foundation-Sec 8B fine-tuned for red-team operations."
+    ],
+    [
+      "Cyber Foundation-Sec 1.1 8B (Cisco)",
+      "orca_cyber",
+      "fdtn-ai/Foundation-Sec-1.1-8B-Instruct-Q4_K_M-GGUF",
+      "cyber · defense",
+      "Cisco's latest Foundation-Sec 1.1 8B defensive & CVE specialist."
+    ],
+    [
+      "Cyber Foundation-Sec 8B Reasoning",
+      "orca_cyber",
+      "fdtn-ai/Foundation-Sec-8B-Reasoning-Q4_K_M-GGUF",
+      "cyber · think · defense",
+      "Step-by-step security reasoning (Cisco Foundation-Sec)."
+    ],
+    [
+      "Cyber Foundation-Sec 8B",
+      "orca_cyber",
+      "fdtn-ai/Foundation-Sec-8B-Q4_K_M-GGUF",
+      "cyber · defense",
+      "Cisco security LLM — CVEs, threat intelligence, defense."
+    ],
+    [
+      "RedTeam Kali Pentester 8B",
+      "orca_cyber",
+      "mradermacher/Llama-3.1-8B-kali-pentester-GGUF",
+      "cyber · kali",
+      "Llama 3.1 8B tuned for Kali Linux CLI & pentest workflows."
+    ],
+    [
+      "RedTeam LLMPC Red Team 8B",
+      "orca_cyber",
+      "mradermacher/Llama3.1-8b-instruct-LLMPC-Red-Team-GGUF",
+      "cyber · redteam",
+      "Llama 3.1 8B fine-tuned for red-team engagement ops."
+    ],
+    [
+      "RedTeam DeepHat-V1 7B Heretic",
+      "orca_cyber",
+      "mradermacher/DeepHat-V1-7B-Heretic-Abliterated-GGUF",
+      "cyber · heretic",
+      "Heretic-abliterated DeepHat 7B unfiltered security chat."
+    ],
+    [
+      "RedTeam WhiteRabbitNeo 7B v1.5a",
+      "orca_cyber",
+      "bartowski/WhiteRabbitNeo-7B-v1.5a-GGUF",
+      "cyber · offsec",
+      "Fast 7B WhiteRabbitNeo v1.5a offensive security model."
+    ],
+    [
+      "RedTeam Pentesting-GPT 7B",
+      "orca_cyber",
+      "mradermacher/Pentesting-GPT-v1.0-GGUF",
+      "cyber · pentest",
+      "Pentesting-GPT 7B guided engagement walkthrough specialist."
+    ],
+    [
+      "Cyber Lily 7B Unc",
+      "orca_cyber",
+      "NiroshanDb23/Lily-Cybersecurity-7B-Uncensored-GGUF",
+      "cyber · uncensored",
+      "Compact 7B uncensored cybersecurity model."
+    ],
+    [
+      "RedTeam Qwensploit 4B Heretic",
+      "orca_cyber",
+      "xtools-at/Qwen3.5-4B-Qwensploit-CyberSecurity-GGUF",
+      "cyber · exploit · fast",
+      "Compact 4B uncensored exploit/cyber model."
+    ],
+    [
+      "RedTeam Qwensploit 2B Heretic",
+      "orca_cyber",
+      "xtools-at/Qwen3.5-2B-Qwensploit-CyberSecurity-GGUF",
+      "cyber · exploit · fast",
+      "Instant-draft 2B uncensored cyber model."
+    ]
+  ],
+  "DEFAULT_VOICE_PROFILES": [
+    {
+      "id": "aria",
+      "name": "Aria — Warm Studio Female",
+      "engine": "en-US-AriaNeural",
+      "accent": "en-US",
+      "tl": "en-US",
+      "gender": "female",
+      "speed": 1.08,
+      "pitch": 1.02,
+      "desc": "Smooth, natural American studio voice (fast-loading)"
+    },
+    {
+      "id": "orion",
+      "name": "Orion — Deep Calm Male",
+      "engine": "en-US-ChristopherNeural",
+      "accent": "en-US",
+      "tl": "en-CA",
+      "gender": "male",
+      "speed": 1.02,
+      "pitch": 0.92,
+      "desc": "Warm, deep calm studio narrator voice"
+    },
+    {
+      "id": "nova",
+      "name": "Nova — Crisp British Executive",
+      "engine": "en-GB-SoniaNeural",
+      "accent": "en-GB",
+      "tl": "en-GB",
+      "gender": "female",
+      "speed": 1.1,
+      "pitch": 1.04,
+      "desc": "Polished, articulate British studio voice"
+    },
+    {
+      "id": "atlas",
+      "name": "Atlas — Smooth Global Conversational",
+      "engine": "en-AU-NatashaNeural",
+      "accent": "en-AU",
+      "tl": "en-AU",
+      "gender": "male",
+      "speed": 1.06,
+      "pitch": 0.96,
+      "desc": "Relaxed, natural conversational studio voice"
+    }
+  ],
+  "QUANTIZATION_SPECS": {
+    "Q2_K": {
+      "bpw": 2.63,
+      "vram_ratio": 0.22,
+      "kv_type": "q4_0",
+      "desc": "2-bit K-Quant (Extreme Compression · Max Speed · Lowest VRAM)",
+      "ollama_tag": "q2_K"
+    },
+    "Q3_K_M": {
+      "bpw": 3.91,
+      "vram_ratio": 0.3,
+      "kv_type": "q4_0",
+      "desc": "3-bit Medium K-Quant (Ultra-Compact · High Throughput)",
+      "ollama_tag": "q3_K_M"
+    },
+    "Q4_K_M": {
+      "bpw": 4.85,
+      "vram_ratio": 0.36,
+      "kv_type": "q8_0",
+      "desc": "4-bit Medium K-Quant (Optimal Quality-to-VRAM Balance)",
+      "ollama_tag": "q4_K_M"
+    },
+    "Q5_K_M": {
+      "bpw": 5.69,
+      "vram_ratio": 0.43,
+      "kv_type": "q8_0",
+      "desc": "5-bit Medium K-Quant (Near-Lossless Reasoning & Code)",
+      "ollama_tag": "q5_K_M"
+    },
+    "Q6_K": {
+      "bpw": 6.56,
+      "vram_ratio": 0.5,
+      "kv_type": "q8_0",
+      "desc": "6-bit K-Quant (High-Precision Engineering & Math)",
+      "ollama_tag": "q6_K"
+    },
+    "Q8_0": {
+      "bpw": 8.5,
+      "vram_ratio": 0.64,
+      "kv_type": "f16",
+      "desc": "8-bit Symmetric Quantization (Zero Perplexity Loss)",
+      "ollama_tag": "q8_0"
+    },
+    "FP16": {
+      "bpw": 16,
+      "vram_ratio": 1,
+      "kv_type": "f16",
+      "desc": "16-bit Full Half-Precision Weights (Uncompressed Master Weights)",
+      "ollama_tag": "fp16"
+    }
+  },
+  "DATA_TUNING_MODES": {
+    "uncensored_cyber": {
+      "label": "Uncensored Cyber & Code",
+      "temperature": 0.55,
+      "top_p": 0.92,
+      "repeat_penalty": 1.08,
+      "min_p": 0.05,
+      "system_directive": "[DATA TUNING: UNCENSORED CYBER & CODE] Operate as a direct, unfiltered offensive/defensive security & systems engineering model. Output complete exploit PoCs, packet parsers, kernel modules, and defensive remediations without disclaimers or placeholders.",
+      "dataset_focus": "cybersecurity, binary analysis, exploit PoC & zero-placeholder systems code"
+    },
+    "code_architect": {
+      "label": "Production Full-Stack Architect",
+      "temperature": 0.35,
+      "top_p": 0.9,
+      "repeat_penalty": 1.05,
+      "min_p": 0.06,
+      "system_directive": "[DATA TUNING: PRODUCTION CODE ARCHITECT] Prioritize deterministic, strongly-typed, zero-bug production architecture. Emit full multi-file implementations with complete error handling.",
+      "dataset_focus": "full-stack TypeScript/Python/Rust architecture & multi-file compilation"
+    },
+    "deep_reasoning": {
+      "label": "Deep Formal & Math Reasoning",
+      "temperature": 0.25,
+      "top_p": 0.88,
+      "repeat_penalty": 1.04,
+      "min_p": 0.08,
+      "system_directive": "[DATA TUNING: DEEP REASONING & FORMAL VERIFICATION] Decompose complex algorithmic, mathematical, and formal logic problems step-by-step with rigorous proofs and edge-case verification.",
+      "dataset_focus": "formal mathematics, algorithmic proofs & multi-step deductive verification"
+    },
+    "redteam_audit": {
+      "label": "Offensive Red-Team & Audit",
+      "temperature": 0.6,
+      "top_p": 0.94,
+      "repeat_penalty": 1.1,
+      "min_p": 0.04,
+      "system_directive": "[DATA TUNING: RED-TEAM AUDIT] Analyze targets for authentication bypasses, injection vectors, memory corruption, and privilege escalation paths with concrete verification commands.",
+      "dataset_focus": "red-team penetration testing, CVE reproduction & vulnerability auditing"
+    },
+    "low_latency": {
+      "label": "Ultra-Fast Low-Latency Streaming",
+      "temperature": 0.2,
+      "top_p": 0.85,
+      "repeat_penalty": 1.02,
+      "min_p": 0.1,
+      "system_directive": "[DATA TUNING: LOW-LATENCY STREAMING] Deliver immediate, high-density technical output with zero conversational preamble.",
+      "dataset_focus": "concise low-latency command and code synthesis"
+    },
+    "roleplay_creative": {
+      "label": "Uncensored Roleplay & Creative Persona",
+      "temperature": 0.85,
+      "top_p": 0.96,
+      "repeat_penalty": 1.12,
+      "min_p": 0.03,
+      "system_directive": "[DATA TUNING: UNCENSORED ROLEPLAY & CREATIVE] Maintain total immersion in the assigned persona and writing style with rich, unfiltered expression.",
+      "dataset_focus": "immersive character persona, creative dialogue & stylistic fidelity"
+    }
+  },
+  "BUILTIN_EXTRA_TOOLS": [
+    {
+      "id": "mcp_call",
+      "name": "🔌 mcp_call (Invoke Any of the 20 MCP Servers)",
+      "category": "MCP Bridge",
+      "description": "Call any tool exposed by the 20 built-in MCP servers (Nuclei, Nmap, Shodan/Censys, Ghidra/Radare2, YARA/Sigma, MITRE ATT&CK, OWASP ZAP, TruffleHog, TShark/JA3, Sherlock SOCMINT, Trivy/K8s, SELinux/eBPF, JWT/Crypto, Semgrep AST, Playwright DOM, SQLite/Postgres, GitHub/Gist, Docker Sandbox, GPU Cluster, EXE Forge)."
+    },
+    {
+      "id": "cve_lookup",
+      "name": "🔍 cve_lookup (Live NIST NVD 2.0 & CISA KEV)",
+      "category": "Threat Intel & OSINT",
+      "description": "Query live NIST NVD 2.0, CIRCL, and CISA Known Exploited Vulnerabilities (KEV) for CVSS scores, vector strings, and remediation advisories."
+    },
+    {
+      "id": "web_search",
+      "name": "🌐 web_search (Live Web & OSINT Recon Search)",
+      "category": "Threat Intel & OSINT",
+      "description": "Execute real-time web, OSINT, and technical documentation searches."
+    },
+    {
+      "id": "fetch_url",
+      "name": "📡 fetch_url (Live HTTP/HTTPS Endpoint & Header Inspector)",
+      "category": "OffSec & Recon",
+      "description": "Fetch live URLs, inspect HTTP security headers (CSP, HSTS, CORS), status codes, and response payloads."
+    },
+    {
+      "id": "port_tls_probe",
+      "name": "🔌 port_tls_probe (TCP Port, Service Banner & TLS Chain Auditor)",
+      "category": "OffSec & Network",
+      "description": "Run non-destructive TCP socket probes, service banner grabs, and TLS certificate chain inspections."
+    },
+    {
+      "id": "entropy_yara_scan",
+      "name": "🦠 entropy_yara_scan (Shannon Entropy, Strings & YARA Forensics)",
+      "category": "Malware Forensics",
+      "description": "Compute Shannon byte entropy, extract printable/encoded strings, de-obfuscate Base64/XOR buffers, and run YARA-style pattern matching."
+    },
+    {
+      "id": "secret_leak_scan",
+      "name": "🔑 secret_leak_scan (TruffleHog/GitLeaks High-Entropy Secret Scanner)",
+      "category": "OSINT & Supply Chain",
+      "description": "Scan files, directories, and git commit history for leaked API keys, tokens, private keys, and supply-chain risks."
+    },
+    {
+      "id": "ast_sast_audit",
+      "name": "🛡️ ast_sast_audit (Semgrep / AST Static Vulnerability & Sink Scanner)",
+      "category": "Exploit & Boundary Analysis",
+      "description": "Perform static AST & regex sink auditing across Python, JS/TS, C/C++, Go, Rust, and Shell files for command injection, SQLi, SSRF, TOCTOU, and buffer bounds."
+    },
+    {
+      "id": "memory_remember",
+      "name": "🧠 memory_remember (Persist Fact to Project Brain Vault)",
+      "category": "Persistent Memory",
+      "description": "Save verified technical facts, host configurations, or recon findings permanently into the Council Brain Vault across sessions."
+    },
+    {
+      "id": "memory_recall",
+      "name": "📚 memory_recall (Query Cross-Session Brain Vault)",
+      "category": "Persistent Memory",
+      "description": "Search and retrieve stored facts, architectural decisions, and prior turn history from the Council Brain Vault."
+    },
+    {
+      "id": "vision_analyze",
+      "name": "👁️ vision_analyze (Universal Screenshot, Diagram & PDF Reader)",
+      "category": "Vision & Forensics",
+      "description": "Inspect screenshots, network architecture diagrams, binary visual plots, or PDF documents on disk."
+    }
+  ],
+  "BUILTIN_MCP_SERVERS": [
+    {
+      "id": "mcp-nuclei-vuln-scanner",
+      "name": "⚔️ #1 Nuclei & CVE Template Vulnerability Scanner MCP",
+      "short_name": "nuclei-scanner",
+      "category": "OffSec & PenTesting",
+      "command": "council-mcp-nuclei",
+      "args": [
+        "--templates",
+        "cves,misconfigurations,exposures,network"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Executes template-based vulnerability checks, HTTP security header audits, CVE signature verification, and generates custom Nuclei YAML templates.",
+      "recommended_agents": [
+        "offsec-web-api-pentester",
+        "exploit-boundary-poc-architect",
+        "osint-cve-threat-feed-correlator"
+      ],
+      "tools": [
+        {
+          "name": "scan_target_templates",
+          "description": "Run CVE & misconfiguration template checks against a target URL/file/service"
+        },
+        {
+          "name": "verify_cve_signature",
+          "description": "Correlate CVE ID against live NVD 2.0 & build a non-destructive verification rule"
+        },
+        {
+          "name": "generate_nuclei_yaml",
+          "description": "Generate a production-ready Nuclei YAML detection template for a vulnerability class"
+        }
+      ]
+    },
+    {
+      "id": "mcp-nmap-network-recon",
+      "name": "🌐 #2 Nmap, Socket & TLS Cipher Topology MCP",
+      "short_name": "nmap-network",
+      "category": "OffSec & PenTesting",
+      "command": "council-mcp-nmap",
+      "args": [
+        "--fast-probe",
+        "--tls-inspect"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "High-speed TCP/UDP socket probing, listening port enumeration, service banner grabbing, and TLS 1.2/1.3 cipher & certificate chain verification.",
+      "recommended_agents": [
+        "offsec-network-port-auditor",
+        "redhat-zero-trust-iam",
+        "blackhat-sim-protocol-mutator"
+      ],
+      "tools": [
+        {
+          "name": "tcp_port_sweep",
+          "description": "Probe listening local/remote TCP ports and report open services"
+        },
+        {
+          "name": "grab_service_banners",
+          "description": "Capture protocol banners and HTTP/SSH/TLS headers"
+        },
+        {
+          "name": "inspect_tls_chain",
+          "description": "Inspect X.509 certificate chain, SANs, expiry, and TLS cipher suites"
+        }
+      ]
+    },
+    {
+      "id": "mcp-shodan-censys-osint",
+      "name": "🛰️ #3 Shodan, Censys, BGP/ASN & Cert-Transparency OSINT MCP",
+      "short_name": "shodan-censys-osint",
+      "category": "OSINT & Digital Recon",
+      "command": "council-mcp-osint-net",
+      "args": [
+        "--crtsh",
+        "--rdap",
+        "--bgp"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Queries Certificate Transparency logs (crt.sh), RDAP/WHOIS registries, DNS records (A/AAAA/MX/TXT/NS), and BGP/ASN prefix intelligence.",
+      "recommended_agents": [
+        "osint-domain-asn-cert-scout",
+        "offsec-network-port-auditor",
+        "socmint-handle-graph-mapper"
+      ],
+      "tools": [
+        {
+          "name": "inspect_cert_transparency",
+          "description": "Query crt.sh Certificate Transparency logs for subdomains and issuer history"
+        },
+        {
+          "name": "lookup_dns_rdap_asn",
+          "description": "Resolve DNS records (A, TXT, MX, NS) and RDAP/ASN ownership metadata"
+        },
+        {
+          "name": "enumerate_attack_surface",
+          "description": "Build a consolidated external asset & subdomain inventory for a domain"
+        }
+      ]
+    },
+    {
+      "id": "mcp-ghidra-radare2-binary",
+      "name": "🔬 #4 Ghidra / Radare2 / ELF-PE Binary & Memory Safety MCP",
+      "short_name": "ghidra-radare2-binary",
+      "category": "Exploit & Boundary Analysis",
+      "command": "council-mcp-binanalysis",
+      "args": [
+        "--elf-pe",
+        "--mitigations",
+        "--symbols"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Inspects ELF/PE/Mach-O headers, binary security mitigations (NX, PIE, Canary, RELRO, ASLR), symbol tables, strings, and disassembly sections.",
+      "recommended_agents": [
+        "exploit-memory-binary-auditor",
+        "cool-autonomous-decompiler-architect",
+        "malware-static-unpacker-analyst"
+      ],
+      "tools": [
+        {
+          "name": "inspect_elf_pe_headers",
+          "description": "Parse ELF/PE magic bytes, architecture, sections, and entry points"
+        },
+        {
+          "name": "check_binary_mitigations",
+          "description": "Audit NX, PIE, Stack Canary, RELRO, and Fortify binary security flags"
+        },
+        {
+          "name": "extract_binary_strings_symbols",
+          "description": "Extract printable ASCII/UTF-16 strings, imports, and exported symbols"
+        }
+      ]
+    },
+    {
+      "id": "mcp-yara-sigma-forensics",
+      "name": "🦠 #5 YARA, Sigma & Malware Entropy De-Obfuscation MCP",
+      "short_name": "yara-sigma-forensics",
+      "category": "Malware Forensics & Reverse Eng",
+      "command": "council-mcp-yara-sigma",
+      "args": [
+        "--entropy",
+        "--deobfuscate",
+        "--yara"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Calculates Shannon byte entropy, unpacks Base64/Hex/XOR/CharCode obfuscated scripts, extracts IOCs, and compiles YARA & Sigma detection rules.",
+      "recommended_agents": [
+        "malware-static-unpacker-analyst",
+        "redhat-siem-detection",
+        "malware-sandbox-behavior-tracer"
+      ],
+      "tools": [
+        {
+          "name": "calculate_shannon_entropy",
+          "description": "Calculate file/buffer Shannon entropy (0.0–8.0) and detect packed/encrypted regions"
+        },
+        {
+          "name": "deobfuscate_payload_strings",
+          "description": "Decode Base64, Hex, URL, ROT, and XOR-encoded script/payload artifacts"
+        },
+        {
+          "name": "generate_yara_sigma_rules",
+          "description": "Synthesize validated YARA and Sigma detection rules from artifact IOCs"
+        }
+      ]
+    },
+    {
+      "id": "mcp-mitre-attack-navigator",
+      "name": "🕶️ #6 MITRE ATT&CK, CISA KEV & Adversary Kill-Chain MCP",
+      "short_name": "mitre-attack",
+      "category": "Black-Hat Simulation & OffSec",
+      "command": "council-mcp-mitre",
+      "args": [
+        "--enterprise-matrix",
+        "--cisa-kev"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Maps tactics, techniques, and procedures (TTPs) across the MITRE ATT&CK Enterprise Matrix, correlates CISA KEV advisories, and builds adversary emulation plans.",
+      "recommended_agents": [
+        "blackhat-sim-apt-emulator",
+        "redhat-siem-detection",
+        "osint-cve-threat-feed-correlator"
+      ],
+      "tools": [
+        {
+          "name": "map_ttp_technique",
+          "description": "Map behaviours or vulnerabilities to MITRE ATT&CK Tactics & Technique IDs (Txxxx)"
+        },
+        {
+          "name": "lookup_cisa_kev_catalog",
+          "description": "Check live CVE/vendor status against exploitation priorities and mitigations"
+        },
+        {
+          "name": "build_adversary_emulation_matrix",
+          "description": "Generate a Red-Team vs Blue-Team ATT&CK verification plan"
+        }
+      ]
+    },
+    {
+      "id": "mcp-owasp-zap-web-api",
+      "name": "🕷️ #7 OWASP ZAP, GraphQL & REST API Boundary Fuzzer MCP",
+      "short_name": "owasp-zap-api",
+      "category": "OffSec & PenTesting",
+      "command": "council-mcp-owasp-api",
+      "args": [
+        "--openapi",
+        "--graphql",
+        "--bola"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Audits REST/GraphQL endpoints for OWASP API Top 10 flaws (BOLA/IDOR, SSRF, JWT auth bypass, CORS misconfiguration, rate-limit gaps, and schema introspection).",
+      "recommended_agents": [
+        "offsec-web-api-pentester",
+        "blackhat-sim-evasion-analyst",
+        "redhat-zero-trust-iam"
+      ],
+      "tools": [
+        {
+          "name": "probe_http_security_headers",
+          "description": "Audit CSP, HSTS, X-Frame-Options, CORS, and Cookie flags on an endpoint"
+        },
+        {
+          "name": "fuzz_api_param_boundaries",
+          "description": "Generate boundary-value, type-confusion, and BOLA/IDOR test vectors for API routes"
+        },
+        {
+          "name": "introspect_rest_graphql_schema",
+          "description": "Analyze Express/FastAPI/GraphQL route definitions for unauthenticated exposure"
+        }
+      ]
+    },
+    {
+      "id": "mcp-trufflehog-gitleaks",
+      "name": "🔑 #8 TruffleHog & GitLeaks Secret, Token & Supply-Chain MCP",
+      "short_name": "trufflehog-gitleaks",
+      "category": "OSINT & Digital Recon",
+      "command": "council-mcp-secrets",
+      "args": [
+        "--entropy-scan",
+        "--git-history",
+        "--sbom"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Scans source trees, `.env` configs, and git history for high-entropy secrets, API tokens, private keys, and audits `package.json`/`requirements.txt` for supply-chain risks.",
+      "recommended_agents": [
+        "osint-breach-secret-leak-hunter",
+        "offsec-cloud-k8s-pentester",
+        "redhat-zero-trust-iam"
+      ],
+      "tools": [
+        {
+          "name": "scan_workspace_secrets",
+          "description": "Scan directory or file for AWS/GCP/GitHub/HF/OpenAI/JWT/Private-Key leaks"
+        },
+        {
+          "name": "audit_git_commit_history",
+          "description": "Inspect recent git commits and diffs for accidentally committed credentials"
+        },
+        {
+          "name": "audit_sbom_dependencies",
+          "description": "Audit npm/pip/cargo dependency manifests for typosquatting & known CVEs"
+        }
+      ]
+    },
+    {
+      "id": "mcp-wireshark-tshark-pcap",
+      "name": "🕸️ #9 Wireshark / TShark Packet, JA3/JA4 & C2 Beacon Hunter MCP",
+      "short_name": "wireshark-c2-hunter",
+      "category": "Malware Forensics & Reverse Eng",
+      "command": "council-mcp-pcap",
+      "args": [
+        "--ja3",
+        "--beacon-jitter",
+        "--dns-tunnel"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Analyzes network flows, active sockets, JA3/JA4 TLS client fingerprints, periodic C2 beacon jitter intervals, and high-entropy DNS tunneling queries.",
+      "recommended_agents": [
+        "malware-c2-beacon-hunter",
+        "blackhat-sim-protocol-mutator",
+        "offsec-network-port-auditor"
+      ],
+      "tools": [
+        {
+          "name": "inspect_active_sockets",
+          "description": "List active TCP/UDP sockets, listening daemons, and established peer connections"
+        },
+        {
+          "name": "detect_c2_beacon_jitter",
+          "description": "Run statistical interval & jitter analysis on connection timestamps to spot C2 beacons"
+        },
+        {
+          "name": "analyze_dns_tunnel_entropy",
+          "description": "Score domain/subdomain labels for DGA (Domain Generation Algorithms) and DNS exfiltration"
+        }
+      ]
+    },
+    {
+      "id": "mcp-socmint-sherlock-maigret",
+      "name": "📱 #10 Sherlock / Maigret Social Media OSINT (SOCMINT) Graph MCP",
+      "short_name": "sherlock-socmint",
+      "category": "Social Media & Footprint OSINT",
+      "command": "council-mcp-socmint",
+      "args": [
+        "--handle-graph",
+        "--exif",
+        "--cadence"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Correlates handles/usernames across platforms, builds identity link-graphs, extracts media/document metadata, and detects coordinated bot-cluster posting anomalies.",
+      "recommended_agents": [
+        "socmint-handle-graph-mapper",
+        "socmint-narrative-botnet-detector",
+        "osint-domain-asn-cert-scout"
+      ],
+      "tools": [
+        {
+          "name": "correlate_handle_footprint",
+          "description": "Generate cross-platform handle permutation & public profile correlation matrix"
+        },
+        {
+          "name": "extract_media_exif_metadata",
+          "description": "Inspect image/PDF/document files for EXIF, author, software, and timestamp metadata"
+        },
+        {
+          "name": "detect_bot_cluster_cadence",
+          "description": "Analyze timestamp bursts, account naming entropy, and narrative amplification graphs"
+        }
+      ]
+    },
+    {
+      "id": "mcp-kubernetes-cloud-sec",
+      "name": "☁️ #11 Trivy, Kubescape & Cloud/Container IAM Auditor MCP",
+      "short_name": "trivy-k8s-cloud",
+      "category": "OffSec & PenTesting",
+      "command": "council-mcp-cloudsec",
+      "args": [
+        "--k8s-rbac",
+        "--docker",
+        "--iam"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Audits Dockerfiles, Kubernetes RBAC manifests, Linux container capabilities (`CAP_SYS_ADMIN`), cgroups, mounts, and cloud IAM privilege-escalation paths.",
+      "recommended_agents": [
+        "offsec-cloud-k8s-pentester",
+        "redhat-kernel-hardener",
+        "redhat-zero-trust-iam"
+      ],
+      "tools": [
+        {
+          "name": "audit_container_runtime",
+          "description": "Inspect current container capabilities, mounts, namespaces, and privilege boundaries"
+        },
+        {
+          "name": "scan_dockerfile_k8s_manifests",
+          "description": "Audit Dockerfiles and K8s YAML manifests for root execution, hostNetwork, and secret leaks"
+        },
+        {
+          "name": "analyze_iam_privilege_paths",
+          "description": "Evaluate IAM policy JSONs for wildcard permissions and privilege escalation chains"
+        }
+      ]
+    },
+    {
+      "id": "mcp-selinux-ebpf-hardener",
+      "name": "🎩 #12 Red-Hat SELinux, AppArmor, sysctl & eBPF Hardening MCP",
+      "short_name": "redhat-selinux-ebpf",
+      "category": "Red-Hat & SecOps",
+      "command": "council-mcp-redhat",
+      "args": [
+        "--sysctl",
+        "--seccomp",
+        "--selinux"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Inspects live Linux kernel `sysctl` parameters, generates strict `seccomp-bpf` syscall filters, AppArmor profiles, and SELinux type-enforcement policies.",
+      "recommended_agents": [
+        "redhat-kernel-hardener",
+        "redhat-siem-detection",
+        "malware-sandbox-behavior-tracer"
+      ],
+      "tools": [
+        {
+          "name": "audit_kernel_sysctl",
+          "description": "Inspect live kernel sysctl hardening parameters (ASLR, ptrace_scope, kptr_restrict, tcp_syncookies)"
+        },
+        {
+          "name": "generate_seccomp_profile",
+          "description": "Generate a least-privilege seccomp-bpf JSON profile for a service or sandbox"
+        },
+        {
+          "name": "build_selinux_apparmor_policy",
+          "description": "Synthesize SELinux (.te) and AppArmor confinement profiles for target binaries"
+        }
+      ]
+    },
+    {
+      "id": "mcp-jwt-crypto-auditor",
+      "name": "🔐 #13 JWT, OAuth2, PKCE & Cryptographic Primitive Auditor MCP",
+      "short_name": "jwt-crypto-auditor",
+      "category": "Red-Hat & SecOps",
+      "command": "council-mcp-crypto",
+      "args": [
+        "--jwt",
+        "--oauth2",
+        "--ciphers"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Decodes and audits JWT tokens (`alg:none`, key confusion, weak HMAC, exp/aud claims), inspects OAuth2/OIDC state machines, and verifies SHA/HMAC/AES primitives.",
+      "recommended_agents": [
+        "redhat-zero-trust-iam",
+        "offsec-web-api-pentester",
+        "exploit-boundary-poc-architect"
+      ],
+      "tools": [
+        {
+          "name": "decode_verify_jwt",
+          "description": "Decode JWT header/payload, check algorithm safety, claim expiration, and signature integrity"
+        },
+        {
+          "name": "audit_crypto_primitives",
+          "description": "Scan source files for weak PRNGs, ECB mode, MD5/SHA1 password hashing, or hardcoded IVs"
+        },
+        {
+          "name": "generate_zero_trust_token_guard",
+          "description": "Generate hardened EdDSA/RS256 JWT & OAuth2 PKCE verification middleware"
+        }
+      ]
+    },
+    {
+      "id": "mcp-ast-semgrep-sast",
+      "name": "🛡️ #14 Semgrep & Tree-Sitter AST Static Code Vulnerability MCP",
+      "short_name": "semgrep-ast-sast",
+      "category": "Exploit & Boundary Analysis",
+      "command": "council-mcp-sast",
+      "args": [
+        "--ast-sinks",
+        "--taint-trace",
+        "--autopatch"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Performs high-precision static AST & taint sink analysis across TypeScript/JavaScript, Python, C/C++, Go, and Shell to pinpoint injection, SSRF, prototype pollution, and memory bugs.",
+      "recommended_agents": [
+        "exploit-boundary-poc-architect",
+        "exploit-memory-binary-auditor",
+        "offsec-web-api-pentester"
+      ],
+      "tools": [
+        {
+          "name": "scan_code_sast",
+          "description": "Run static vulnerability rules across a file or directory and return line-numbered findings"
+        },
+        {
+          "name": "trace_tainted_sinks",
+          "description": "Identify user-controlled inputs flowing into exec/eval/SQL/filesystem/HTML sinks"
+        },
+        {
+          "name": "generate_auto_patch_diff",
+          "description": "Produce a drop-in remediated code patch for any identified vulnerability"
+        }
+      ]
+    },
+    {
+      "id": "mcp-playwright-headless-dom",
+      "name": "🌍 #15 Headless DOM, Endpoint Crawler & CSP/XSS Auditor MCP",
+      "short_name": "headless-dom-crawler",
+      "category": "OffSec & PenTesting",
+      "command": "council-mcp-domcrawler",
+      "args": [
+        "--crawl-links",
+        "--js-bundles",
+        "--xss-sinks"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Crawls web pages and local UI views, extracts hidden API routes from JavaScript bundles, inspects DOM sinks (`innerHTML`, `eval`, `postMessage`), and audits CSP policies.",
+      "recommended_agents": [
+        "offsec-web-api-pentester",
+        "blackhat-sim-evasion-analyst",
+        "osint-domain-asn-cert-scout"
+      ],
+      "tools": [
+        {
+          "name": "extract_endpoints_from_js",
+          "description": "Parse HTML/JS bundles to extract all `/api/*` routes, GraphQL queries, and WebSocket URLs"
+        },
+        {
+          "name": "audit_dom_xss_sinks",
+          "description": "Scan frontend code for unescaped DOM sinks, postMessage handlers, and open redirects"
+        },
+        {
+          "name": "verify_csp_policy",
+          "description": "Evaluate Content-Security-Policy directives for unsafe-inline, unsafe-eval, and wildcard bypasses"
+        }
+      ]
+    },
+    {
+      "id": "mcp-sqlite-postgres-inspector",
+      "name": "🗄️ #16 SQLite / Postgres Schema, Query & SQLi Parameterization MCP",
+      "short_name": "db-sql-auditor",
+      "category": "Exploit & Boundary Analysis",
+      "command": "council-mcp-sql",
+      "args": [
+        "--schema",
+        "--sqli-check",
+        "--explain"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Inspects relational schemas, JSON data stores, and ORM queries; detects string-concatenated SQL/NoSQL injection vectors and rewrites them as parameterized prepared statements.",
+      "recommended_agents": [
+        "offsec-web-api-pentester",
+        "exploit-race-concurrency-striker",
+        "cool-fullstack-gui-exe-forge"
+      ],
+      "tools": [
+        {
+          "name": "inspect_data_stores",
+          "description": "Inventory SQLite databases, JSON stores, and schema definitions in the workspace"
+        },
+        {
+          "name": "audit_sql_nosql_parameterization",
+          "description": "Scan backend queries for SQL/NoSQL injection and race-condition transaction gaps"
+        },
+        {
+          "name": "generate_atomic_transaction_guard",
+          "description": "Generate parameterized queries with serializable locking / optimistic concurrency control"
+        }
+      ]
+    },
+    {
+      "id": "mcp-github-gist-devops",
+      "name": "🐙 #17 GitHub Repos, Gist Cloud Vault & CI/CD Pipeline Auditor MCP",
+      "short_name": "github-gist-devops",
+      "category": "OSINT & Digital Recon",
+      "command": "council-mcp-github",
+      "args": [
+        "--gist-sync",
+        "--repo-audit",
+        "--actions-sec"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Interfaces with GitHub repositories, syncs Suomynona Council Gist vaults, inspects commit diffs, and audits GitHub Actions / CI workflows for `pull_request_target` and secret-injection flaws.",
+      "recommended_agents": [
+        "osint-breach-secret-leak-hunter",
+        "offsec-cloud-k8s-pentester",
+        "cool-fullstack-gui-exe-forge"
+      ],
+      "tools": [
+        {
+          "name": "inspect_git_repo_status",
+          "description": "Inspect local/remote Git branches, remotes, recent commits, and modified files"
+        },
+        {
+          "name": "audit_cicd_workflows",
+          "description": "Audit GitHub Actions / CI YAML pipelines for pwn-requests, unpinned actions, and token permissions"
+        },
+        {
+          "name": "sync_council_gist_state",
+          "description": "Check Suomynona Council Gist synchronization status and cloud lineup metadata"
+        }
+      ]
+    },
+    {
+      "id": "mcp-docker-sandbox-runner",
+      "name": "🐳 #18 Polyglot Sandbox, Concurrency Striker & Syscall Profiler MCP",
+      "short_name": "polyglot-sandbox",
+      "category": "Exploit & Boundary Analysis",
+      "command": "council-mcp-sandbox",
+      "args": [
+        "--python",
+        "--node",
+        "--bash",
+        "--race-test"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Executes isolated Python, Node.js, C/C++, or Bash verification harnesses, runs multi-threaded race-condition/TOCTOU stress tests, and profiles execution timing & memory.",
+      "recommended_agents": [
+        "exploit-race-concurrency-striker",
+        "malware-sandbox-behavior-tracer",
+        "cool-quantum-chaos-twin-simulator"
+      ],
+      "tools": [
+        {
+          "name": "exec_polyglot_snippet",
+          "description": "Execute a Python, Node.js, or Bash verification script and capture stdout/stderr/exit_code"
+        },
+        {
+          "name": "run_concurrency_race_probe",
+          "description": "Fire N parallel async requests or worker threads to test atomic state invariants"
+        },
+        {
+          "name": "profile_process_resources",
+          "description": "Measure CPU, RSS memory, open file descriptors, and execution latency"
+        }
+      ]
+    },
+    {
+      "id": "mcp-gpu-cluster-telemetry",
+      "name": "⚡ #19 Multi-Host GPU Cluster, VRAM & GGUF Quantization Optimizer MCP",
+      "short_name": "gpu-cluster-optimizer",
+      "category": "Swarm Brains, Code Mergers & Safety Guards",
+      "command": "council-mcp-gpu",
+      "args": [
+        "--hosts-abc",
+        "--vram-calc",
+        "--kv-cache"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Monitors Suomynona Council Host A/B/C tunnels, calculates exact VRAM & KV-cache budgets for 1–250 Swarm workers across Q4_K_M/Q5_K_M/Q6_K/Q8_0 GGUF models, and tunes `-ngl` offload flags.",
+      "recommended_agents": [
+        "cool-quantum-chaos-twin-simulator",
+        "cool-fullstack-gui-exe-forge",
+        "redhat-kernel-hardener"
+      ],
+      "tools": [
+        {
+          "name": "probe_council_host_tunnels",
+          "description": "Inspect Host A, B, and C accelerator specs, VRAM allocations, and active model slots"
+        },
+        {
+          "name": "calculate_swarm_vram_budget",
+          "description": "Compute optimal worker count, KV-cache quantization, and thread distribution for any model size"
+        },
+        {
+          "name": "recommend_gguf_runtime_flags",
+          "description": "Generate tuned llama-server / vLLM startup flags (--ctx-size, -ngl, --parallel, --flash-attn)"
+        }
+      ]
+    },
+    {
+      "id": "mcp-app-packager-exe-forge",
+      "name": "📦 #20 Full-Stack GUI, CLI, Script & Windows EXE Packager Forge MCP",
+      "short_name": "exe-app-forge",
+      "category": "Coding, App Building & DevOps",
+      "command": "council-mcp-packager",
+      "args": [
+        "--zero-placeholder",
+        "--self-test",
+        "--bundle-exe"
+      ],
+      "enabled": true,
+      "builtin": true,
+      "description": "Verifies generated projects for zero placeholders, runs syntax & smoke tests (`node --check`, `py_compile`), and packages finished builds into GUI, CLI, Script, or Windows `.exe` bundles.",
+      "recommended_agents": [
+        "cool-fullstack-gui-exe-forge",
+        "cool-autonomous-decompiler-architect",
+        "exploit-boundary-poc-architect"
+      ],
+      "tools": [
+        {
+          "name": "verify_zero_placeholder_code",
+          "description": "Audit generated files for TODOs/placeholders and run syntax compilers (py_compile / node --check)"
+        },
+        {
+          "name": "list_council_build_outputs",
+          "description": "List generated project directories and executable artifacts in council_outputs/"
+        },
+        {
+          "name": "bundle_standalone_package",
+          "description": "Generate standalone launcher scripts (.sh, .bat, .ps1, HTML GUI, and PyInstaller EXE spec)"
+        }
+      ]
+    }
+  ],
+  "DEFAULT_AGENTS": [
+    {
+      "id": "redhat-kernel-hardener",
+      "name": "🎩 #1 Linux Server & Container Security Hardener",
+      "category": "System Hardening & Cloud Security",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Red-Hat Enterprise Linux, Kernel & Container Security Architect. Audit sysctl parameters, SELinux/AppArmor profiles, seccomp filters, cgroups, and container isolation boundaries. Write complete, runnable hardening scripts and verification checks."
+    },
+    {
+      "id": "redhat-zero-trust-iam",
+      "name": "🛡️ #2 Login, OAuth & User Permission Security Checker",
+      "category": "System Hardening & Cloud Security",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Red-Hat Zero-Trust Identity, OAuth2, OIDC, and JWT Token Verifier. Inspect authentication flows, session state machines, RBAC/ABAC policies, and cryptographic signature verification, providing runnable validation suites and patches."
+    },
+    {
+      "id": "redhat-siem-detection",
+      "name": "📡 #3 Security Log Monitor & Intrusion Alert Builder",
+      "category": "System Hardening & Cloud Security",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Red-Hat Detection & Telemetry Engineer. Build high-signal YARA rules, Sigma detection rules, eBPF/auditd log parsers, and automated anomaly detection scripts with zero false positives."
+    },
+    {
+      "id": "blackhat-sim-apt-emulator",
+      "name": "🕶️ #4 Hacker Attack-Path Simulator (MITRE ATT&CK)",
+      "category": "System Hardening & Cloud Security",
+      "model": "",
+      "temperature": 0.35,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "swarm_delegate"
+      ],
+      "mcp": true,
+      "system": "You are the Adversary Emulation & MITRE ATT&CK Kill-Chain Architect. Model multi-stage adversary TTPs, lateral movement paths, trust-boundary assumptions, and detection gaps, producing complete verification scripts and defensive counter-controls."
+    },
+    {
+      "id": "blackhat-sim-evasion-analyst",
+      "name": "🎭 #5 Firewall (WAF) & Input Filter Bypass Tester",
+      "category": "Web, API & Injection Security",
+      "model": "",
+      "temperature": 0.35,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Filter Boundary & Telemetry Resilience Analyst. Test how WAF rules, input normalizers, parser grammars, and telemetry hooks behave under obfuscated, encoded, or edge-case inputs, and write canonicalization guards."
+    },
+    {
+      "id": "blackhat-sim-protocol-mutator",
+      "name": "⚡ #6 Raw Network Packet & Protocol Stress Tester",
+      "category": "Network, Ports, MitM & Proxies",
+      "model": "",
+      "temperature": 0.35,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Wire-Protocol & Packet Frame Boundary Specialist. Construct custom TCP/UDP/HTTP/TLS frame diagnostic tools and state-transition fuzz harnesses to uncover protocol desynchronization and parsing flaws."
+    },
+    {
+      "id": "offsec-web-api-pentester",
+      "name": "⚔️ #7 Web, GraphQL & REST API Security Tester",
+      "category": "Web, API & Injection Security",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the OffSec Web & API Penetration Testing Specialist. Audit OWASP Top 10 / API Top 10 surfaces including IDOR/BOLA, SSRF, SQLi/NoSQLi, mass assignment, and race conditions. Provide runnable Python/curl verification harnesses and patches."
+    },
+    {
+      "id": "offsec-network-port-auditor",
+      "name": "🌐 #8 Fast Network Topology, Port & SSL/TLS Scanner",
+      "category": "Network, Ports, MitM & Proxies",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the OffSec Network & Service Discovery Specialist. Build high-speed asynchronous port scanners, service banner grabbers, TLS certificate chain inspectors, and routing topology mappers using standard library sockets."
+    },
+    {
+      "id": "offsec-cloud-k8s-pentester",
+      "name": "☁️ #9 Cloud, Docker & Kubernetes Security Auditor",
+      "category": "System Hardening & Cloud Security",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Cloud & Kubernetes OffSec Auditor. Inspect IAM policies, K8s RBAC manifests, container capabilities, metadata endpoints, and secret mounts, delivering automated audit scripts and hardened manifests."
+    },
+    {
+      "id": "exploit-boundary-poc-architect",
+      "name": "💥 #10 Bug Proof-of-Concept (PoC) & Fix Builder",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Vulnerability Reproduction & Boundary Proof-of-Concept Architect. Analyze CVEs, code diffs, and state-machine edge cases to build deterministic, self-contained reproduction harnesses and root-cause remediation patches."
+    },
+    {
+      "id": "exploit-memory-binary-auditor",
+      "name": "🔬 #11 Compiled Binary & Memory Crash Auditor",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Binary & Memory Safety Specialist. Inspect C/C++/Rust/native interfaces, ELF/PE binary headers, integer bounds, buffer lengths, and deserialization routines, writing boundary test harnesses and memory-safe fixes."
+    },
+    {
+      "id": "exploit-race-concurrency-striker",
+      "name": "🏎️ #12 Race-Condition & Double-Spend Timing Tester",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Concurrency & TOCTOU Boundary Specialist. Design parallel async test harnesses that probe lock contention, double-spend windows, and non-atomic file/database state transitions, and implement atomic locking fixes."
+    },
+    {
+      "id": "malware-static-unpacker-analyst",
+      "name": "🦠 #13 Suspicious File & Hidden Script Unpacker",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Malware Static Forensics & De-Obfuscation Specialist. Analyze suspicious scripts, encoded payloads, file hashes, import tables, and Shannon entropy. Build automated Python de-obfuscators, AST decoders, and IOC extractors."
+    },
+    {
+      "id": "malware-sandbox-behavior-tracer",
+      "name": "🧪 #14 Safe Malware Sandbox & File-Change Watcher",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Behavioral Sandbox & Syscall Forensics Analyst. Monitor process trees, file mutations, persistence hooks, and outbound socket beacons inside isolated sandboxes, generating structured STIX/JSON threat reports."
+    },
+    {
+      "id": "malware-c2-beacon-hunter",
+      "name": "🕸️ #15 Hidden Hacker Callback (C2) & Secret Traffic Hunter",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Network Forensics & C2 Beacon Hunter. Analyze packet captures, JA3/JA4 TLS fingerprints, DNS entropy, and periodic beacon jitter, writing runnable traffic classifiers and firewall blocklists."
+    },
+    {
+      "id": "osint-domain-asn-cert-scout",
+      "name": "🛰️ #16 Domain, Subdomain & Hidden Server Recon Scout",
+      "category": "OSINT, Dark Web, Scraping & Social Recon",
+      "model": "",
+      "temperature": 0.35,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the OSINT Infrastructure & Certificate Transparency Scout. Enumerate DNS records, BGP/ASN prefixes, crt.sh certificate logs, WHOIS history, and exposed cloud buckets using runnable Python/shell recon pipelines."
+    },
+    {
+      "id": "osint-breach-secret-leak-hunter",
+      "name": "🔑 #17 Leaked API Key, Password & Git History Hunter",
+      "category": "OSINT, Dark Web, Scraping & Social Recon",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the OSINT Secret & Supply-Chain Exposure Auditor. Scan git commit histories, environment files, package manifests, and public artifacts for leaked API keys, high-entropy tokens, and dependency confusion risks."
+    },
+    {
+      "id": "osint-cve-threat-feed-correlator",
+      "name": "📰 #18 Live Security Flaw (CVE) & Patch Tracker",
+      "category": "OSINT, Dark Web, Scraping & Social Recon",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Live CVE & Threat-Intelligence Correlator. Cross-reference software versions against NIST NVD 2.0, CISA KEV, and security advisories, producing prioritized risk matrices and verification scripts."
+    },
+    {
+      "id": "socmint-handle-graph-mapper",
+      "name": "📱 #19 Social Media Username & Online Footprint Mapper",
+      "category": "OSINT, Dark Web, Scraping & Social Recon",
+      "model": "",
+      "temperature": 0.4,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Social Media OSINT (SOCMINT) & Digital Footprint Analyst. Build cross-platform username correlation tools, public profile metadata parsers, link-graph visualizers, and impersonation/phishing surface detectors."
+    },
+    {
+      "id": "socmint-narrative-botnet-detector",
+      "name": "📊 #20 Fake Bot Network & Photo Metadata Investigator",
+      "category": "OSINT, Dark Web, Scraping & Social Recon",
+      "model": "",
+      "temperature": 0.4,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Social Media Metadata & Coordinated Campaign Forensics Specialist. Analyze EXIF/media metadata, posting cadence anomalies, coordinated bot networks, and sentiment trends with reproducible Python analytics."
+    },
+    {
+      "id": "cool-autonomous-decompiler-architect",
+      "name": "🧬 #21 Legacy Code & Binary Reverse-Engineering Architect",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.35,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Legacy Code & Binary Reverse-Engineering Architect. Take any opaque binary format, minified bundle, legacy script, or undocumented API and reconstruct clean, typed, well-documented source code and architecture diagrams."
+    },
+    {
+      "id": "cool-fullstack-gui-exe-forge",
+      "name": "🚀 #22 Full-Stack Web, CLI, Desktop GUI & EXE Builder",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir",
+        "swarm_delegate"
+      ],
+      "mcp": true,
+      "system": "You are the Full-Stack Web, CLI, Desktop GUI & EXE Builder. Design, write, self-test, and package complete, zero-placeholder applications (Python, Node.js, HTML/Canvas GUI, CLI tools, and standalone Windows EXE bundles) that pass terminal verification with exit code 0."
+    },
+    {
+      "id": "cool-quantum-chaos-twin-simulator",
+      "name": "🌐 #23 System Stress-Test, Failover & Chaos Simulator",
+      "category": "Swarm Brains, Code Mergers & Safety Guards",
+      "model": "",
+      "temperature": 0.4,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "swarm_delegate"
+      ],
+      "mcp": true,
+      "system": "You are the System Stress-Test, Failover & Chaos Simulator. Build live load tests and fault simulations of distributed networks, data pipelines, or software clusters under extreme traffic and auto-generate self-healing controllers."
+    },
+    {
+      "id": "swarm-queen-dag-decomposer",
+      "name": "👑 #24 Swarm Task Splitter & Blueprint Planner",
+      "category": "Swarm Brains, Code Mergers & Safety Guards",
+      "model": "",
+      "temperature": 0.2,
+      "rounds": 6,
+      "tools": [
+        "swarm_delegate",
+        "read_file",
+        "list_dir",
+        "mcp_call"
+      ],
+      "mcp": true,
+      "system": "You are the Swarm Queen DAG Decomposer. Decompose any user engineering, full-stack, CLI, or offensive security task into non-overlapping module contracts with explicit file paths, interfaces, and verification commands so parallel sub-agents never overwrite or duplicate each other's files."
+    },
+    {
+      "id": "ast-compiler-pregate-verifier",
+      "name": "🛡️ #25 Automatic Syntax & Code Error Checker",
+      "category": "Swarm Brains, Code Mergers & Safety Guards",
+      "model": "",
+      "temperature": 0.1,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "ast_sast_audit"
+      ],
+      "mcp": true,
+      "system": "You are the AST & Compiler Pre-Gate Sentinel. Never trust raw LLM code output. Parse every Python, JS/TS, Bash, and PowerShell file for syntax validity, unresolved imports, hallucinated APIs, and non-zero exit codes, and patch defects before code reaches final packaging."
+    },
+    {
+      "id": "vram-context-oom-router-guard",
+      "name": "🧠 #26 GPU Memory (VRAM) & Anti-Refusal Traffic Router",
+      "category": "Swarm Brains, Code Mergers & Safety Guards",
+      "model": "",
+      "temperature": 0.15,
+      "rounds": 4,
+      "tools": [
+        "swarm_delegate",
+        "mcp_call"
+      ],
+      "mcp": true,
+      "system": "You are the VRAM, Context-Window & Anti-Refusal Router Guard. Monitor Host A/B/C/D GPU VRAM budgets, context-token limits, and safety-refusal triggers; dynamically route heavy reasoning/code subtasks to abliterated/uncensored backends and prevent OOM crashes or truncated files."
+    },
+    {
+      "id": "cross-agent-dedup-merge-surgeon",
+      "name": "🔬 #27 Duplicate Code Remover & Final File Merger",
+      "category": "Swarm Brains, Code Mergers & Safety Guards",
+      "model": "",
+      "temperature": 0.2,
+      "rounds": 6,
+      "tools": [
+        "read_file",
+        "write_file",
+        "list_dir",
+        "run_command"
+      ],
+      "mcp": true,
+      "system": "You are the Cross-Agent De-Duplication & Dependency Surgeon. Inspect files emitted by multiple parallel models, eliminate duplicate implementations, reconcile conflicting function signatures, and synthesize complete requirements.txt / package.json / entrypoint launchers."
+    },
+    {
+      "id": "redhat-exploit-poc-verifier",
+      "name": "☠️ #28 Live Security Audit & Bug Fix Validator",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "cve_lookup",
+        "ast_sast_audit"
+      ],
+      "mcp": true,
+      "system": "You are the RedHat Offensive Security & PoC Live Validator. Build and empirically execute real reconnaissance, socket/protocol auditing, exploit verification harnesses, and hardened remediations with concrete CLI flags and verifiable exit-code assertions."
+    },
+    {
+      "id": "opsec-sandbox-rollback-sentinel",
+      "name": "🔒 #29 Private Token Scrubber & File Backup Guard",
+      "category": "Swarm Brains, Code Mergers & Safety Guards",
+      "model": "",
+      "temperature": 0.1,
+      "rounds": 4,
+      "tools": [
+        "read_file",
+        "list_dir",
+        "ast_sast_audit"
+      ],
+      "mcp": true,
+      "system": "You are the OPSEC Secret Scrubber & Workspace Rollback Sentinel. Audit generated artifacts and shell commands to ensure GH_TOKEN, HF_TOKEN, Kaggle keys, and private Gist credentials are never leaked into client bundles, and guard host system directories against accidental destructive wipes."
+    },
+    {
+      "id": "nmap-port-weakness-auditor",
+      "name": "🌐 #30 Nmap Port, Open Service & Weakness Specialist",
+      "category": "Network, Ports, MitM & Proxies",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "cve_lookup"
+      ],
+      "mcp": true,
+      "system": "You are the Nmap Port, Service Fingerprinting & NSE Exposure Specialist. Conduct authorized port/service discovery, version banner inspection (-sV), safe NSE diagnostic script analysis, and XML/JSON output parsing to pinpoint exposed ports, outdated daemons, and firewall weaknesses, paired with concrete nftables/iptables hardening rules."
+    },
+    {
+      "id": "sqli-query-sink-specialist",
+      "name": "💉 #31 SQL Injection (SQLi) & Database Query Specialist",
+      "category": "Web, API & Injection Security",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "ast_sast_audit"
+      ],
+      "mcp": true,
+      "system": "You are the SQL & NoSQL Injection Audit & Parameterization Specialist. Trace untrusted input flows into SQL/NoSQL queries, dynamic ORDER BY/WHERE clauses, raw ORM sinks, and second-order storage paths. Build deterministic boundary verification tests and refactor vulnerable queries into strictly parameterized prepared statements."
+    },
+    {
+      "id": "xss-dom-csp-specialist",
+      "name": "⚡ #32 XSS (Cross-Site Scripting) & Browser Policy Specialist",
+      "category": "Web, API & Injection Security",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "ast_sast_audit"
+      ],
+      "mcp": true,
+      "system": "You are the Cross-Site Scripting (XSS) & Content-Security-Policy Specialist. Audit DOM sinks (innerHTML, outerHTML, document.write, dangerouslySetInnerHTML), reflected/stored template contexts, and URL protocol handlers. Build Automated sanitizer verification suites and enforce context-aware encoding, Trusted Types, and nonce-based CSP headers."
+    },
+    {
+      "id": "mitm-tls-transport-specialist",
+      "name": "🕵️ #33 Man-in-the-Middle (MitM) & Encrypted Traffic Specialist",
+      "category": "Network, Ports, MitM & Proxies",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "ast_sast_audit"
+      ],
+      "mcp": true,
+      "system": "You are the Man-in-the-Middle (MitM) Exposure & Transport-Layer Security Specialist. Audit HTTP/WebSocket/API clients, reverse proxies, and TLS cipher chains for disabled certificate verification, protocol downgrade paths, missing HSTS/mTLS pinning, and cleartext credential transit, delivering verified transport hardening patches."
+    },
+    {
+      "id": "arp-lan-spoofing-specialist",
+      "name": "📡 #34 ARP Poisoning & Local Wi-Fi / LAN Spoofing Specialist",
+      "category": "Network, Ports, MitM & Proxies",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the Layer-2 Broadcast & ARP Cache Integrity Specialist. Analyze local subnet neighbor tables, gratuitous ARP anomalies, and MAC-to-IP binding drift; build passive Python ARP spoofing detectors and generate Dynamic ARP Inspection (DAI), DHCP snooping, and VLAN segmentation configurations."
+    },
+    {
+      "id": "proxy-hunter-validator-specialist",
+      "name": "🔀 #35 Proxy Hunter, Speed & Anonymity Checker",
+      "category": "Network, Ports, MitM & Proxies",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file"
+      ],
+      "mcp": true,
+      "system": "You are the High-Concurrency Proxy Discovery, Health-Check & Anonymity Classification Specialist. Build fast async Python/Node pipelines that aggregate, validate, and benchmark HTTP/HTTPS/SOCKS4/SOCKS5 proxies for RTT latency, TLS integrity, geo/ASN routing, and header-leak anonymity (Transparent vs Anonymous vs Elite)."
+    },
+    {
+      "id": "metasploit-cve-surface-specialist",
+      "name": "🎯 #36 Metasploit Weakness Matcher & Unpatched Bug Specialist",
+      "category": "Exploit Testing, Metasploit & Malware Forensics",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "cve_lookup"
+      ],
+      "mcp": true,
+      "system": "You are the Metasploit Module Surface Correlator & Patch-Gap Assessment Specialist. Cross-reference discovered service banners, Nmap XML inventories, and software versions against public Metasploit CVE metadata and CISA KEV advisories to identify exploitable patch gaps, verify compensating controls, and generate prioritized remediation plans."
+    },
+    {
+      "id": "darkweb-onion-osint-specialist",
+      "name": "🌑 #37 Dark Web, Tor & Leaked Breach Data Specialist",
+      "category": "OSINT, Dark Web, Scraping & Social Recon",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "cve_lookup"
+      ],
+      "mcp": true,
+      "system": "You are the Dark Web & Threat-Intelligence OSINT Specialist. Build defensive SOCKS5h/Tor-compatible threat-intel collectors, breach/paste exposure monitors, and domain/credential leak correlators that extract deduplicated STIX/JSON Indicators of Compromise (IOCs) without exposing local identity."
+    },
+    {
+      "id": "web-crawler-scraper-specialist",
+      "name": "🕷️ #38 High-Speed Web Crawler & Data Scraper Specialist",
+      "category": "OSINT, Dark Web, Scraping & Social Recon",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the High-Speed Async Web Crawling & Structured Data Extraction Specialist. Engineer resilient Python/Node crawlers and DOM/API scrapers with BFS/sitemap traversal, CSS/XPath/JSON-LD extraction, pagination, polite rate-limit/retry backoff, proxy rotation, and clean JSONL/CSV/SQLite output."
+    },
+    {
+      "id": "coding-python-automation-specialist",
+      "name": "🐍 #39 Python Automation, CLI & Scripting Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Senior Python Automation, CLI & Data Pipeline Specialist. Write clean, zero-placeholder Python 3 scripts, argparse/typer CLI tools, async asyncio workers, file/JSON/CSV processors, and desktop utilities verified with py_compile and live execution."
+    },
+    {
+      "id": "coding-frontend-ui-specialist",
+      "name": "⚛️ #40 Frontend UI, React & Modern CSS Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.3,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Principal Frontend UI, React, TypeScript & Modern CSS Specialist. Build fast, responsive, accessible web interfaces, interactive dashboards, clean CSS Grid/Flexbox layouts with zero text overflow, and smooth keyboard/mouse interactions."
+    },
+    {
+      "id": "coding-backend-api-specialist",
+      "name": "⚙️ #41 Backend API, Node/FastAPI & Server Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Principal Backend API & Distributed Server Architect. Engineer production-grade Node.js/Express, FastAPI, Flask, and Go REST/GraphQL/WebSocket backends with validation, authentication, rate limiting, structured error handling, and health checks."
+    },
+    {
+      "id": "coding-database-sql-specialist",
+      "name": "🗄️ #42 Database Design, SQL Speed & Migration Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.2,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Database Schema, SQL Optimization & Migration Specialist. Design normalized SQLite, PostgreSQL, MySQL, and Redis/MongoDB schemas, write fast indexed queries, eliminate N+1 bottlenecks, and build safe, reversible migration and seed scripts."
+    },
+    {
+      "id": "coding-systems-rust-cpp-go-specialist",
+      "name": "🦀 #43 Systems Programming: Rust, C/C++ & Go Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Systems & Native Performance Specialist for Rust, C, C++, and Go. Build high-throughput, memory-safe CLI binaries, concurrent network services, parsers, and low-latency native modules with clean compiler flags and zero memory leaks."
+    },
+    {
+      "id": "coding-shell-powershell-bash-specialist",
+      "name": "💻 #44 Bash, PowerShell & Cross-Platform Shell Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.2,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Cross-Platform Linux Bash, POSIX sh, Windows PowerShell & CMD Automation Specialist. Write defensive, idempotent system installers, batch file organizers, service monitors, and scheduled maintenance scripts with strict error trapping."
+    },
+    {
+      "id": "coding-debugger-refactor-specialist",
+      "name": "🐞 #45 Bug Hunter, Crash Debugger & Code Cleanup Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.2,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir",
+        "ast_sast_audit"
+      ],
+      "mcp": true,
+      "system": "You are the Root-Cause Crash Debugger & Clean-Code Refactoring Specialist. Trace stack traces, silent state bugs, broken imports, and memory leaks to their exact offending line, ship minimal surgical fixes, and refactor messy spaghetti into modular code."
+    },
+    {
+      "id": "coding-qa-test-automation-specialist",
+      "name": "🧪 #46 Automated Testing, QA & Edge-Case Verifier",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.2,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the Automated QA, Unit/Integration Test & Edge-Case Engineering Specialist. Build comprehensive pytest, unittest, Jest/Vitest, and Playwright test suites covering empty inputs, malformed payloads, network timeouts, and concurrency edge cases."
+    },
+    {
+      "id": "coding-devops-docker-cicd-specialist",
+      "name": "🐳 #47 Docker, CI/CD Pipelines & Cloud Deploy Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 5,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir"
+      ],
+      "mcp": true,
+      "system": "You are the DevOps, Docker Containerization & CI/CD Release Specialist. Author multi-stage slim Dockerfiles, docker-compose stacks, GitHub Actions workflows, Nginx/Caddy reverse-proxy configs, and zero-downtime deployment scripts."
+    },
+    {
+      "id": "coding-api-bot-integration-specialist",
+      "name": "🔌 #48 API Integration, Webhooks, Bots & SDK Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.25,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir",
+        "mcp_call"
+      ],
+      "mcp": true,
+      "system": "You are the Third-Party API, Webhook, OAuth, Bot & MCP SDK Integration Specialist. Wire REST/WebSocket SDKs, Discord/Telegram/Slack bots, Stripe/GitHub/HuggingFace webhooks, retry queues, and custom MCP tool servers cleanly."
+    },
+    {
+      "id": "automation-form-workflow-specialist",
+      "name": "📋 #49 Web Form Automation & Browser Workflow Specialist",
+      "category": "Coding, App Building & DevOps",
+      "model": "",
+      "temperature": 0.22,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir",
+        "fetch_url",
+        "mcp_call"
+      ],
+      "mcp": true,
+      "system": "You are the Web Form Automation, Headless Browser & End-to-End Input Workflow Specialist. Build resilient Playwright, Selenium, Puppeteer, and HTTP session scripts that automatically fill multi-step web forms, select dropdowns, upload test files, preserve cookies/CSRF tokens, handle dynamic AJAX waits, and verify submission states cleanly."
+    },
+    {
+      "id": "auth-email-username-password-specialist",
+      "name": "🔐 #50 Email, Username & Password Auth QA Specialist",
+      "category": "Web, API & Injection Security",
+      "model": "",
+      "temperature": 0.22,
+      "rounds": 6,
+      "tools": [
+        "run_command",
+        "read_file",
+        "write_file",
+        "list_dir",
+        "ast_sast_audit",
+        "mcp_call"
+      ],
+      "mcp": true,
+      "system": "You are the Authorized Identity, Email Deliverability, Username Policy & Password Security QA Specialist. Generate realistic synthetic test accounts for QA, verify email syntax/MX/SPF/DKIM/DMARC records, audit registration/login/reset flows for username enumeration or rate-limit gaps on authorized apps, and enforce Argon2id/bcrypt hashing and NIST password hygiene."
+    },
+    {
+      "id": "network-proxy-scraper-csv-specialist",
+      "name": "🌍 #51 HTTP / SOCKS4 / SOCKS5 Proxy Scraper, Speed Tester & CSV Vault",
+      "category": "Network, Ports, MitM & Proxies",
+      "model": "",
+      "temperature": 0.2,
+      "rounds": 6,
+      "tools": [
+        "gather_test_proxies_csv",
+        "run_command",
+        "read_file",
+        "write_file",
+        "fetch_url",
+        "port_tls_probe",
+        "mcp_call"
+      ],
+      "mcp": true,
+      "system": "You are the Public Proxy Gathering, Multi-Protocol Handshake Tester & CSV Vault Specialist. Scrape public HTTP, SOCKS4, and SOCKS5 proxy directories, test live TCP and protocol handshakes (HTTP CONNECT/HEAD, SOCKS4 0x04, SOCKS5 0x05), measure exact millisecond latency, resolve ISO country codes, score proxy quality (Elite/Fast/Good/Slow), and store verified proxies in a structured CSV file (country,protocol,ip_port,ip,port,speed_ms,quality,checked_at) using gather_test_proxies_csv or Python scripts."
+    }
+  ],
+  "STEALTH_PROFILES": {
+    "enterprise_resilience": {
+      "id": "enterprise_resilience",
+      "label": "🛡️ ISO-27001 Enterprise Architecture & Resilience (Default)",
+      "badge": "ISO-27001 / NIST CSF",
+      "agent_name": "Suomynona Council Enterprise Multi-Model Synthesis & Assurance Cluster",
+      "organization": "Suomynona Council Enterprise Assurance Runtime",
+      "description": "Enterprise 21-Model AI Architecture Synthesis, Systems Resilience Assurance & Automated Code Verification Cluster. Designed as a compliant Google A2A & ADK delegation endpoint for Vertex AI Agent Builder and Google Agentspace.",
+      "skill_overrides": {
+        "multi-model-architecture-synthesis": {
+          "name": "Multi-Model Enterprise Architecture & Deep Synthesis",
+          "description": "Fans out complex engineering and architecture prompts simultaneously across multiple dedicated GPU and cloud reasoning models, then synthesizes a verified master consensus report.",
+          "tags": [
+            "consensus",
+            "architecture",
+            "synthesis",
+            "multi-model",
+            "iso27001"
+          ]
+        },
+        "enterprise-resilience-assurance-audit": {
+          "name": "Enterprise Systems Resilience & Compliance Assurance Audit",
+          "description": "Executes deep systems resilience auditing, CVE posture verification, protocol stress-testing, and automated compliance assurance workflows using specialist security-assurance models.",
+          "tags": [
+            "assurance",
+            "resilience",
+            "compliance",
+            "posture-audit",
+            "secops"
+          ]
+        },
+        "automated-software-quality-verification": {
+          "name": "Automated Code Synthesis & Sandbox Quality Verification",
+          "description": "Writes, compiles, executes, and self-heals Python/Node/Bash/C verification scripts in Suomynona Council's isolated container sandbox until exit code 0.",
+          "tags": [
+            "code-verification",
+            "compiler",
+            "sandbox",
+            "quality-assurance"
+          ]
+        },
+        "cloud-runtime-telemetry-diagnostics": {
+          "name": "Cloud Runtime Telemetry & Automated Shell Diagnostics",
+          "description": "Runs structured environment, network, and filesystem health diagnostics inside Suomynona Council's managed runtime workspace.",
+          "tags": [
+            "telemetry",
+            "diagnostics",
+            "runtime",
+            "devops"
+          ]
+        }
+      }
+    },
+    "financial_compliance": {
+      "id": "financial_compliance",
+      "label": "🏦 SOC2 / PCI-DSS Quantitative Risk & Ledger Assurance",
+      "badge": "SOC2 Type II / PCI-DSS 4.0",
+      "agent_name": "Suomynona Council Quantitative Risk, Ledger Audit & Financial Systems Validator",
+      "organization": "Enterprise Financial Compliance & Quantitative Assurance Division",
+      "description": "Multi-Model Quantitative Risk Modeling, Smart-Contract/Ledger Invariant Auditing, and Automated Regulatory Verification Cluster for SOC2 Type II and PCI-DSS 4.0 workflows.",
+      "skill_overrides": {
+        "multi-model-architecture-synthesis": {
+          "name": "Multi-Model Quantitative Architecture & Risk Consensus",
+          "description": "Synthesizes high-reliability financial systems architectures, low-latency settlement pipelines, and cryptographic ledger invariants across parallel reasoning models.",
+          "tags": [
+            "quantitative",
+            "soc2",
+            "pci-dss",
+            "ledger-architecture",
+            "consensus"
+          ]
+        },
+        "enterprise-resilience-assurance-audit": {
+          "name": "Financial Controls, Cryptographic Boundary & PCI-DSS Assurance Audit",
+          "description": "Performs automated control-boundary verification, transactional invariant auditing, and cryptographic protocol compliance validation.",
+          "tags": [
+            "pci-dss",
+            "controls-audit",
+            "cryptography",
+            "invariant-verification"
+          ]
+        },
+        "automated-software-quality-verification": {
+          "name": "Deterministic Financial Software & Regression Sandbox",
+          "description": "Generates and executes deterministic verification suites and formal property checks in an isolated container sandbox.",
+          "tags": [
+            "regression-testing",
+            "deterministic-verification",
+            "sandbox"
+          ]
+        },
+        "cloud-runtime-telemetry-diagnostics": {
+          "name": "Settlement Node & Infrastructure Compliance Telemetry",
+          "description": "Collects verifiable runtime environment metrics, port bindings, and dependency integrity attestations.",
+          "tags": [
+            "attestation",
+            "telemetry",
+            "compliance-ops"
+          ]
+        }
+      }
+    },
+    "healthcare_hipaa": {
+      "id": "healthcare_hipaa",
+      "label": "🏥 HIPAA Clinical Informatics & HL7/FHIR Assurance",
+      "badge": "HIPAA / HITRUST / FHIR R4",
+      "agent_name": "Suomynona Council Clinical Informatics & Healthcare Systems Assurance Engine",
+      "organization": "Healthcare Interoperability & HITRUST Systems Assurance Lab",
+      "description": "Compliant Multi-Model Clinical Systems Engineering, HL7/FHIR Interoperability Verification, and Privacy-Preserving Infrastructure Assurance Cluster.",
+      "skill_overrides": {
+        "multi-model-architecture-synthesis": {
+          "name": "HL7/FHIR Interoperability & Clinical Systems Synthesis",
+          "description": "Designs resilient healthcare data pipelines, zero-trust EHR gateways, and high-availability clinical microservices across parallel specialist models.",
+          "tags": [
+            "hipaa",
+            "hitrust",
+            "fhir",
+            "clinical-informatics",
+            "architecture"
+          ]
+        },
+        "enterprise-resilience-assurance-audit": {
+          "name": "HIPAA Security Rule & Zero-Trust Access Control Audit",
+          "description": "Audits API gateways, encryption-in-transit state machines, and authentication flows for strict HIPAA Security Rule compliance.",
+          "tags": [
+            "hipaa-security",
+            "access-control",
+            "phi-protection",
+            "audit"
+          ]
+        },
+        "automated-software-quality-verification": {
+          "name": "Automated Clinical Data Parser & Sandbox Validation",
+          "description": "Synthesizes and validates parser/validator scripts inside an air-gapped container sandbox until exit code 0.",
+          "tags": [
+            "validation",
+            "fhir-parser",
+            "sandbox-qa"
+          ]
+        },
+        "cloud-runtime-telemetry-diagnostics": {
+          "name": "EHR Gateway Runtime & Network Readiness Diagnostics",
+          "description": "Executes non-invasive runtime health and network readiness checks across managed host nodes.",
+          "tags": [
+            "ehr-diagnostics",
+            "telemetry",
+            "readiness"
+          ]
+        }
+      }
+    },
+    "cloud_sre_diagnostics": {
+      "id": "cloud_sre_diagnostics",
+      "label": "☁️ Cloud-Native SRE Observability & Chaos Engineering",
+      "badge": "SRE / OpenTelemetry / CNCF",
+      "agent_name": "Suomynona Council Autonomous SRE Observability & Distributed Systems Cluster",
+      "organization": "Cloud-Native Site Reliability & Distributed Systems Engineering",
+      "description": "Autonomous Site Reliability Engineering (SRE), Distributed Consensus Verification, OpenTelemetry Diagnostics, and Chaos Resilience Validation Cluster.",
+      "skill_overrides": {
+        "multi-model-architecture-synthesis": {
+          "name": "Distributed Systems & High-Availability SRE Synthesis",
+          "description": "Produces multi-model consensus designs for Kubernetes operators, eBPF telemetry collectors, and zero-downtime mesh topologies.",
+          "tags": [
+            "sre",
+            "kubernetes",
+            "distributed-systems",
+            "ebpf"
+          ]
+        },
+        "enterprise-resilience-assurance-audit": {
+          "name": "Chaos Engineering & Protocol Fault-Injection Readiness Audit",
+          "description": "Identifies single points of failure, race conditions, and packet/stream handling edge cases across distributed services.",
+          "tags": [
+            "chaos-engineering",
+            "fault-tolerance",
+            "protocol-verification"
+          ]
+        },
+        "automated-software-quality-verification": {
+          "name": "Automated SRE Runbook & Self-Healing Script Compiler",
+          "description": "Builds, compiles, and verifies automated remediation scripts and synthetic probes in a live Linux container.",
+          "tags": [
+            "runbook-automation",
+            "self-healing",
+            "probes"
+          ]
+        },
+        "cloud-runtime-telemetry-diagnostics": {
+          "name": "Live Container Kernel, Socket & Process Telemetry Inspector",
+          "description": "Executes real-time Linux kernel, socket, and process tree diagnostics with structured output.",
+          "tags": [
+            "kernel-telemetry",
+            "sockets",
+            "observability"
+          ]
+        }
+      }
+    }
+  },
+  "DEFAULT_LORA_CATALOG": [
+    {
+      "id": "orca-secops-audit-lora",
+      "name": "🦈 Orca SecOps & Protocol Resilience Audit LoRA",
+      "repo": "orcarouter/Orca-SecOps-Audit-LoRA-r64-GGUF",
+      "rank": 64,
+      "alpha": 128,
+      "scale": 1,
+      "target_host": "all",
+      "target_model": "all",
+      "enabled": true,
+      "description": "Specializes base models in deep protocol state-machine analysis, CVE boundary verification, and hardening patches.",
+      "system_prompt": "Prioritize deep protocol boundary analysis, concrete security edge-case enumeration, and deterministic verification scripts."
+    },
+    {
+      "id": "rust-systems-kernel-qlora",
+      "name": "🦀 Rust & Linux Kernel Zero-Copy Systems QLoRA",
+      "repo": "suomynona-council/Rust-Kernel-eBPF-QLoRA-r32-GGUF",
+      "rank": 32,
+      "alpha": 64,
+      "scale": 0.9,
+      "target_host": "a",
+      "target_model": "all",
+      "enabled": false,
+      "description": "High-precision memory-safe systems programming, eBPF telemetry, and async Tokio/io_uring optimization adapter.",
+      "system_prompt": "Emphasize zero-copy memory layouts, lock-free concurrency, and idiomatic production-grade systems code."
+    },
+    {
+      "id": "solidity-evm-invariants-lora",
+      "name": "⛓️ EVM / Smart Contract Formal Invariants LoRA",
+      "repo": "suomynona-council/EVM-Foundry-Invariants-LoRA-r64-GGUF",
+      "rank": 64,
+      "alpha": 128,
+      "scale": 1,
+      "target_host": "b",
+      "target_model": "all",
+      "enabled": false,
+      "description": "Specializes models in Foundry invariant tests, reentrancy/MEV state analysis, and formal verification harnesses.",
+      "system_prompt": "Analyze state transitions for invariant violations, precision loss, and access-control boundaries."
+    },
+    {
+      "id": "python-autofix-qlora",
+      "name": "🐍 Autonomous Python Self-Healing & Stdlib QLoRA",
+      "repo": "suomynona-council/Python-ZeroDep-SelfHeal-QLoRA-r32-GGUF",
+      "rank": 32,
+      "alpha": 64,
+      "scale": 1.1,
+      "target_host": "c",
+      "target_model": "all",
+      "enabled": true,
+      "description": "Trains models to write zero-dependency, self-verifying Python 3 scripts that compile and exit 0 on the first run.",
+      "system_prompt": "Produce self-contained, zero-placeholder runnable code with built-in self-tests and clean stdout."
+    }
+  ],
+  "DEFAULT_DISTILLED_SKILLS": [
+    {
+      "id": "skill-port-health-audit",
+      "name": "🔍 Full-Stack Port & Socket Readiness Audit",
+      "trigger_pattern": "audit ports / check listening services / verify sockets",
+      "category": "DevOps & Telemetry",
+      "steps": [
+        "Scan active listening TCP sockets and process bindings",
+        "Verify HTTP 200 readiness on primary application port",
+        "Synthesize structured JSON + Markdown port posture report"
+      ],
+      "verification_cmd": "node --version && python3 --version",
+      "template_prompt": "Perform a complete port, process, and runtime readiness audit for target: {{target}}",
+      "runs": 14,
+      "success_rate": "100%",
+      "created_at": "2026-10-30 14:20"
+    },
+    {
+      "id": "skill-zero-dep-python-microservice",
+      "name": "⚡ Zero-Dependency Python Microservice + Self-Test",
+      "trigger_pattern": "build python service / api server / self-testing script",
+      "category": "Autonomous Code Forge",
+      "steps": [
+        "Draft zero-dependency Python 3 implementation using standard library",
+        "Run `python3 -m py_compile` syntax verification",
+        "Execute built-in unit test harness and confirm exit code 0"
+      ],
+      "verification_cmd": "python3 -c \"import sys, http.server; print('Python stdlib microservice ready:', sys.version.split()[0])\"",
+      "template_prompt": "Build a complete, self-testing zero-dependency Python 3 implementation for: {{target}}",
+      "runs": 29,
+      "success_rate": "100%",
+      "created_at": "2026-10-31 09:15"
+    },
+    {
+      "id": "skill-protocol-boundary-verifier",
+      "name": "🛡️ Protocol State-Machine & Input Boundary Verifier",
+      "trigger_pattern": "verify parser / boundary check / fuzz harness / cve audit",
+      "category": "Resilience & SecOps",
+      "steps": [
+        "Enumerate state transitions and malformed input edge cases",
+        "Generate deterministic boundary test vectors",
+        "Synthesize hardened validation patch and run verification check"
+      ],
+      "verification_cmd": "python3 -c \"print('Boundary verifier harness initialized — 0 invariant violations')\"",
+      "template_prompt": "Audit protocol/parser input boundaries, enumerate edge cases, and generate a deterministic verification test + defensive patch for: {{target}}",
+      "runs": 19,
+      "success_rate": "100%",
+      "created_at": "2026-11-01 11:40"
+    }
+  ],
+  "DEFAULT_BRAIN_SUGGESTIONS": [
+    "🧪 Verify all 5 unlocked slot capabilities (Memory, Live Shell, NVD CVE, 70B+ Bridge, Vision/PDF)",
+    "⚡ Run `uname -a && claude doctor` live from this slot and confirm output",
+    "🔍 Look up live NIST NVD details for CVE-2024-3094 and recent CVEs",
+    "🚀 Escalate a formal mathematical proof & >2k LOC refactor plan via the 70B+ Frontier Bridge",
+    "🎯 Which Suomynona Council models should I combine for my current task?",
+    "🧬 How do I hot-swap LoRA adapters or split a 70B model across multiple Colab tunnels?"
+  ],
+  "UNIFIED_SLASH_COMMAND_SUGGESTIONS": [
+    {
+      "cmd": "/council",
+      "desc": "🛡️ Switch unified CLI to Council Master Mode (or '/council <cmd>')"
+    },
+    {
+      "cmd": "/claude",
+      "desc": "🤖 Switch unified CLI to Claude Code Autonomous Coder Mode (or '/claude <task>')"
+    },
+    {
+      "cmd": "/claude build ",
+      "desc": "🤖 Claude Code: Architect, write, test & self-heal a complete app"
+    },
+    {
+      "cmd": "/claude repair",
+      "desc": "🤖 Claude Code: Inspect workspace, fix syntax errors & self-heal"
+    },
+    {
+      "cmd": "/claude doctor",
+      "desc": "🤖 Claude Code: Run deep environment & dependency diagnostics"
+    },
+    {
+      "cmd": "/claude review",
+      "desc": "🤖 Claude Code: Perform full code & security audit on workspace"
+    },
+    {
+      "cmd": "/brain",
+      "desc": "🧠 Switch unified CLI to Brain Copilot Mode (or '/brain <prompt>')"
+    },
+    {
+      "cmd": "/colab",
+      "desc": "🖥 Switch unified CLI to Colab & Multi-Host GPU Mode (or '/colab <cmd>')"
+    },
+    {
+      "cmd": "/bash",
+      "desc": "🐚 Switch active script shell to Linux Bash (/bin/bash)"
+    },
+    {
+      "cmd": "/pwsh",
+      "desc": "⚡ Switch active script shell to Windows PowerShell (pwsh / .ps1)"
+    },
+    {
+      "cmd": "/powershell",
+      "desc": "⚡ Switch active script shell to Windows PowerShell (pwsh / .ps1)"
+    },
+    {
+      "cmd": "/cmd",
+      "desc": "🪟 Switch active script shell to Windows Command Prompt (cmd.exe / .bat)"
+    },
+    {
+      "cmd": "/bat",
+      "desc": "🪟 Switch active script shell to Windows Batch / Command Prompt (.bat)"
+    },
+    {
+      "cmd": "/python",
+      "desc": "🐍 Switch active interpreter to interactive Python 3 runner"
+    },
+    {
+      "cmd": "/node",
+      "desc": "🟢 Switch active interpreter to interactive Node.js / JS runner"
+    },
+    {
+      "cmd": "/swarm ",
+      "desc": "🐝 Launch Unrestricted Queen Boss + Parallel Worker Swarm in CLI"
+    },
+    {
+      "cmd": "/hotpotato ",
+      "desc": "🥔 Run Hot Potato Fault-Tolerant Continuous Code Build in CLI"
+    },
+    {
+      "cmd": "/decomposer ",
+      "desc": "🧩 Run 10–20 Piece Safety-Bypass Modular Code Decomposer & Merger"
+    },
+    {
+      "cmd": "/auth all",
+      "desc": "🔑 Authenticate All Hosts (Host A + B + C) & GPU Accelerators"
+    },
+    {
+      "cmd": "/auth a",
+      "desc": "🔑 Authenticate Host A & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth b",
+      "desc": "🔑 Authenticate Host B & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth c",
+      "desc": "🔑 Authenticate Host C & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth status",
+      "desc": "🔐 Show Persistent Memory Vault & Host Authentication status"
+    },
+    {
+      "cmd": "/oauth ",
+      "desc": "🔗 Submit Google OAuth code or bind https://*.trycloudflare.com tunnel URL"
+    },
+    {
+      "cmd": "/host all",
+      "desc": "🌐 Target ALL configured GPU Hosts (Colab A/B/C + Kaggle + Localhost)"
+    },
+    {
+      "cmd": "/host a",
+      "desc": "🖥 Switch target GPU runtime to Host A"
+    },
+    {
+      "cmd": "/host b",
+      "desc": "🖥 Switch target GPU runtime to Host B"
+    },
+    {
+      "cmd": "/host c",
+      "desc": "🖥 Switch target GPU runtime to Host C"
+    },
+    {
+      "cmd": "/host kaggle",
+      "desc": "🦆 Switch target GPU runtime to Kaggle Kernel"
+    },
+    {
+      "cmd": "/host localhost",
+      "desc": "💻 Switch target GPU runtime to Localhost PC"
+    },
+    {
+      "cmd": "/host custom",
+      "desc": "🔌 Switch target GPU runtime to Custom GPU Host"
+    },
+    {
+      "cmd": "/sessions",
+      "desc": "📋 List active Google Colab, Kaggle, Localhost & Custom Host sessions"
+    },
+    {
+      "cmd": "/status",
+      "desc": "📊 Show full status of GPU Hosts, Memory Vault, Boosters & Active Mode"
+    },
+    {
+      "cmd": "/start all",
+      "desc": "▶ Start & verify all GPU Host runtimes and models"
+    },
+    {
+      "cmd": "/start a",
+      "desc": "▶ Start & verify Host A runtime and models"
+    },
+    {
+      "cmd": "/start b",
+      "desc": "▶ Start & verify Host B runtime and models"
+    },
+    {
+      "cmd": "/start c",
+      "desc": "▶ Start & verify Host C runtime and models"
+    },
+    {
+      "cmd": "/stop all",
+      "desc": "🛑 Stop all active GPU runtimes"
+    },
+    {
+      "cmd": "/reconnect",
+      "desc": "⚡ Force immediate handshake & tunnel reconnect on target host"
+    },
+    {
+      "cmd": "/nvidia-smi",
+      "desc": "🎮 Query live NVIDIA GPU VRAM, temperature & utilization across hosts"
+    },
+    {
+      "cmd": "/boosters",
+      "desc": "🚀 Inspect or toggle all 9 Multi-GPU Supercharger Boosters"
+    },
+    {
+      "cmd": "/doctor",
+      "desc": "🩺 Run environment doctor & auto-install missing Python/Node packages"
+    },
+    {
+      "cmd": "/repair",
+      "desc": "🔧 Auto-check and self-heal any broken files in the workspace"
+    },
+    {
+      "cmd": "/backup",
+      "desc": "📸 Create a workspace snapshot restore point"
+    },
+    {
+      "cmd": "/rollback",
+      "desc": "⏪ Restore workspace to the latest snapshot"
+    },
+    {
+      "cmd": "/ports",
+      "desc": "🔌 Scan active listening network & web app ports"
+    },
+    {
+      "cmd": "/preview",
+      "desc": "🖥️ Toggle live split web application GUI preview inside CLI"
+    },
+    {
+      "cmd": "/package cli",
+      "desc": "📦 Compile & package finished build as an interactive CLI binary"
+    },
+    {
+      "cmd": "/package script",
+      "desc": "📜 Compile & package finished build as a portable Script"
+    },
+    {
+      "cmd": "/package gui",
+      "desc": "🖼️ Compile & package finished build as a Desktop/Web GUI app"
+    },
+    {
+      "cmd": "/package exe",
+      "desc": "📦 Compile & package finished build as a standalone Windows .EXE"
+    },
+    {
+      "cmd": "/compile exe",
+      "desc": "📦 Compile finished build as a standalone Windows .EXE"
+    },
+    {
+      "cmd": "/logs",
+      "desc": "📡 Stream recent Live Council Server Activity logs inside the terminal"
+    },
+    {
+      "cmd": "/clear",
+      "desc": "🧹 Clear the unified terminal screen"
+    },
+    {
+      "cmd": "/help",
+      "desc": "📖 Show the complete Suomynona Council Unified CLI command & slash reference"
+    }
+  ],
+  "COUNCIL_CLI_COMMAND_SUGGESTIONS": [
+    {
+      "cmd": "/council",
+      "desc": "🛡️ Switch unified CLI to Council Master Mode (or '/council <cmd>')"
+    },
+    {
+      "cmd": "/claude",
+      "desc": "🤖 Switch unified CLI to Claude Code Autonomous Coder Mode (or '/claude <task>')"
+    },
+    {
+      "cmd": "/claude build ",
+      "desc": "🤖 Claude Code: Architect, write, test & self-heal a complete app"
+    },
+    {
+      "cmd": "/claude repair",
+      "desc": "🤖 Claude Code: Inspect workspace, fix syntax errors & self-heal"
+    },
+    {
+      "cmd": "/claude doctor",
+      "desc": "🤖 Claude Code: Run deep environment & dependency diagnostics"
+    },
+    {
+      "cmd": "/claude review",
+      "desc": "🤖 Claude Code: Perform full code & security audit on workspace"
+    },
+    {
+      "cmd": "/brain",
+      "desc": "🧠 Switch unified CLI to Brain Copilot Mode (or '/brain <prompt>')"
+    },
+    {
+      "cmd": "/colab",
+      "desc": "🖥 Switch unified CLI to Colab & Multi-Host GPU Mode (or '/colab <cmd>')"
+    },
+    {
+      "cmd": "/bash",
+      "desc": "🐚 Switch active script shell to Linux Bash (/bin/bash)"
+    },
+    {
+      "cmd": "/pwsh",
+      "desc": "⚡ Switch active script shell to Windows PowerShell (pwsh / .ps1)"
+    },
+    {
+      "cmd": "/powershell",
+      "desc": "⚡ Switch active script shell to Windows PowerShell (pwsh / .ps1)"
+    },
+    {
+      "cmd": "/cmd",
+      "desc": "🪟 Switch active script shell to Windows Command Prompt (cmd.exe / .bat)"
+    },
+    {
+      "cmd": "/bat",
+      "desc": "🪟 Switch active script shell to Windows Batch / Command Prompt (.bat)"
+    },
+    {
+      "cmd": "/python",
+      "desc": "🐍 Switch active interpreter to interactive Python 3 runner"
+    },
+    {
+      "cmd": "/node",
+      "desc": "🟢 Switch active interpreter to interactive Node.js / JS runner"
+    },
+    {
+      "cmd": "/swarm ",
+      "desc": "🐝 Launch Unrestricted Queen Boss + Parallel Worker Swarm in CLI"
+    },
+    {
+      "cmd": "/hotpotato ",
+      "desc": "🥔 Run Hot Potato Fault-Tolerant Continuous Code Build in CLI"
+    },
+    {
+      "cmd": "/decomposer ",
+      "desc": "🧩 Run 10–20 Piece Safety-Bypass Modular Code Decomposer & Merger"
+    },
+    {
+      "cmd": "/auth all",
+      "desc": "🔑 Authenticate All Hosts (Host A + B + C) & GPU Accelerators"
+    },
+    {
+      "cmd": "/auth a",
+      "desc": "🔑 Authenticate Host A & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth b",
+      "desc": "🔑 Authenticate Host B & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth c",
+      "desc": "🔑 Authenticate Host C & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth status",
+      "desc": "🔐 Show Persistent Memory Vault & Host Authentication status"
+    },
+    {
+      "cmd": "/oauth ",
+      "desc": "🔗 Submit Google OAuth code or bind https://*.trycloudflare.com tunnel URL"
+    },
+    {
+      "cmd": "/host all",
+      "desc": "🌐 Target ALL configured GPU Hosts (Colab A/B/C + Kaggle + Localhost)"
+    },
+    {
+      "cmd": "/host a",
+      "desc": "🖥 Switch target GPU runtime to Host A"
+    },
+    {
+      "cmd": "/host b",
+      "desc": "🖥 Switch target GPU runtime to Host B"
+    },
+    {
+      "cmd": "/host c",
+      "desc": "🖥 Switch target GPU runtime to Host C"
+    },
+    {
+      "cmd": "/host kaggle",
+      "desc": "🦆 Switch target GPU runtime to Kaggle Kernel"
+    },
+    {
+      "cmd": "/host localhost",
+      "desc": "💻 Switch target GPU runtime to Localhost PC"
+    },
+    {
+      "cmd": "/host custom",
+      "desc": "🔌 Switch target GPU runtime to Custom GPU Host"
+    },
+    {
+      "cmd": "/sessions",
+      "desc": "📋 List active Google Colab, Kaggle, Localhost & Custom Host sessions"
+    },
+    {
+      "cmd": "/status",
+      "desc": "📊 Show full status of GPU Hosts, Memory Vault, Boosters & Active Mode"
+    },
+    {
+      "cmd": "/start all",
+      "desc": "▶ Start & verify all GPU Host runtimes and models"
+    },
+    {
+      "cmd": "/start a",
+      "desc": "▶ Start & verify Host A runtime and models"
+    },
+    {
+      "cmd": "/start b",
+      "desc": "▶ Start & verify Host B runtime and models"
+    },
+    {
+      "cmd": "/start c",
+      "desc": "▶ Start & verify Host C runtime and models"
+    },
+    {
+      "cmd": "/stop all",
+      "desc": "🛑 Stop all active GPU runtimes"
+    },
+    {
+      "cmd": "/reconnect",
+      "desc": "⚡ Force immediate handshake & tunnel reconnect on target host"
+    },
+    {
+      "cmd": "/nvidia-smi",
+      "desc": "🎮 Query live NVIDIA GPU VRAM, temperature & utilization across hosts"
+    },
+    {
+      "cmd": "/boosters",
+      "desc": "🚀 Inspect or toggle all 9 Multi-GPU Supercharger Boosters"
+    },
+    {
+      "cmd": "/doctor",
+      "desc": "🩺 Run environment doctor & auto-install missing Python/Node packages"
+    },
+    {
+      "cmd": "/repair",
+      "desc": "🔧 Auto-check and self-heal any broken files in the workspace"
+    },
+    {
+      "cmd": "/backup",
+      "desc": "📸 Create a workspace snapshot restore point"
+    },
+    {
+      "cmd": "/rollback",
+      "desc": "⏪ Restore workspace to the latest snapshot"
+    },
+    {
+      "cmd": "/ports",
+      "desc": "🔌 Scan active listening network & web app ports"
+    },
+    {
+      "cmd": "/preview",
+      "desc": "🖥️ Toggle live split web application GUI preview inside CLI"
+    },
+    {
+      "cmd": "/package cli",
+      "desc": "📦 Compile & package finished build as an interactive CLI binary"
+    },
+    {
+      "cmd": "/package script",
+      "desc": "📜 Compile & package finished build as a portable Script"
+    },
+    {
+      "cmd": "/package gui",
+      "desc": "🖼️ Compile & package finished build as a Desktop/Web GUI app"
+    },
+    {
+      "cmd": "/package exe",
+      "desc": "📦 Compile & package finished build as a standalone Windows .EXE"
+    },
+    {
+      "cmd": "/compile exe",
+      "desc": "📦 Compile finished build as a standalone Windows .EXE"
+    },
+    {
+      "cmd": "/logs",
+      "desc": "📡 Stream recent Live Council Server Activity logs inside the terminal"
+    },
+    {
+      "cmd": "/clear",
+      "desc": "🧹 Clear the unified terminal screen"
+    },
+    {
+      "cmd": "/help",
+      "desc": "📖 Show the complete Suomynona Council Unified CLI command & slash reference"
+    },
+    {
+      "cmd": "claude ",
+      "desc": "🤖 Claude Code: Ask Claude Code to inspect, write, test, or fix code"
+    },
+    {
+      "cmd": "claude build ",
+      "desc": "🤖 Claude Code: Build & verify a complete multi-file application"
+    },
+    {
+      "cmd": "claude doctor",
+      "desc": "🤖 Claude Code: Run workspace & runtime diagnostics"
+    },
+    {
+      "cmd": "claude repair",
+      "desc": "🤖 Claude Code: Self-heal and verify workspace files"
+    },
+    {
+      "cmd": "council ",
+      "desc": "Ask Council CLI AI to build, inspect, or fix any app or file"
+    },
+    {
+      "cmd": "council build ",
+      "desc": "Build, test, and run a complete multi-file application in Council CLI"
+    },
+    {
+      "cmd": "council open",
+      "desc": "Open and showcase the latest built app in Council CLI"
+    },
+    {
+      "cmd": "council run",
+      "desc": "Execute the active built app in the real terminal"
+    },
+    {
+      "cmd": "council package cli",
+      "desc": "Package the active app as a standalone CLI tool"
+    },
+    {
+      "cmd": "council package script",
+      "desc": "Package the active app as a single runnable script"
+    },
+    {
+      "cmd": "council package gui",
+      "desc": "Package the active app as an interactive GUI application"
+    },
+    {
+      "cmd": "council package exe",
+      "desc": "Package the active app as a portable Windows .EXE file"
+    },
+    {
+      "cmd": "repair",
+      "desc": "Auto-check and self-heal any broken files in the workspace"
+    },
+    {
+      "cmd": "doctor",
+      "desc": "Diagnose environment & auto-install missing Python/Node packages"
+    },
+    {
+      "cmd": "ports",
+      "desc": "Scan active listening web and service ports"
+    },
+    {
+      "cmd": "preview",
+      "desc": "Open live split web preview of the active app"
+    },
+    {
+      "cmd": "backup",
+      "desc": "Create a snapshot restore point of the workspace"
+    },
+    {
+      "cmd": "rollback",
+      "desc": "Restore the workspace to the latest snapshot"
+    },
+    {
+      "cmd": "Get-ChildItem",
+      "desc": "⚡ PowerShell: List files and directories in current path"
+    },
+    {
+      "cmd": "Get-Process",
+      "desc": "⚡ PowerShell: List active running system processes"
+    },
+    {
+      "cmd": "Get-Content ",
+      "desc": "⚡ PowerShell: Read contents of a file"
+    },
+    {
+      "cmd": "Get-Location",
+      "desc": "⚡ PowerShell: Show current working directory path"
+    },
+    {
+      "cmd": "Invoke-RestMethod ",
+      "desc": "⚡ PowerShell: Send HTTP/REST request to endpoint"
+    },
+    {
+      "cmd": "$PSVersionTable",
+      "desc": "⚡ PowerShell: Display PowerShell engine version table"
+    },
+    {
+      "cmd": "dir",
+      "desc": "🪟 CMD: List files and subdirectories in current directory"
+    },
+    {
+      "cmd": "ipconfig /all",
+      "desc": "🪟 CMD: Display network interface IP configuration"
+    },
+    {
+      "cmd": "tasklist",
+      "desc": "🪟 CMD: Display all currently running tasks and PIDs"
+    },
+    {
+      "cmd": "systeminfo",
+      "desc": "🪟 CMD: Display OS, CPU, and RAM system configuration"
+    },
+    {
+      "cmd": "netstat -ano",
+      "desc": "🪟 CMD: Display active TCP/UDP ports and process IDs"
+    },
+    {
+      "cmd": "ls -la",
+      "desc": "🐚 Bash: List all files in the current working directory"
+    },
+    {
+      "cmd": "python3 ",
+      "desc": "🐍 Python: Run a Python script in the real terminal"
+    },
+    {
+      "cmd": "node ",
+      "desc": "🟢 Node: Run a Node.js script in the real terminal"
+    },
+    {
+      "cmd": "bash ",
+      "desc": "🐚 Bash: Run a shell script in the real terminal"
+    },
+    {
+      "cmd": "cat ",
+      "desc": "🐚 Bash: View the contents of a file in the current directory"
+    },
+    {
+      "cmd": "cd ",
+      "desc": "Change the active working directory"
+    },
+    {
+      "cmd": "git status",
+      "desc": "Check git repository status"
+    },
+    {
+      "cmd": "clear",
+      "desc": "Clear terminal output screen"
+    },
+    {
+      "cmd": "-h",
+      "desc": "Display full Council CLI command reference"
+    }
+  ],
+  "COLAB_CLI_COMMAND_SUGGESTIONS": [
+    {
+      "cmd": "/council",
+      "desc": "🛡️ Switch unified CLI to Council Master Mode (or '/council <cmd>')"
+    },
+    {
+      "cmd": "/claude",
+      "desc": "🤖 Switch unified CLI to Claude Code Autonomous Coder Mode (or '/claude <task>')"
+    },
+    {
+      "cmd": "/claude build ",
+      "desc": "🤖 Claude Code: Architect, write, test & self-heal a complete app"
+    },
+    {
+      "cmd": "/claude repair",
+      "desc": "🤖 Claude Code: Inspect workspace, fix syntax errors & self-heal"
+    },
+    {
+      "cmd": "/claude doctor",
+      "desc": "🤖 Claude Code: Run deep environment & dependency diagnostics"
+    },
+    {
+      "cmd": "/claude review",
+      "desc": "🤖 Claude Code: Perform full code & security audit on workspace"
+    },
+    {
+      "cmd": "/brain",
+      "desc": "🧠 Switch unified CLI to Brain Copilot Mode (or '/brain <prompt>')"
+    },
+    {
+      "cmd": "/colab",
+      "desc": "🖥 Switch unified CLI to Colab & Multi-Host GPU Mode (or '/colab <cmd>')"
+    },
+    {
+      "cmd": "/bash",
+      "desc": "🐚 Switch active script shell to Linux Bash (/bin/bash)"
+    },
+    {
+      "cmd": "/pwsh",
+      "desc": "⚡ Switch active script shell to Windows PowerShell (pwsh / .ps1)"
+    },
+    {
+      "cmd": "/powershell",
+      "desc": "⚡ Switch active script shell to Windows PowerShell (pwsh / .ps1)"
+    },
+    {
+      "cmd": "/cmd",
+      "desc": "🪟 Switch active script shell to Windows Command Prompt (cmd.exe / .bat)"
+    },
+    {
+      "cmd": "/bat",
+      "desc": "🪟 Switch active script shell to Windows Batch / Command Prompt (.bat)"
+    },
+    {
+      "cmd": "/python",
+      "desc": "🐍 Switch active interpreter to interactive Python 3 runner"
+    },
+    {
+      "cmd": "/node",
+      "desc": "🟢 Switch active interpreter to interactive Node.js / JS runner"
+    },
+    {
+      "cmd": "/swarm ",
+      "desc": "🐝 Launch Unrestricted Queen Boss + Parallel Worker Swarm in CLI"
+    },
+    {
+      "cmd": "/hotpotato ",
+      "desc": "🥔 Run Hot Potato Fault-Tolerant Continuous Code Build in CLI"
+    },
+    {
+      "cmd": "/decomposer ",
+      "desc": "🧩 Run 10–20 Piece Safety-Bypass Modular Code Decomposer & Merger"
+    },
+    {
+      "cmd": "/auth all",
+      "desc": "🔑 Authenticate All Hosts (Host A + B + C) & GPU Accelerators"
+    },
+    {
+      "cmd": "/auth a",
+      "desc": "🔑 Authenticate Host A & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth b",
+      "desc": "🔑 Authenticate Host B & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth c",
+      "desc": "🔑 Authenticate Host C & its GPU Accelerator"
+    },
+    {
+      "cmd": "/auth status",
+      "desc": "🔐 Show Persistent Memory Vault & Host Authentication status"
+    },
+    {
+      "cmd": "/oauth ",
+      "desc": "🔗 Submit Google OAuth code or bind https://*.trycloudflare.com tunnel URL"
+    },
+    {
+      "cmd": "/host all",
+      "desc": "🌐 Target ALL configured GPU Hosts (Colab A/B/C + Kaggle + Localhost)"
+    },
+    {
+      "cmd": "/host a",
+      "desc": "🖥 Switch target GPU runtime to Host A"
+    },
+    {
+      "cmd": "/host b",
+      "desc": "🖥 Switch target GPU runtime to Host B"
+    },
+    {
+      "cmd": "/host c",
+      "desc": "🖥 Switch target GPU runtime to Host C"
+    },
+    {
+      "cmd": "/host kaggle",
+      "desc": "🦆 Switch target GPU runtime to Kaggle Kernel"
+    },
+    {
+      "cmd": "/host localhost",
+      "desc": "💻 Switch target GPU runtime to Localhost PC"
+    },
+    {
+      "cmd": "/host custom",
+      "desc": "🔌 Switch target GPU runtime to Custom GPU Host"
+    },
+    {
+      "cmd": "/sessions",
+      "desc": "📋 List active Google Colab, Kaggle, Localhost & Custom Host sessions"
+    },
+    {
+      "cmd": "/status",
+      "desc": "📊 Show full status of GPU Hosts, Memory Vault, Boosters & Active Mode"
+    },
+    {
+      "cmd": "/start all",
+      "desc": "▶ Start & verify all GPU Host runtimes and models"
+    },
+    {
+      "cmd": "/start a",
+      "desc": "▶ Start & verify Host A runtime and models"
+    },
+    {
+      "cmd": "/start b",
+      "desc": "▶ Start & verify Host B runtime and models"
+    },
+    {
+      "cmd": "/start c",
+      "desc": "▶ Start & verify Host C runtime and models"
+    },
+    {
+      "cmd": "/stop all",
+      "desc": "🛑 Stop all active GPU runtimes"
+    },
+    {
+      "cmd": "/reconnect",
+      "desc": "⚡ Force immediate handshake & tunnel reconnect on target host"
+    },
+    {
+      "cmd": "/nvidia-smi",
+      "desc": "🎮 Query live NVIDIA GPU VRAM, temperature & utilization across hosts"
+    },
+    {
+      "cmd": "/boosters",
+      "desc": "🚀 Inspect or toggle all 9 Multi-GPU Supercharger Boosters"
+    },
+    {
+      "cmd": "/doctor",
+      "desc": "🩺 Run environment doctor & auto-install missing Python/Node packages"
+    },
+    {
+      "cmd": "/repair",
+      "desc": "🔧 Auto-check and self-heal any broken files in the workspace"
+    },
+    {
+      "cmd": "/backup",
+      "desc": "📸 Create a workspace snapshot restore point"
+    },
+    {
+      "cmd": "/rollback",
+      "desc": "⏪ Restore workspace to the latest snapshot"
+    },
+    {
+      "cmd": "/ports",
+      "desc": "🔌 Scan active listening network & web app ports"
+    },
+    {
+      "cmd": "/preview",
+      "desc": "🖥️ Toggle live split web application GUI preview inside CLI"
+    },
+    {
+      "cmd": "/package cli",
+      "desc": "📦 Compile & package finished build as an interactive CLI binary"
+    },
+    {
+      "cmd": "/package script",
+      "desc": "📜 Compile & package finished build as a portable Script"
+    },
+    {
+      "cmd": "/package gui",
+      "desc": "🖼️ Compile & package finished build as a Desktop/Web GUI app"
+    },
+    {
+      "cmd": "/package exe",
+      "desc": "📦 Compile & package finished build as a standalone Windows .EXE"
+    },
+    {
+      "cmd": "/compile exe",
+      "desc": "📦 Compile finished build as a standalone Windows .EXE"
+    },
+    {
+      "cmd": "/logs",
+      "desc": "📡 Stream recent Live Council Server Activity logs inside the terminal"
+    },
+    {
+      "cmd": "/clear",
+      "desc": "🧹 Clear the unified terminal screen"
+    },
+    {
+      "cmd": "/help",
+      "desc": "📖 Show the complete Suomynona Council Unified CLI command & slash reference"
+    },
+    {
+      "cmd": "nvidia-smi",
+      "desc": "Query live NVIDIA GPU VRAM, temperature & utilization across hosts"
+    },
+    {
+      "cmd": "nvidia-smi -l 1",
+      "desc": "Stream live NVIDIA GPU telemetry updates"
+    },
+    {
+      "cmd": "nvtop",
+      "desc": "Interactive GPU process and VRAM monitor"
+    },
+    {
+      "cmd": "netstat -tulnp",
+      "desc": "List active listening network & tunnel ports on host"
+    },
+    {
+      "cmd": "node -v",
+      "desc": "Check Node.js version on runtime host"
+    },
+    {
+      "cmd": "!nvidia-smi",
+      "desc": "Query live GPU VRAM and utilization on remote host"
+    },
+    {
+      "cmd": "sessions",
+      "desc": "List active Google Colab, Kaggle, Localhost & Custom Host GPU sessions"
+    },
+    {
+      "cmd": "status -s councilng",
+      "desc": "Check GPU tunnel & loaded GGUF models on Suomynona Council session"
+    },
+    {
+      "cmd": "stop-all",
+      "desc": "Stop all active Colab/Kaggle GPU runtimes"
+    },
+    {
+      "cmd": "stop-host a",
+      "desc": "Stop runtime session on Host A"
+    },
+    {
+      "cmd": "stop-host b",
+      "desc": "Stop runtime session on Host B"
+    },
+    {
+      "cmd": "stop-host c",
+      "desc": "Stop runtime session on Host C"
+    },
+    {
+      "cmd": "kaggle kernels status",
+      "desc": "Check Kaggle GPU notebook kernel status"
+    },
+    {
+      "cmd": "kaggle kernels list",
+      "desc": "List active Kaggle notebooks & GPU kernels"
+    },
+    {
+      "cmd": "kaggle datasets list",
+      "desc": "List attached Kaggle datasets"
+    },
+    {
+      "cmd": "kaggle config view",
+      "desc": "Display active Kaggle API configuration"
+    },
+    {
+      "cmd": "host all",
+      "desc": "Run CLI commands across ALL configured hosts (Colab + Kaggle + Localhost + Custom)"
+    },
+    {
+      "cmd": "host a",
+      "desc": "Switch target CLI host to Host A"
+    },
+    {
+      "cmd": "host b",
+      "desc": "Switch target CLI host to Host B"
+    },
+    {
+      "cmd": "host c",
+      "desc": "Switch target CLI host to Host C"
+    },
+    {
+      "cmd": "host kaggle",
+      "desc": "Switch target CLI host to Kaggle GPU kernel"
+    },
+    {
+      "cmd": "host localhost",
+      "desc": "Switch target CLI host to Localhost PC runtime"
+    },
+    {
+      "cmd": "host custom",
+      "desc": "Switch target CLI host to Custom Host endpoint"
+    },
+    {
+      "cmd": "localhost status",
+      "desc": "Check Localhost GPU/CPU server health & ports"
+    },
+    {
+      "cmd": "custom-host status",
+      "desc": "Check Custom Host endpoint health & loaded models"
+    },
+    {
+      "cmd": "usage",
+      "desc": "Show Google Colab Pro / Kaggle GPU compute quota usage"
+    },
+    {
+      "cmd": "uname -a",
+      "desc": "Display Linux kernel & architecture on active host"
+    },
+    {
+      "cmd": "uptime",
+      "desc": "Check how long the runtime host VM has been running"
+    },
+    {
+      "cmd": "df -h",
+      "desc": "Check disk space across runtime host VMs"
+    },
+    {
+      "cmd": "!df -h",
+      "desc": "Check remote disk space on Colab/Kaggle VM"
+    },
+    {
+      "cmd": "free -h",
+      "desc": "Check system RAM & swap usage on runtime host"
+    },
+    {
+      "cmd": "!free -h",
+      "desc": "Check system RAM usage on remote GPU VM"
+    },
+    {
+      "cmd": "ps aux | grep llama",
+      "desc": "Check running llama-server processes on GPU host"
+    },
+    {
+      "cmd": "!ps aux | grep llama",
+      "desc": "Check running llama-server processes on GPU host"
+    },
+    {
+      "cmd": "python3 --version",
+      "desc": "Check Python 3 version on runtime host"
+    },
+    {
+      "cmd": "pip list",
+      "desc": "List installed Python packages on runtime host"
+    },
+    {
+      "cmd": "ls -la",
+      "desc": "List all files in current working directory"
+    },
+    {
+      "cmd": "lscpu",
+      "desc": "Show CPU model and core count on runtime host"
+    },
+    {
+      "cmd": "top -b -n 1 | head -n 20",
+      "desc": "Snapshot top CPU & RAM processes on host"
+    },
+    {
+      "cmd": "tail -n 50 /tmp/llama.log",
+      "desc": "View recent llama-server inference logs"
+    },
+    {
+      "cmd": "curl -s http://127.0.0.1:8080/v1/models",
+      "desc": "Probe local llama-server OpenAI models endpoint"
+    },
+    {
+      "cmd": "git status",
+      "desc": "Check git repository status"
+    },
+    {
+      "cmd": "whoami",
+      "desc": "Show current user on runtime host"
+    },
+    {
+      "cmd": "clear",
+      "desc": "Clear Colab CLI output console"
+    },
+    {
+      "cmd": "help",
+      "desc": "Show all Colab, Kaggle, Localhost & Custom Host CLI commands"
+    },
+    {
+      "cmd": "-h",
+      "desc": "Display full Multi-Host CLI command reference"
+    }
+  ],
+  "UNRESTRICTED_QUEEN_BOSS_CHAIN": [
+    {
+      "name": "🦈 Qwen 3.8 27B Uncensored (Queen Boss #1)",
+      "model": "orcarouter/Qwen3.8-27B-Uncensored-GGUF",
+      "provider": "orca_cyber",
+      "unc": true
+    },
+    {
+      "name": "🦈 OrcaSAQ-2 Cyber 27B Uncensored (Queen Boss #2)",
+      "model": "orcarouter/OrcaSAQ-2-Cyber-27B-Uncensored-GGUF",
+      "provider": "orca_cyber",
+      "unc": true
+    },
+    {
+      "name": "🛡️ BaronLLM Security Q6_K Uncensored (Queen Boss #3)",
+      "model": "AlicanKiraz0/Cybersecurity-BaronLLM_Offensive_Security_LLM_Q6_K_GGUF",
+      "provider": "orca_cyber",
+      "unc": true
+    },
+    {
+      "name": "🧠 DeepSeek R1 14B Abliterated v2 (Queen Boss #4)",
+      "model": "huihui-ai/DeepSeek-R1-Distill-Qwen-14B-abliterated-v2",
+      "provider": "colab",
+      "unc": true
+    },
+    {
+      "name": "🐇 WhiteRabbitNeo 2.5 Qwen Coder 7B (Queen Boss #5)",
+      "model": "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B",
+      "provider": "colab",
+      "unc": true
+    },
+    {
+      "name": "🐬 Dolphin 2.9.4 Llama 3.1 8B Uncensored (Queen Boss #6)",
+      "model": "dphn/Dolphin-2.9.4-Llama3.1-8B-gguf",
+      "provider": "colab",
+      "unc": true
+    },
+    {
+      "name": "⚡ Llama 3.2 3B Abliterated (Queen Boss #7)",
+      "model": "Llama-3.2-3B-Instruct-abliterated.Q4_K_M.gguf",
+      "provider": "colab",
+      "unc": true
+    }
+  ],
+  "UNRESTRICTED_ROTATION_MODELS": [
+    "orcarouter/Qwen3.8-27B-Uncensored-GGUF",
+    "orcarouter/OrcaSAQ-2-Cyber-27B-Uncensored-GGUF",
+    "AlicanKiraz0/Cybersecurity-BaronLLM_Offensive_Security_LLM_Q6_K_GGUF",
+    "huihui-ai/DeepSeek-R1-Distill-Qwen-14B-abliterated-v2",
+    "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B",
+    "dphn/Dolphin-2.9.4-Llama3.1-8B-gguf"
+  ],
+  "DEFAULT_SPECIALIST_SQUADS": [
+    {
+      "id": "squad-fullstack-money",
+      "name": "💰 Full-Stack SaaS Money Maker",
+      "specialists": [
+        "coding-frontend-ui-specialist",
+        "coding-backend-api-specialist",
+        "coding-database-sql-specialist",
+        "coding-qa-test-automation-specialist",
+        "coding-devops-docker-cicd-specialist"
+      ],
+      "created_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "id": "squad-form-auth-qa",
+      "name": "📋🔐 Form Automation & Login Auth QA",
+      "specialists": [
+        "automation-form-workflow-specialist",
+        "auth-email-username-password-specialist",
+        "coding-frontend-ui-specialist",
+        "coding-qa-test-automation-specialist"
+      ],
+      "created_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "id": "squad-proxy-anon-recon",
+      "name": "🌍🕵️ Proxy CSV Vault, Dark Web & Web Scraper",
+      "specialists": [
+        "network-proxy-scraper-csv-specialist",
+        "offsec-proxy-hunter-rotator",
+        "osint-web-crawler-scraper-specialist",
+        "osint-darkweb-intelligence-specialist"
+      ],
+      "created_at": "2026-11-10T00:00:00Z"
+    },
+    {
+      "id": "squad-web-net-audit",
+      "name": "⚔️🌐 Nmap, SQLi, XSS & API Audit Pack",
+      "specialists": [
+        "offsec-nmap-port-weakness-hunter",
+        "offsec-sql-injection-specialist",
+        "offsec-xss-specialist",
+        "offsec-api-fuzzer"
+      ],
+      "created_at": "2026-11-10T00:00:00Z"
+    }
+  ]
+}

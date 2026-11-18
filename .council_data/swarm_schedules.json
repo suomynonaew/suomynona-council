@@ -1,0 +1,24 @@
+[
+  {
+    "id": "sched_proxy_refresh",
+    "name": "🌍 Auto-Refresh & Prune Verified Proxies CSV",
+    "kind": "proxy_refresh",
+    "interval_minutes": 30,
+    "enabled": false,
+    "target": "http,socks4,socks5",
+    "last_run_at": "",
+    "last_status": "Standby (toggle ON to run every 30m)",
+    "run_count": 0
+  },
+  {
+    "id": "sched_dns_auth_check",
+    "name": "🔐 Domain MX / SPF / DMARC Watchdog",
+    "kind": "auth_audit",
+    "interval_minutes": 60,
+    "enabled": false,
+    "target": "gmail.com",
+    "last_run_at": "",
+    "last_status": "Standby (toggle ON to audit every 60m)",
+    "run_count": 0
+  }
+]

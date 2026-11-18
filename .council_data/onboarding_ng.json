@@ -1,0 +1,12 @@
+{
+  "completed": true,
+  "completed_at": "2026-11-16 07:47:37",
+  "compute_mode": "colab",
+  "local_gpu_url": "http://127.0.0.1:8080/v1",
+  "local_ram_threads": 16,
+  "local_ram_ctx": 8192,
+  "local_ram_model_gb": 8,
+  "colab_cell_verified": true,
+  "default_model_id": "cloud:orca_cyber:orcarouter/OrcaSAQ-2-Cyber-27B-Uncensored-GGUF",
+  "default_model_name": "🦈 OrcaRouter OrcaSAQ-2 Cyber 27B 🔒 [Approved] (orca_cyber)"
+}

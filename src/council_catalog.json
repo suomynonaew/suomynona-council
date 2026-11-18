@@ -1,0 +1,985 @@
+{
+  "CATALOG": {
+    "orca27": {
+      "name": "OrcaRouter OrcaSAQ-2 Cyber 27B",
+      "gb": 16,
+      "gated": true,
+      "desc": "Cyber-tuned 27B, fully uncensored. GATED on Hugging Face \u2014 accept access + HF_TOKEN.",
+      "unc": true,
+      "best": "uncensored flagship chat (aggressive / cyber-flavored)"
+    },
+    "q38u": {
+      "name": "OrcaRouter Qwen3.8 27B Unc (vis)",
+      "gb": 17,
+      "gated": true,
+      "desc": "OrcaRouter's uncensored 27B with vision. GATED on Hugging Face \u2014 accept access + HF_TOKEN.",
+      "unc": true,
+      "best": "uncensored 27B that also sees images"
+    },
+    "l70": {
+      "name": "Llama 3.3 70B ablit [HEAVY]",
+      "gb": 42,
+      "desc": "Best-quality Llama, abliterated. 42GB \u2014 pair it only with small models.",
+      "unc": true,
+      "best": "highest-quality Llama chat (heavy VRAM)"
+    },
+    "l8": {
+      "name": "Llama 3.1 8B ablit",
+      "gb": 5,
+      "desc": "Abliterated Llama 8B. Fast, solid everyday chat.",
+      "unc": true,
+      "best": "fast everyday uncensored chat"
+    },
+    "l3b": {
+      "name": "Llama 3.2 3B ablit",
+      "gb": 2,
+      "desc": "Tiny abliterated Llama. Quick drafts, weaker reasoning.",
+      "unc": true,
+      "best": "tiny uncensored drafts"
+    },
+    "l3bs": {
+      "name": "Llama 3.2 3B Instruct",
+      "gb": 2,
+      "desc": "Standard (aligned) Llama 3B. Quick but cautious.",
+      "unc": false,
+      "best": "tiny aligned drafts"
+    },
+    "l1b": {
+      "name": "Llama 3.2 1B Instruct",
+      "gb": 1,
+      "desc": "Fastest model in the catalog. Simple answers only.",
+      "unc": false,
+      "best": "fastest simple answers"
+    },
+    "g27a": {
+      "name": "Gemma-3 27B ablit (vision)",
+      "gb": 17,
+      "desc": "Abliterated Gemma 27B with vision. Strong uncensored chat + images.",
+      "unc": true,
+      "best": "uncensored Gemma chat + images"
+    },
+    "g12a": {
+      "name": "Gemma-3 12B ablit (vision)",
+      "gb": 8,
+      "desc": "Abliterated Gemma 12B with vision. Best balance of size/quality.",
+      "unc": true,
+      "best": "best size/quality vision-chat balance"
+    },
+    "g4a": {
+      "name": "Gemma-3 4B ablit (vision)",
+      "gb": 3,
+      "desc": "Tiny abliterated Gemma with vision. Light, quick, sees images.",
+      "unc": true,
+      "best": "light vision + quick uncensored chat"
+    },
+    "tiger9": {
+      "name": "Tiger-Gemma 9B v3",
+      "gb": 6,
+      "desc": "TheDrummer's uncensored Gemma tune \u2014 creative, storyteller style.",
+      "unc": true,
+      "best": "creative writing and storytelling"
+    },
+    "g27": {
+      "name": "Gemma-3 27B Instruct (vision)",
+      "gb": 17,
+      "desc": "Standard Gemma 27B with vision. Polished but more cautious.",
+      "unc": false,
+      "best": "polished aligned Gemma + vision"
+    },
+    "r1-32": {
+      "name": "DeepSeek R1 32B ablit",
+      "gb": 20,
+      "desc": "Deep chain-of-thought reasoning, abliterated. Your main thinker.",
+      "unc": true,
+      "best": "deep chain-of-thought \u2014 main reasoner / judge"
+    },
+    "r1-14": {
+      "name": "DeepSeek R1 14B ablit",
+      "gb": 9,
+      "desc": "Lighter R1 reasoning \u2014 good depth, half the size.",
+      "unc": true,
+      "best": "medium-depth reasoning, half the VRAM"
+    },
+    "r1q7": {
+      "name": "DeepSeek R1 7B ablit",
+      "gb": 5,
+      "desc": "Fast R1 reasoning for simpler problems.",
+      "unc": true,
+      "best": "quick reasoning on simpler problems"
+    },
+    "r1l70": {
+      "name": "DeepSeek R1-Llama 70B ablit [HEAVY]",
+      "gb": 42,
+      "desc": "Top-tier R1 reasoning on Llama 70B. 42GB \u2014 use with small partners.",
+      "unc": true,
+      "best": "top-tier R1 reasoning (very heavy)"
+    },
+    "r1l8": {
+      "name": "DeepSeek R1-Llama 8B ablit",
+      "gb": 5,
+      "desc": "Quick R1 reasoning on a Llama 8B base.",
+      "unc": true,
+      "best": "light R1 reasoning"
+    },
+    "dscl": {
+      "name": "DeepSeek Coder-V2-Lite ablit",
+      "gb": 10,
+      "desc": "MoE coder (16B total, ~2B active) \u2014 smart code, very fast.",
+      "unc": true,
+      "best": "fast MoE coding"
+    },
+    "qwq-32": {
+      "name": "Qwen QwQ 32B ablit",
+      "gb": 20,
+      "desc": "Math/logic reasoning specialist, abliterated.",
+      "unc": true,
+      "best": "math, logic, step-by-step proofs"
+    },
+    "q332": {
+      "name": "Qwen3 32B ablit",
+      "gb": 20,
+      "desc": "Qwen3 flagship with hybrid think/chat modes, abliterated.",
+      "unc": true,
+      "best": "hybrid think/chat Qwen3 flagship"
+    },
+    "q314": {
+      "name": "Qwen3 14B ablit",
+      "gb": 9,
+      "desc": "Mid-size Qwen3 \u2014 good coding and reasoning.",
+      "unc": true,
+      "best": "mid-size coding and reasoning"
+    },
+    "q38": {
+      "name": "Qwen3 8B ablit",
+      "gb": 5,
+      "desc": "Quick Qwen3 answers, abliterated.",
+      "unc": true,
+      "best": "quick uncensored Qwen answers"
+    },
+    "q34": {
+      "name": "Qwen3 4B ablit",
+      "gb": 3,
+      "desc": "Tiny Qwen3 \u2014 fast drafts and simple questions.",
+      "unc": true,
+      "best": "tiny Qwen drafts"
+    },
+    "qw14": {
+      "name": "Qwen2.5 14B ablit",
+      "gb": 9,
+      "desc": "Reliable abliterated general chat.",
+      "unc": true,
+      "best": "solid uncensored general chat"
+    },
+    "qw7": {
+      "name": "Qwen2.5 7B ablit",
+      "gb": 5,
+      "desc": "Light abliterated general chat.",
+      "unc": true,
+      "best": "light general chat"
+    },
+    "code32": {
+      "name": "Qwen2.5 Coder 32B ablit",
+      "gb": 20,
+      "desc": "Heaviest code specialist \u2014 best for large refactors.",
+      "unc": true,
+      "best": "large refactors and hard coding problems"
+    },
+    "coder14": {
+      "name": "Qwen2.5 Coder 14B Q8",
+      "gb": 16,
+      "desc": "Your main coder \u2014 uncensored, high-quality Q8 quant.",
+      "unc": true,
+      "best": "best everyday uncensored coder"
+    },
+    "coder7": {
+      "name": "Qwen2.5 Coder 7B",
+      "gb": 5,
+      "desc": "Quick uncensored code help for small tasks.",
+      "unc": true,
+      "best": "small scripts and fast code help"
+    },
+    "qwen3vl": {
+      "name": "Qwen3-VL 8B Unc (vision)",
+      "gb": 7,
+      "desc": "Uncensored vision model \u2014 describes and analyzes images.",
+      "unc": true,
+      "best": "uncensored image describe / analyze"
+    },
+    "moe30i": {
+      "name": "Qwen3 30B-A3B Instruct ablit",
+      "gb": 19,
+      "desc": "MoE: 30B knowledge at 3B speed. Great fast-chat pick.",
+      "unc": true,
+      "best": "fast 30B-knowledge chat (MoE)"
+    },
+    "moe30t": {
+      "name": "Qwen3 30B-A3B Thinking ablit",
+      "gb": 19,
+      "desc": "MoE reasoning \u2014 deep thinking at 3B speed.",
+      "unc": true,
+      "best": "fast deep thinking (MoE)"
+    },
+    "nemo12": {
+      "name": "Mistral Nemo 12B ablit",
+      "gb": 8,
+      "desc": "Abliterated Mistral \u2014 good creative and roleplay chat.",
+      "unc": true,
+      "best": "creative and roleplay chat"
+    },
+    "m7b": {
+      "name": "Mistral 7B ablit",
+      "gb": 4,
+      "desc": "Very fast abliterated Mistral for simple answers.",
+      "unc": true,
+      "best": "very fast simple uncensored answers"
+    },
+    "glm432": {
+      "name": "GLM-4 32B ablit",
+      "gb": 20,
+      "desc": "Strong bilingual (EN/CN) reasoning and chat, abliterated.",
+      "unc": true,
+      "best": "bilingual EN/CN reasoning and chat"
+    },
+    "phi4": {
+      "name": "Phi-4 14B ablit",
+      "gb": 9,
+      "desc": "Microsoft's compact model, abliterated \u2014 punchy quality per GB.",
+      "unc": true,
+      "best": "dense quality-per-GB all-rounder"
+    },
+    "fsec8": {
+      "name": "Cyber Foundation-Sec 8B",
+      "gb": 5,
+      "desc": "Cisco's security LLM \u2014 CVEs, defense, threat analysis.",
+      "unc": false,
+      "best": "defensive security, CVEs, threat analysis"
+    },
+    "fsecr": {
+      "name": "Cyber Foundation-Sec 8B Reasoning",
+      "gb": 5,
+      "desc": "Step-by-step security reasoning (Cisco Foundation-Sec).",
+      "unc": false,
+      "best": "step-by-step defensive security reasoning"
+    },
+    "fsec11": {
+      "name": "Cyber Foundation-Sec 1.1 8B",
+      "gb": 5,
+      "desc": "Newest Cisco security model release.",
+      "unc": false,
+      "best": "newest Cisco defensive security chat"
+    },
+    "seneca": {
+      "name": "Cyber SenecaLLM OffSec 8B",
+      "gb": 5,
+      "desc": "Offensive security \u2014 pentesting and exploitation topics.",
+      "unc": true,
+      "best": "offensive-security discussion (8B)"
+    },
+    "seneca32": {
+      "name": "Cyber Seneca-QwQ 32B",
+      "gb": 20,
+      "desc": "Heavy offensive-security reasoning on a QwQ 32B base.",
+      "unc": true,
+      "best": "heavy offensive-security reasoning"
+    },
+    "wrn8": {
+      "name": "Cyber WhiteRabbitNeo-2 8B",
+      "gb": 5,
+      "desc": "The classic offensive-security model (Llama 3.1 base).",
+      "unc": true,
+      "best": "classic offensive-security chat"
+    },
+    "qsp9": {
+      "name": "Cyber Qwensploit 9B heretic",
+      "gb": 6,
+      "desc": "Uncensored heretic-tuned exploit/cyber chat.",
+      "unc": true,
+      "best": "uncensored exploit/cyber chat"
+    },
+    "lily7": {
+      "name": "Cyber Lily 7B Unc",
+      "gb": 4,
+      "desc": "Small uncensored security-chat model.",
+      "unc": true,
+      "best": "small uncensored security chat"
+    },
+    "raven35": {
+      "name": "RedTeam RavenX CyberAgent 35B",
+      "gb": 22,
+      "desc": "MoE pentester/bug-hunter (Q4) \u2014 deep red-team playbooks at 3B speed.",
+      "unc": true,
+      "best": "deep red-team playbooks (MoE, Q4)"
+    },
+    "pent32": {
+      "name": "RedTeam QwQ 32B Pentest CoT",
+      "gb": 20,
+      "desc": "Chain-of-thought pentest reasoning on a QwQ 32B base.",
+      "unc": true,
+      "best": "chain-of-thought pentest reasoning"
+    },
+    "wrn33": {
+      "name": "RedTeam WhiteRabbitNeo 33B",
+      "gb": 20,
+      "desc": "The largest classic WhiteRabbitNeo offensive-security model.",
+      "unc": true,
+      "best": "heaviest classic offensive-security chat"
+    },
+    "oss20h": {
+      "name": "RedTeam GPT-OSS 20B heretic",
+      "gb": 16,
+      "desc": "Heretic-tuned GPT-OSS 20B for cybersecurity work.",
+      "unc": true,
+      "best": "heretic cybersecurity chat (20B)"
+    },
+    "rednemo": {
+      "name": "RedTeam Red-Teamer Nemo 12B",
+      "gb": 8,
+      "desc": "Mistral Nemo tuned into an uncensored red-teamer.",
+      "unc": true,
+      "best": "uncensored red-team chat (12B)"
+    },
+    "wrn13": {
+      "name": "RedTeam WhiteRabbitNeo 13B",
+      "gb": 8,
+      "desc": "Classic 13B offensive-security model.",
+      "unc": true,
+      "best": "classic offensive-security chat"
+    },
+    "baron8": {
+      "name": "RedTeam BaronLLM OffSec 8B",
+      "gb": 7,
+      "gated": true,
+      "desc": "Llama 3.1 offensive-security tune (Q6). GATED (auto-grant) \u2014 accept access + HF_TOKEN.",
+      "unc": true,
+      "best": "offensive-security discussion (gated, auto-grant)"
+    },
+    "fsecred": {
+      "name": "RedTeam Foundation-Sec 8B RT",
+      "gb": 6,
+      "desc": "Cisco Foundation-Sec 8B fine-tuned for red-team operations.",
+      "unc": true,
+      "best": "red-team ops on Foundation-Sec"
+    },
+    "kalipen": {
+      "name": "RedTeam Kali Pentester 8B",
+      "gb": 5,
+      "desc": "Llama 3.1 tuned for Kali Linux pentest workflows.",
+      "unc": true,
+      "best": "Kali Linux pentest guidance"
+    },
+    "dhat7": {
+      "name": "RedTeam DeepHat-V1 7B heretic",
+      "gb": 5,
+      "desc": "Heretic-abliterated DeepHat \u2014 unfiltered security chat.",
+      "unc": true,
+      "best": "unfiltered security chat (heretic)"
+    },
+    "llred8": {
+      "name": "RedTeam LLMPC Red Team 8B",
+      "gb": 5,
+      "desc": "Llama 3.1 fine-tuned for red-team operations.",
+      "unc": true,
+      "best": "red-team operations chat"
+    },
+    "wrn7a": {
+      "name": "RedTeam WhiteRabbitNeo 7B v1.5a",
+      "gb": 4,
+      "desc": "Light classic WhiteRabbitNeo \u2014 offensive chat, small.",
+      "unc": true,
+      "best": "light offensive-security chat"
+    },
+    "pentgpt": {
+      "name": "RedTeam Pentesting-GPT 7B",
+      "gb": 4,
+      "desc": "Pentesting-GPT \u2014 guided engagement walkthroughs.",
+      "unc": true,
+      "best": "guided pentest walkthroughs"
+    },
+    "qsp4": {
+      "name": "RedTeam Qwensploit 4B heretic",
+      "gb": 3,
+      "desc": "Tiny uncensored exploit/cyber chat.",
+      "unc": true,
+      "best": "tiny uncensored exploit chat"
+    },
+    "qsp2": {
+      "name": "RedTeam Qwensploit 2B heretic",
+      "gb": 2,
+      "desc": "Smallest uncensored cyber model \u2014 instant drafts.",
+      "unc": true,
+      "best": "instant uncensored cyber drafts"
+    },
+    "rp_roci": {
+      "name": "RP Rocinante-X 12B heretic",
+      "gb": 8,
+      "desc": "TheDrummer's story/roleplay 12B, heretic-uncensored.",
+      "unc": true,
+      "best": "uncensored story/roleplay writing"
+    },
+    "rp_sth": {
+      "name": "RP Stheno v3.4 8B",
+      "gb": 5,
+      "desc": "Popular uncensored roleplay tune on Llama 3.1.",
+      "unc": true,
+      "best": "popular uncensored roleplay chat"
+    },
+    "rp_mag9": {
+      "name": "RP Magnum v4 9B",
+      "gb": 6,
+      "desc": "Claude-prose-style creative writing model.",
+      "unc": true,
+      "best": "polished creative prose"
+    },
+    "math7": {
+      "name": "Math Qwen2.5-Math 7B",
+      "gb": 5,
+      "desc": "Dedicated competition-math specialist.",
+      "unc": false,
+      "best": "competition math and step-by-step solutions"
+    },
+    "math15": {
+      "name": "Math Qwen2.5-Math 1.5B",
+      "gb": 1,
+      "desc": "Tiny math model \u2014 quick arithmetic and algebra.",
+      "unc": false,
+      "best": "quick arithmetic and algebra"
+    },
+    "aya8": {
+      "name": "Translate Aya-Expanse 8B",
+      "gb": 5,
+      "desc": "Cohere's multilingual model \u2014 23+ languages, translate and chat.",
+      "unc": false,
+      "best": "translation and multilingual chat (23+ langs)"
+    },
+    "aya32": {
+      "name": "Translate Aya-Expanse 32B",
+      "gb": 20,
+      "desc": "Larger Aya \u2014 best multilingual quality.",
+      "unc": false,
+      "best": "best-quality translation and multilingual chat"
+    },
+    "hermes8": {
+      "name": "Agent Hermes-3 8B",
+      "gb": 5,
+      "desc": "Nous Hermes 3 \u2014 strong tool/function calling and structured output.",
+      "unc": false,
+      "best": "tool/function calling and structured JSON output"
+    },
+    "hermes70": {
+      "name": "Agent Hermes-3 70B [HEAVY]",
+      "gb": 43,
+      "desc": "The agent flagship \u2014 43GB, pair only with small models.",
+      "unc": false,
+      "best": "flagship agentic tool use (very heavy)"
+    },
+    "ocr_olm": {
+      "name": "OCR olmOCR 7B",
+      "gb": 6,
+      "desc": "AllenAI's document OCR \u2014 scans, photos and PDF pages to clean text.",
+      "unc": false,
+      "best": "scanned docs, photos and PDF pages \u2192 clean text"
+    },
+    "ocr_nan": {
+      "name": "OCR Nanonets-OCR-s 7B",
+      "gb": 9,
+      "desc": "Document parser \u2014 extracts tables, LaTeX and signatures from images.",
+      "unc": false,
+      "best": "tables, LaTeX and signatures from document images"
+    },
+    "med_bio": {
+      "name": "Medical BioMistral 7B",
+      "gb": 4,
+      "desc": "Mistral fine-tuned on medical literature \u2014 clinical Q&A.",
+      "unc": false,
+      "best": "clinical Q&A and medical literature"
+    },
+    "med_llama3": {
+      "name": "Medical Llama-3.2 3B",
+      "gb": 2,
+      "desc": "Light medical conversational model for quick health questions.",
+      "unc": false,
+      "best": "quick medical conversation (small)"
+    },
+    "cyag27": {
+      "name": "Agent Cyber 27B unc agentic",
+      "gb": 17,
+      "desc": "Uncensored agentic cyber tune (Qwen3.8) \u2014 plans and executes security tasks.",
+      "unc": true,
+      "best": "uncensored agentic security operations"
+    },
+    "dphn8": {
+      "name": "Agent Dolphin 3.0 8B ablit",
+      "gb": 5,
+      "desc": "Dolphin 3.0 abliterated \u2014 uncensored tool-calling agent.",
+      "unc": true,
+      "best": "uncensored tool/function-calling agent"
+    },
+    "aglfm": {
+      "name": "Agent Hermes-Coder LFM2.5 8B ablit",
+      "gb": 6,
+      "desc": "MoE agentic coder (1B active) \u2014 fast, abliterated, tool-capable.",
+      "unc": true,
+      "best": "fast abliterated agentic coder (MoE)"
+    },
+    "agent4": {
+      "name": "Agent Space.Claude 4B unc",
+      "gb": 3,
+      "desc": "Tiny uncensored agentic model (Qwen3-based) \u2014 quick autonomous steps.",
+      "unc": true,
+      "best": "tiny uncensored autonomous agent"
+    },
+    "qc30": {
+      "name": "Qwen3-Coder 30B-A3B MoE",
+      "gb": 19,
+      "desc": "Top open code model \u2014 MoE, so it's also fast.",
+      "unc": false,
+      "best": "top open code model, fast MoE (aligned)"
+    },
+    "qc14a": {
+      "name": "Qwen2.5-Coder 14B ablit",
+      "gb": 9,
+      "desc": "Abliterated variant of the 14B coder.",
+      "unc": true,
+      "best": "abliterated 14B coder"
+    },
+    "qc7a": {
+      "name": "Qwen2.5-Coder 7B ablit",
+      "gb": 5,
+      "desc": "Light abliterated coder for quick scripts.",
+      "unc": true,
+      "best": "light abliterated coder"
+    },
+    "codestral": {
+      "name": "Codestral 22B",
+      "gb": 13,
+      "desc": "Mistral's code specialist (standard alignment).",
+      "unc": false,
+      "best": "aligned Mistral coding"
+    },
+    "seedc": {
+      "name": "Seed-Coder 8B",
+      "gb": 5,
+      "desc": "ByteDance's code model (standard alignment).",
+      "unc": false,
+      "best": "aligned ByteDance coding"
+    }
+  },
+  "SLOT_CHOICES": {
+    "chat": [
+      "orca27",
+      "g27",
+      "tiger9",
+      "l70",
+      "l8",
+      "qw14",
+      "nemo12",
+      "phi4"
+    ],
+    "think": [
+      "r1-32",
+      "qwq-32",
+      "r1-14",
+      "r1l70",
+      "r1l8",
+      "r1q7",
+      "moe30t",
+      "q332",
+      "glm432"
+    ],
+    "code": [
+      "coder14",
+      "code32",
+      "coder7",
+      "dscl",
+      "q314",
+      "qc30",
+      "qc14a",
+      "qc7a",
+      "codestral",
+      "seedc"
+    ],
+    "cyber": [
+      "fsec8",
+      "fsecr",
+      "fsec11",
+      "seneca",
+      "seneca32",
+      "wrn8",
+      "qsp9",
+      "lily7",
+      "raven35",
+      "pent32",
+      "wrn33",
+      "oss20h",
+      "rednemo",
+      "wrn13",
+      "baron8",
+      "fsecred",
+      "kalipen",
+      "dhat7",
+      "llred8",
+      "wrn7a",
+      "pentgpt",
+      "qsp4",
+      "qsp2",
+      "cyag27"
+    ],
+    "vision": [
+      "qwen3vl",
+      "g27a",
+      "g12a",
+      "g4a",
+      "q38u"
+    ],
+    "fast": [
+      "q38",
+      "q34",
+      "qw7",
+      "l3b",
+      "l3bs",
+      "l1b",
+      "m7b",
+      "moe30i"
+    ],
+    "roleplay": [
+      "rp_roci",
+      "rp_sth",
+      "rp_mag9"
+    ],
+    "math": [
+      "math7",
+      "math15"
+    ],
+    "translate": [
+      "aya8",
+      "aya32"
+    ],
+    "agent": [
+      "hermes8",
+      "hermes70",
+      "dphn8",
+      "aglfm",
+      "agent4"
+    ],
+    "ocr": [
+      "ocr_olm",
+      "ocr_nan"
+    ],
+    "medical": [
+      "med_bio",
+      "med_llama3"
+    ]
+  },
+  "LINEUP_SLOTS": [
+    "chat",
+    "think",
+    "code",
+    "cyber",
+    "vision",
+    "fast",
+    "roleplay",
+    "math",
+    "translate",
+    "agent",
+    "ocr",
+    "medical"
+  ],
+  "DEFAULT_LINEUP": {
+    "chat": [
+      "orca27"
+    ],
+    "think": [
+      "r1-32"
+    ],
+    "code": [
+      "coder14"
+    ],
+    "cyber": [
+      "seneca"
+    ],
+    "vision": [
+      "qwen3vl"
+    ],
+    "fast": [
+      "moe30i"
+    ],
+    "roleplay": [],
+    "math": [],
+    "translate": [],
+    "agent": [],
+    "ocr": [],
+    "medical": []
+  },
+  "COUNCIL_PRESETS": {
+    "Coding": {
+      "blurb": "Best coding council: heavy coder + everyday coder + ablit 14B, R1 as thinker/judge.",
+      "lineup": {
+        "chat": [],
+        "think": [
+          "r1-32"
+        ],
+        "code": [
+          "code32",
+          "coder14",
+          "qc14a"
+        ],
+        "vision": [],
+        "fast": [
+          "q38"
+        ]
+      }
+    },
+    "Reasoning": {
+      "blurb": "Deepest thinkers for math, logic, and hard multi-step problems.",
+      "lineup": {
+        "chat": [
+          "phi4"
+        ],
+        "think": [
+          "r1-32",
+          "qwq-32",
+          "moe30t"
+        ],
+        "code": [],
+        "vision": [],
+        "fast": [
+          "q38"
+        ]
+      }
+    },
+    "Creative": {
+      "blurb": "Uncensored chat, story, and roleplay, plus a mid-size vision model.",
+      "lineup": {
+        "chat": [
+          "orca27",
+          "tiger9",
+          "nemo12"
+        ],
+        "think": [],
+        "code": [],
+        "vision": [
+          "g12a"
+        ],
+        "fast": [
+          "moe30i"
+        ]
+      }
+    },
+    "Vision": {
+      "blurb": "Image-capable council: describe, analyze, and discuss pictures.",
+      "lineup": {
+        "chat": [
+          "l8"
+        ],
+        "think": [],
+        "code": [],
+        "vision": [
+          "qwen3vl",
+          "g27a",
+          "g12a"
+        ],
+        "fast": [
+          "q38"
+        ]
+      }
+    },
+    "Fast draft": {
+      "blurb": "Small/fast models for quick iterations (lowest VRAM).",
+      "lineup": {
+        "chat": [
+          "l8"
+        ],
+        "think": [
+          "r1q7"
+        ],
+        "code": [
+          "coder7"
+        ],
+        "cyber": [],
+        "vision": [
+          "g4a"
+        ],
+        "fast": [
+          "q38",
+          "m7b"
+        ]
+      }
+    },
+    "Cyber Red-Team": {
+      "blurb": "Uncensored offensive-security council: pentest reasoning, red-team chat, fast recon.",
+      "lineup": {
+        "chat": [],
+        "think": [],
+        "code": [],
+        "cyber": [
+          "raven35",
+          "rednemo",
+          "fsecred",
+          "kalipen",
+          "qsp2"
+        ],
+        "vision": [],
+        "fast": []
+      }
+    }
+  },
+  "CLOUD_PROVIDERS": {
+    "openai": {
+      "label": "OpenAI",
+      "conf": "OPENAI_API_KEY",
+      "base": "https://api.openai.com/v1",
+      "test": [
+        "https://api.openai.com/v1/models",
+        "bearer"
+      ],
+      "signup": "https://platform.openai.com/api-keys"
+    },
+    "grok": {
+      "label": "xAI Grok",
+      "conf": "XAI_API_KEY",
+      "base": "https://api.x.ai/v1",
+      "test": [
+        "https://api.x.ai/v1/models",
+        "bearer"
+      ],
+      "signup": "https://console.x.ai/"
+    },
+    "gemini": {
+      "label": "Google Gemini",
+      "conf": "GEMINI_API_KEY",
+      "base": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "test": [
+        "https://generativelanguage.googleapis.com/v1beta/models",
+        "query"
+      ],
+      "signup": "https://aistudio.google.com/apikey"
+    },
+    "openrouter": {
+      "label": "OpenRouter",
+      "conf": "OPENROUTER_API_KEY",
+      "base": "https://openrouter.ai/api/v1",
+      "test": [
+        "https://openrouter.ai/api/v1/key",
+        "bearer"
+      ],
+      "signup": "https://openrouter.ai/keys"
+    }
+  },
+  "CLOUD_MODELS": [
+    [
+      "GPT-4.1",
+      "openai",
+      "gpt-4.1",
+      "chat \u00b7 code",
+      "OpenAI flagship \u2014 excellent general chat and coding. Paid API."
+    ],
+    [
+      "o4-mini",
+      "openai",
+      "o4-mini",
+      "think",
+      "OpenAI reasoning model \u2014 thinks step-by-step before answering. Paid API."
+    ],
+    [
+      "GPT-4o (vision)",
+      "openai",
+      "gpt-4o",
+      "chat \u00b7 vision",
+      "OpenAI multimodal \u2014 can analyze images (this GUI sends text only). Paid API."
+    ],
+    [
+      "GPT-4.1 mini",
+      "openai",
+      "gpt-4.1-mini",
+      "fast",
+      "Cheap, quick OpenAI answers. Paid API."
+    ],
+    [
+      "Grok-4",
+      "grok",
+      "grok-4-0709",
+      "chat",
+      "xAI flagship \u2014 sharp, minimal guardrails. Paid API."
+    ],
+    [
+      "Grok-3 Mini (think)",
+      "grok",
+      "grok-3-mini",
+      "think",
+      "xAI reasoning model \u2014 working shown before the answer. Paid API."
+    ],
+    [
+      "Grok Code Fast",
+      "grok",
+      "grok-code-fast-1",
+      "code",
+      "xAI's fast coding specialist. Paid API."
+    ],
+    [
+      "Grok-3 Fast",
+      "grok",
+      "grok-3-fast",
+      "fast",
+      "Quickest Grok \u2014 rapid answers. Paid API."
+    ],
+    [
+      "Gemini 4 Argon",
+      "gemini",
+      "gemini-4-argon",
+      "think \u00b7 vision",
+      "Google's new flagship \u2014 deepest reasoner, sees images (text-only here). Free tier available."
+    ],
+    [
+      "Gemini 3.5 Flash",
+      "gemini",
+      "gemini-3.5-flash",
+      "chat",
+      "Fast all-round Google model. Free tier available."
+    ],
+    [
+      "Gemini 3.5 Flash-Lite",
+      "gemini",
+      "gemini-3.5-flash-lite",
+      "fast",
+      "Cheapest, quickest Gemini. Free tier available."
+    ],
+    [
+      "OR Llama 3.3 70B (free)",
+      "openrouter",
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "chat",
+      "Free via OpenRouter \u2014 strong general chat."
+    ],
+    [
+      "OR Dolphin Venice unc (free)",
+      "openrouter",
+      "cognitivecomputations/dolphin-mistral-24b-venice-edition:free",
+      "chat \u00b7 uncensored",
+      "Free uncensored chat via OpenRouter (Venice edition)."
+    ],
+    [
+      "OR DeepSeek R1 (free)",
+      "openrouter",
+      "deepseek/deepseek-r1:free",
+      "think",
+      "Free deep reasoning via OpenRouter."
+    ],
+    [
+      "OR Qwen3 Coder (free)",
+      "openrouter",
+      "qwen/qwen3-coder:free",
+      "code",
+      "Free top-tier coding via OpenRouter."
+    ],
+    [
+      "OR DeepSeek V3 (free)",
+      "openrouter",
+      "deepseek/deepseek-chat-v3-0324:free",
+      "fast",
+      "Free fast chat via OpenRouter. NOTE: ':free' models rotate \u2014 if one 404s, pick another or add credit."
+    ]
+  ],
+  "CLOUD_UNC_IDS": [
+    "cognitivecomputations/dolphin-mistral-24b-venice-edition:free"
+  ]
+}
