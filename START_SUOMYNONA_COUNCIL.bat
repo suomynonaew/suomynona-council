@@ -9,7 +9,7 @@ rem   Just download the ZIP from GitHub, extract it anywhere, and double-click
 rem   this file! It automatically checks Node.js, installs packages, creates
 rem   your .env file, starts the server on port 3000, and opens your browser.
 rem ============================================================================
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
 cd /d "%~dp0"
 
 rem 1. Handle nested GitHub ZIP folder if the user placed/ran this .bat one level up

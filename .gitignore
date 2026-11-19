@@ -1,6 +1,7 @@
 node_modules/
 build/
 dist/
+dist-server/
 dist-native/
 coverage/
 .DS_Store
@@ -27,3 +28,17 @@ public/assets/aistudio/
 .council_data/agent_telemetry_ng.json
 .council_data/prompt_history.json
 .council_data/datasets/
+.council_data/master_ed25519.json
+.council_data/master_licenses_registry.json
+.council_data/client_license_seal.json
+.master_vault/
+seed_data/master_ed25519.json
+desktop-edition.json
+desktop-repo-config.json
+electron-builder.*.tmp.json
+.council_data/auto_updater.json
+.council_data/desktop_runtime_status.json
+.council_data/desktop_windows.json
+.council_data/quantized_manifests/
+.council_data/custom_slots.json
+.council_data/explorer_workspace.json

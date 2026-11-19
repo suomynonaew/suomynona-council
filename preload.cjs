@@ -12,4 +12,9 @@ contextBridge.exposeInMainWorld("suomynonaNative", {
   closeDetachedCli: (cliKey) => ipcRenderer.invoke("close-detached-cli", cliKey),
   toggleAlwaysOnTop: () => ipcRenderer.invoke("toggle-always-on-top"),
   detectLocalEngines: () => ipcRenderer.invoke("detect-local-engines"),
+  openDataFolder: () => ipcRenderer.invoke("open-data-folder"),
+  getUpdaterStatus: () => ipcRenderer.invoke("updater-status"),
+  checkForUpdates: (opts) => ipcRenderer.invoke("updater-check", opts),
+  pullUpdatesNow: (opts) => ipcRenderer.invoke("updater-pull", opts),
+  runDoctor: (opts) => ipcRenderer.invoke("run-doctor", opts),
 });

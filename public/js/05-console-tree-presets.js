@@ -627,6 +627,11 @@ function restoreMountedCli() {
 }
 
 function openCliPopupWindow(rawCliKey = "master") {
+  if (typeof window.openUnifiedTerminal === "function") {
+    const tab = rawCliKey === "stream" ? "stream" : rawCliKey === "brain" ? "copilot" : "shell";
+    window.openUnifiedTerminal(tab);
+    return;
+  }
   const cliKey = CLI_REGISTRY[rawCliKey]?.aliasOf || rawCliKey;
   const reg = CLI_REGISTRY[cliKey] || CLI_REGISTRY["master"];
   const targetCard = $(reg.selector);
@@ -703,16 +708,16 @@ const SLASH_CONFIG_REGISTRY = {
   host: {
     key: "host",
     icon: "🖥",
-    title: "HOST SETUP — TABBED COLAB / KAGGLE / LOCAL / CUSTOM GPU SITES, SAVED HOSTS & CREDENTIALS VAULT",
-    badge: "● /host CONFIG",
+    title: "HOST CONFIGURATOR — SAVED HOSTS, ENDPOINTS, MODELS, VRAM & SPECIALIST AGENTS",
+    badge: "● HOST CONFIGURATOR",
     selectors: ['[data-lineup-pane="host-setup"]'],
     prependHostUrlMatrix: false,
   },
   models: {
     key: "models",
-    icon: "🌳",
-    title: "UPWARD-BRANCHING HOST TREE BUILDER: LINEUP, SPECIALIST AGENTS & CUSTOMIZATION (HOST A / B / C / D)",
-    badge: "● /models TREE BUILDER",
+    icon: "🤖",
+    title: "HOST CONFIGURATOR — MODELS, VRAM LINEUP & SPECIALIST AGENTS",
+    badge: "● HOST CONFIGURATOR",
     selectors: [],
     prependUpwardHostTreeBuilder: true,
   },
@@ -756,7 +761,7 @@ const SLASH_CONFIG_REGISTRY = {
     icon: "🧰",
     title: "CUSTOM AGENT TOOLS FORGE, 20 MCP SERVERS & A2A JSON-RPC BRIDGE",
     badge: "● /tools CONFIG",
-    selectors: ["#view-system > .grid2", "#view-agents > .grid2"],
+    selectors: ["#system-tools-mcp-grid", "#view-agents > .grid2"],
   },
   tuning: {
     key: "tuning",
@@ -809,7 +814,6 @@ let _slashDockedElements = [];
 let _activeSlashConfigKey = null;
 
 function restoreSlashConfigDockedNodes() {
-  if (!_slashDockedElements.length) return;
   for (const item of _slashDockedElements) {
     const { el, ph, wasHidden } = item;
     if (ph && ph.parentNode) {
@@ -1667,6 +1671,32 @@ function buildUpwardHostTreeBuilder() {
 
     if (activeLighthouseTab === "models") {
       const fullPool = getAllSelectableModels(hk);
+      // Build cross-host placement map across ALL hosts so users see where any model is already mounted
+      const modelHostMap = {};
+      const hostLabelFor = (hid) => {
+        const clean = String(hid || "").toLowerCase();
+        const cfg = HOST_TREE_UI_STATE.hostConfigs?.[clean];
+        return cfg?.label || `Host ${clean.toUpperCase()}`;
+      };
+      const addPlacement = (mid, hid) => {
+        if (!mid || !hid) return;
+        const cleanH = String(hid).toLowerCase();
+        const arr = (modelHostMap[mid] ||= []);
+        if (!arr.some((x) => x.id === cleanH)) {
+          arr.push({ id: cleanH, label: hostLabelFor(cleanH) });
+        }
+      };
+      (HOST_TREE_UI_STATE.models || []).forEach((hm) => {
+        if (hm && hm.id && hm.enabled !== false) addPlacement(hm.id, hm.host || "a");
+      });
+      if (STATE?.host_lineups && typeof STATE.host_lineups === "object") {
+        Object.entries(STATE.host_lineups).forEach(([hid, slotObj]) => {
+          Object.values(slotObj || {}).forEach((ids) => {
+            (Array.isArray(ids) ? ids : []).forEach((mid) => addPlacement(mid, hid));
+          });
+        });
+      }
+
       const allModels = fullPool.filter((m) => {
         if (modelFilterCat !== "all") {
           const cats = Array.isArray(m.categories) ? m.categories : [m.category];
@@ -1702,15 +1732,26 @@ function buildUpwardHostTreeBuilder() {
             ${allModels
               .map((m, idx) => {
                 const isSel = selectedIds.has(m.id);
+                const placedHosts = modelHostMap[m.id] || [];
+                const otherHosts = placedHosts.filter((h) => h.id !== String(hk).toLowerCase());
                 const isCyber = (m.categories || []).includes("cybersecurity");
                 const isAblit = (m.categories || []).includes("abliterated");
                 const tagTxt = isCyber ? "RedHat/Cyber · " : isAblit ? "Unrestricted · " : "";
+                const hostBadgesHtml =
+                  isSel || otherHosts.length
+                    ? `<div class="model-host-badges">
+                        ${isSel ? `<span class="model-host-pill is-here">✓ On Host ${hk.toUpperCase()}</span>` : ""}
+                        ${otherHosts.length ? `<span class="model-host-pill is-other">⚠ Already on ${esc(otherHosts.map((h) => h.label).join(", "))}</span>` : ""}
+                        ${placedHosts.length > 1 ? `<span class="model-host-pill is-multi">×${placedHosts.length} copies</span>` : ""}
+                      </div>`
+                    : "";
                 return `
-                  <button type="button" class="host-leaf-pick-btn ${isSel ? "is-selected" : ""}" data-flyout-pick-model="${idx}" data-model-lighthouse="${esc(m.id || m.hf || m.label)}">
+                  <button type="button" class="host-leaf-pick-btn ${isSel ? "is-selected" : ""} ${otherHosts.length ? "has-other-host" : ""}" data-flyout-pick-model="${idx}" data-model-lighthouse="${esc(m.id || m.hf || m.label)}">
                     <div class="host-model-card-top">
                       <span class="host-model-card-title">${esc(m.label)}</span>
                       <span class="host-model-card-state" style="color:${isSel ? "#2ee6a6" : "#94a3b8"}">${isSel ? "✓ Selected" : "+ Select"}</span>
                     </div>
+                    ${hostBadgesHtml}
                     <div class="host-model-card-meta tabular-nums">${tagTxt}${esc(m.hf || m.id)} · ${esc(m.quant)} · ${m.vram}GB</div>
                   </button>
                 `;
@@ -2115,6 +2156,7 @@ function buildUpwardHostTreeBuilder() {
             <button type="button" id="tree-save-active-lineup-btn" class="primary xs" style="height:26px;padding:0 11px;font-weight:700">Save Current Lineup</button>
             <button type="button" id="tree-autofit-vram-btn" class="ghost xs" style="height:26px;border-color:rgba(56,189,248,0.45);color:#7dd3fc" title="Step down quantization on any host above 85% VRAM">Auto-Fit Quant</button>
             <button type="button" id="tree-rebalance-ffd-btn" class="ghost xs" style="height:26px;border-color:rgba(46,230,166,0.5);color:#2ee6a6;font-weight:700" title="Run First-Fit Decreasing (FFD) 4-Host GPU Load-Balancer & Deduplicator">⚖️ FFD Rebalance A–D</button>
+            <button type="button" id="tree-fill-all-vram-btn" class="primary xs" style="height:26px;font-weight:700" title="Pack all hosts with diverse unique models up to safe 85% VRAM cap">⚡ Fill All Hosts (85%)</button>
             <span id="tree-save-feedback-lbl" style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#2ee6a6"></span>
           </div>
 
@@ -2189,7 +2231,10 @@ function buildUpwardHostTreeBuilder() {
                         Host ${hId.toUpperCase()}
                         <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:1px 5px;border-radius:4px;background:rgba(15,23,42,0.9);border:1px solid ${pColor};color:${pColor}">${esc(vram.stateLabel)}</span>
                       </span>
-                      <span style="font-size:10.5px;font-weight:700;color:#2ee6a6">Configure ↗</span>
+                      <span style="display:inline-flex;align-items:center;gap:4px">
+                        <button type="button" class="ghost xs" data-fill-host-vram="${hId}" style="height:21px;padding:0 6px;font-size:9.5px;color:#fbbf24;border-color:rgba(251,191,36,0.4)" title="Fill Host ${hId.toUpperCase()} up to safe 85% VRAM working cap">⚡ Fill 85%</button>
+                        <span style="font-size:10.5px;font-weight:700;color:#2ee6a6">Configure ↗</span>
+                      </span>
                     </div>
 
                     <!-- Live Latency, Quantization, KV-Cache & VRAM Headroom -->
@@ -2369,7 +2414,7 @@ function buildUpwardHostTreeBuilder() {
     // Open Host Lighthouse on Models tab
     container.querySelectorAll("[data-open-lighthouse]").forEach((node) => {
       node.addEventListener("click", (e) => {
-        if (e.target.closest("[data-sq-remove-model]")) return;
+        if (e.target.closest("[data-sq-remove-model], [data-fill-host-vram]")) return;
         const hId = node.getAttribute("data-open-lighthouse");
         if (!hId) return;
         vaultOverlayOpen = false;
@@ -2379,6 +2424,7 @@ function buildUpwardHostTreeBuilder() {
         renderCascade();
       });
       node.addEventListener("keydown", (e) => {
+        if (e.target.closest("[data-fill-host-vram]")) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           const hId = node.getAttribute("data-open-lighthouse");
@@ -2465,6 +2511,63 @@ function buildUpwardHostTreeBuilder() {
 
     container.querySelector("#tree-autofit-vram-btn")?.addEventListener("click", autoFitHostVramQuantization);
 
+    const syncSnapshotIntoHostTree = async (snapAfter) => {
+      await reloadState().catch(() => {});
+      if (snapAfter?.hosts_map) {
+        const nextModels = [];
+        for (const [hid, hTel] of Object.entries(snapAfter.hosts_map)) {
+          for (const am of hTel.assigned_models || []) {
+            const existing = (HOST_TREE_UI_STATE.models || []).find((x) => x.id === am.id && x.host === hid)
+              || (HOST_TREE_UI_STATE.models || []).find((x) => x.id === am.id);
+            nextModels.push({
+              ...(existing || {}),
+              id: am.id,
+              hf: existing?.hf || STATE?.catalog?.[am.id]?.hf || am.id,
+              label: am.name || existing?.label || existing?.name || am.id,
+              name: am.name || existing?.name || am.id,
+              slot: am.slot || existing?.slot || "code",
+              category: am.slot || existing?.category || "code",
+              host: hid,
+              quantization: existing?.quantization || hTel.quantization || "Q4_K_M",
+              vram_gb: am.gb,
+              base_vram_gb: existing?.base_vram_gb || Number(STATE?.catalog?.[am.id]?.gb) || am.gb,
+              enabled: true,
+            });
+          }
+        }
+        HOST_TREE_UI_STATE.models = nextModels;
+        await persistHostTreeStateToServer();
+      } else {
+        hydrateHostTreeModelsFromGlobalState();
+      }
+      if (typeof renderLineup === "function") renderLineup({ skipHoverMount: true });
+      if (typeof renderChips === "function") renderChips();
+      if (typeof renderRightModelsRail === "function") renderRightModelsRail();
+      await window.pollHostHeartbeatNow?.();
+      await window.refreshTabbedHostSetupUI?.(window._activeHostSetupTab || "a");
+    };
+
+    const runFillHostsVramAction = async (hostId = null, triggerBtn = null) => {
+      if (triggerBtn) triggerBtn.disabled = true;
+      await syncHostTreeToGlobalLineupAndUI();
+      const payload = { target_pct: 85 };
+      if (hostId) payload.host_id = hostId;
+      const res = await postJSON("/api/hosts/fill-vram", payload).catch((e) => ({ ok: false, error: e.message }));
+      if (triggerBtn) triggerBtn.disabled = false;
+      if (res?.ok) {
+        await syncSnapshotIntoHostTree(res.after);
+        const targetLbl = hostId ? `Host ${String(hostId).toUpperCase()}` : "all hosts";
+        const msg = `⚡ Filled +${res.added_count || 0} model(s) on ${targetLbl} up to 85% safe VRAM (${res.after?.cluster_pressure_pct ?? 0}% cluster)`;
+        const fb = container.querySelector("#tree-save-feedback-lbl");
+        if (fb) fb.textContent = msg;
+        pushClientLiveConsole("HOSTS", msg);
+        status(msg);
+        renderCascade();
+      } else {
+        status(`⚠️ VRAM Fill failed: ${res?.error || "Unknown error"}`);
+      }
+    };
+
     container.querySelector("#tree-rebalance-ffd-btn")?.addEventListener("click", async (e) => {
       const btn = e.currentTarget;
       btn.disabled = true;
@@ -2472,33 +2575,24 @@ function buildUpwardHostTreeBuilder() {
       const res = await postJSON("/api/hosts/rebalance-vram", { deduplicate: true });
       btn.disabled = false;
       if (res?.ok && res.after?.hosts_map) {
-        await reloadState();
-        // Sync rebalanced host assignments back into HOST_TREE_UI_STATE.models
-        const nextModels = [];
-        for (const [hid, hTel] of Object.entries(res.after.hosts_map)) {
-          for (const am of hTel.assigned_models || []) {
-            const existing = (HOST_TREE_UI_STATE.models || []).find((x) => x.id === am.id);
-            nextModels.push({
-              ...(existing || {}),
-              id: am.id,
-              name: am.name || existing?.name || am.id,
-              category: am.slot || existing?.category || "code",
-              host: hid,
-              vram_gb: am.gb,
-              base_vram_gb: existing?.base_vram_gb || am.gb,
-              enabled: true,
-            });
-          }
-        }
-        if (nextModels.length) {
-          HOST_TREE_UI_STATE.models = nextModels;
-          await persistHostTreeStateToServer();
-        }
+        await syncSnapshotIntoHostTree(res.after);
         const fb = container.querySelector("#tree-save-feedback-lbl");
         if (fb) fb.textContent = `✓ Rebalanced (${(res.migrations || []).length} moved, ${(res.deduplicated || []).length} deduped)`;
         status(`⚖️ FFD Rebalanced ${res.total_unique_models} models across Hosts A–D (0 overcommitted hosts).`);
         renderCascade();
       }
+    });
+
+    container.querySelector("#tree-fill-all-vram-btn")?.addEventListener("click", (e) => {
+      runFillHostsVramAction(null, e.currentTarget);
+    });
+
+    container.querySelectorAll("[data-fill-host-vram]").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const hId = btn.getAttribute("data-fill-host-vram");
+        if (hId) runFillHostsVramAction(hId, btn);
+      });
     });
 
     // Save Custom Lineup Preset button (also syncs to /api/custom-lineups so it's available everywhere!)
@@ -2785,7 +2879,8 @@ function buildUpwardHostTreeBuilder() {
 function openSlashConfigPopupWindow(rawKey = "host") {
   const clean = String(rawKey || "host").trim().toLowerCase().replace(/^\//, "");
   const key = SLASH_CONFIG_ALIASES[clean] || (SLASH_CONFIG_REGISTRY[clean] ? clean : "host");
-  const cfg = SLASH_CONFIG_REGISTRY[key] || SLASH_CONFIG_REGISTRY.host;
+  const isUnifiedHostConfig = key === "host" || key === "models";
+  const cfg = isUnifiedHostConfig ? SLASH_CONFIG_REGISTRY.host : (SLASH_CONFIG_REGISTRY[key] || SLASH_CONFIG_REGISTRY.host);
   const modal = $("#slash-config-popup-modal");
   const stage = $("#slash-config-popup-stage");
   if (!modal || !stage) return;
@@ -2802,11 +2897,11 @@ function openSlashConfigPopupWindow(rawKey = "host") {
     } else if (key === "bucket") {
       if (typeof renderHfBuckets === "function") renderHfBuckets();
       if (typeof renderCustomGguf === "function") renderCustomGguf();
-    } else if (key === "models" || key === "host") {
+    } else if (isUnifiedHostConfig) {
       if (typeof renderLineup === "function") renderLineup({ skipHoverMount: true });
       if (typeof renderChips === "function") renderChips();
       if (typeof renderRightModelsRail === "function") renderRightModelsRail();
-      if (key === "host" && typeof window.refreshTabbedHostSetupUI === "function") {
+      if (typeof window.refreshTabbedHostSetupUI === "function") {
         window.refreshTabbedHostSetupUI();
       }
     } else if (key === "mcp") {
@@ -2814,26 +2909,87 @@ function openSlashConfigPopupWindow(rawKey = "host") {
     }
   } catch (_) {}
 
-  if (cfg.prependHostUrlMatrix) {
-    stage.appendChild(buildHostUrlMatrixBanner());
-  }
+  if (isUnifiedHostConfig) {
+    const initialHcTab = key === "models" ? "models" : "hosts";
+    const tabBar = document.createElement("div");
+    tabBar.className = "hc-unified-tabs";
+    tabBar.setAttribute("role", "tablist");
+    tabBar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <button type="button" class="hc-tab-btn ${initialHcTab === "hosts" ? "on" : ""}" data-hc-tab="hosts" role="tab">🖥 Hosts, Endpoints &amp; Saved Board</button>
+        <button type="button" class="hc-tab-btn ${initialHcTab === "models" ? "on" : ""}" data-hc-tab="models" role="tab">🤖 Models, VRAM Lineup &amp; Agents</button>
+      </div>
+      <span class="muted" style="font-size:11px">Unified Host Configurator — Configure Hosts A–D, Fill 85% VRAM, &amp; Assign Models without cross-host duplicates</span>
+    `;
 
-  if (cfg.prependUpwardHostTreeBuilder) {
-    stage.appendChild(buildUpwardHostTreeBuilder());
-  }
+    const hostsPane = document.createElement("div");
+    hostsPane.id = "hc-pane-hosts";
+    hostsPane.className = initialHcTab === "hosts" ? "" : "hidden";
 
-  cfg.selectors.forEach((sel, idx) => {
-    const el = document.querySelector(sel);
-    if (!el) return;
-    const wasHidden = el.classList.contains("hidden");
-    const ph = document.createElement("div");
-    ph.className = "slash-config-dock-ph hidden";
-    ph.id = `slash-dock-ph-${key}-${idx}`;
-    el.parentNode.insertBefore(ph, el);
-    el.classList.remove("hidden");
-    stage.appendChild(el);
-    _slashDockedElements.push({ el, ph, wasHidden });
-  });
+    const modelsPane = document.createElement("div");
+    modelsPane.id = "hc-pane-models";
+    modelsPane.className = initialHcTab === "models" ? "" : "hidden";
+
+    const hostEl = document.querySelector('[data-lineup-pane="host-setup"]');
+    if (hostEl) {
+      const wasHidden = hostEl.classList.contains("hidden");
+      const ph = document.createElement("div");
+      ph.className = "slash-config-dock-ph hidden";
+      ph.id = "slash-dock-ph-unified-host-setup";
+      hostEl.parentNode.insertBefore(ph, hostEl);
+      hostEl.classList.remove("hidden");
+      hostsPane.appendChild(hostEl);
+      _slashDockedElements.push({ el: hostEl, ph, wasHidden });
+    }
+
+    let treeBuilderEl = buildUpwardHostTreeBuilder();
+    modelsPane.appendChild(treeBuilderEl);
+
+    stage.appendChild(tabBar);
+    stage.appendChild(hostsPane);
+    stage.appendChild(modelsPane);
+
+    tabBar.querySelectorAll("[data-hc-tab]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const nextTab = btn.getAttribute("data-hc-tab") || "hosts";
+        tabBar.querySelectorAll("[data-hc-tab]").forEach((b) => b.classList.toggle("on", b === btn));
+        hostsPane.classList.toggle("hidden", nextTab !== "hosts");
+        modelsPane.classList.toggle("hidden", nextTab !== "models");
+        if (nextTab === "hosts") {
+          window.refreshTabbedHostSetupUI?.(window._activeHostSetupTab || "a");
+        } else {
+          HOST_TREE_UI_STATE.loadedFromServer = false;
+          await syncHostTreeStateFromServer().catch(() => {});
+          hydrateHostTreeModelsFromGlobalState();
+          modelsPane.innerHTML = "";
+          treeBuilderEl = buildUpwardHostTreeBuilder();
+          modelsPane.appendChild(treeBuilderEl);
+        }
+        stage.scrollTop = 0;
+      });
+    });
+  } else {
+    if (cfg.prependHostUrlMatrix) {
+      stage.appendChild(buildHostUrlMatrixBanner());
+    }
+
+    if (cfg.prependUpwardHostTreeBuilder) {
+      stage.appendChild(buildUpwardHostTreeBuilder());
+    }
+
+    cfg.selectors.forEach((sel, idx) => {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      const wasHidden = el.classList.contains("hidden");
+      const ph = document.createElement("div");
+      ph.className = "slash-config-dock-ph hidden";
+      ph.id = `slash-dock-ph-${key}-${idx}`;
+      el.parentNode.insertBefore(ph, el);
+      el.classList.remove("hidden");
+      stage.appendChild(el);
+      _slashDockedElements.push({ el, ph, wasHidden });
+    });
+  }
 
   if ($("#slash-config-popup-icon")) $("#slash-config-popup-icon").textContent = cfg.icon;
   if ($("#slash-config-popup-title")) $("#slash-config-popup-title").textContent = cfg.title;
@@ -3169,7 +3325,7 @@ function initLiveBackgroundConsole() {
     });
   }
 
-  // Bind all launcher buttons in Left Rail, Top Header, and Slash Config Modal
+  // Bind all launcher buttons in Left Rail, Top Header, and Slash Config Modal -> toggle Unified Command Deck
   [
     "#rail-open-live-console-btn",
     "#topbar-open-live-console-btn",
@@ -3178,6 +3334,16 @@ function initLiveBackgroundConsole() {
     $(sel)?.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
+      if (typeof window.openUnifiedTerminal === "function") {
+        const footer = $("#global-footer-terminal");
+        const tab = "split";
+        if (footer?.classList.contains("gft-expanded") && !footer.classList.contains("hidden")) {
+          $("#gft-min-exp-btn")?.click();
+        } else {
+          window.openUnifiedTerminal(tab);
+        }
+        return;
+      }
       if (win.classList.contains("hidden")) openLiveConsoleWindow();
       else closeLiveConsoleWindow();
     });
@@ -3526,14 +3692,19 @@ function initSlashConfigPopupSystem() {
 function initCliPopupSystem() {
   initSlashConfigPopupSystem();
 
-  // Bind left rail CLI buttons
+  // Bind any [data-open-cli] triggers (Master routes cleanly to the bottom Live Backend Stream Terminal)
   $$("[data-open-cli]").forEach((btn) => {
     if (btn._boundOpenCli) return;
     btn._boundOpenCli = true;
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      openCliPopupWindow(btn.dataset.openCli);
+      const k = btn.dataset.openCli || "master";
+      if (k === "master" && typeof window.openBottomStreamTerminal === "function") {
+        window.openBottomStreamTerminal("");
+      } else {
+        openCliPopupWindow(k);
+      }
     });
   });
 

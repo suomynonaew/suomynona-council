@@ -967,14 +967,16 @@ $("#hs-save-global-auth-btn")?.addEventListener("click", async () => {
   if (btn) btn.disabled = true;
   try {
     const payload = {
-      USER_EMAIL: ($("#hs-auth-email")?.value || "goodoldcanadian@gmail.com").trim(),
-      GH_USERNAME: ($("#hs-auth-gh-user")?.value || "savingannabel").trim(),
-      GIST_ID: ($("#hs-auth-gist-id")?.value || "05a1f96580fa13b373b42d919873dc57").trim(),
+      USER_EMAIL: ($("#hs-auth-email")?.value || "").trim(),
+      GH_USERNAME: ($("#hs-auth-gh-user")?.value || "").trim(),
+      GIST_ID: ($("#hs-auth-gist-id")?.value || "").trim(),
       GH_TOKEN: ($("#hs-auth-gh-token")?.value || "").trim(),
       HF_TOKEN: ($("#hs-auth-hf-token")?.value || "").trim(),
       KAGGLE_USERNAME: ($("#hs-auth-kaggle-user")?.value || "").trim(),
       KAGGLE_KEY: ($("#hs-auth-kaggle-key")?.value || "").trim(),
+      ORCAROUTER_API_KEY: ($("#hs-auth-orcarouter-key")?.value || "").trim(),
       OPENROUTER_API_KEY: ($("#hs-auth-openrouter-key")?.value || "").trim(),
+      ANTHROPIC_API_KEY: ($("#hs-auth-anthropic-key")?.value || "").trim(),
     };
     persistGlobalAuthToLocalStorage(payload);
     const res = await postJSON("/api/host-setup/save-memory", payload);
@@ -987,7 +989,8 @@ $("#hs-save-global-auth-btn")?.addEventListener("click", async () => {
       await reloadState();
       renderKeys();
       renderColabHosts();
-      const msg = `🟢 Saved tokens, Gist (${payload.GIST_ID.slice(0, 8)}…), and email (${payload.USER_EMAIL}) into persistent Brain & Vault Memory!`;
+      window.refreshVaultHubView?.();
+      const msg = `🟢 Saved global credentials & API keys into persistent Vault Memory!`;
       if ($("#hs-global-auth-status")) $("#hs-global-auth-status").textContent = msg;
       status(msg);
     }
@@ -2045,19 +2048,41 @@ async function checkAndOpenFirstTimeSetup(forceOpen = false) {
     const fp = getClientBrowserFingerprint();
     const [obRes, brainRes] = await Promise.all([
       fetch(`/api/onboarding/state?fp=${encodeURIComponent(fp)}`, { cache: "no-store" }).then((r) => r.json()),
-      fetch("/api/brain/state", { cache: "no-store" }).then((r) => r.json()),
+      fetch("/api/brain/state", { cache: "no-store" }).then((r) => r.json()).catch(() => ({})),
     ]);
     if (!obRes?.ok) return;
     setupStateCache = obRes;
 
-    if ($("#setup-hwid-display")) $("#setup-hwid-display").textContent = obRes.hwid || "CNG-PC-LOCAL";
+    const isClientEdition = obRes.edition === "client";
+    window.__COUNCIL_APP_EDITION__ = obRes.edition || "master";
+
+    if (isClientEdition) {
+      // Completely remove Master-only administrative tabs & shortcuts from Client Edition DOM
+      $("#rail-master-licenses-btn")?.remove();
+      $("#view-master-licenses")?.remove();
+      $("#header-drm-studio-btn")?.remove();
+      $("#setup-open-drm-studio-btn")?.remove();
+      $("#setup-owner-quickfill-btn")?.remove();
+      $("#setup-fill-buyer-demo-btn")?.remove();
+      $("#setup-fill-shared-demo-btn")?.remove();
+      if ($("#setup-license-key-input")) {
+        $("#setup-license-key-input").placeholder = "Paste your paid Suomynona Council CD Key (SMN1-...)";
+      }
+    }
+
+    if ($("#setup-hwid-display")) $("#setup-hwid-display").textContent = obRes.hwid || "SMN-PC-LOCAL";
     const licBadge = $("#setup-license-status-badge");
     if (licBadge) {
       if (obRes.license_valid) {
-        licBadge.textContent = `✅ Hardware-Locked & Verified (${obRes.active_key})`;
+        const expTag = obRes.active_license?.expires_at
+          ? ` · Expires ${new Date(obRes.active_license.expires_at).toLocaleDateString()}`
+          : " · Lifetime";
+        licBadge.textContent = `✅ Hardware-Locked & Verified (${obRes.active_key || "ACTIVE"}${expTag})`;
         licBadge.style.color = "var(--ok)";
       } else {
-        licBadge.textContent = "🔒 Unactivated — Enter Registration Key";
+        licBadge.textContent = obRes.license_reason
+          ? `🔒 ${obRes.license_reason}`
+          : "🔒 Unactivated — Enter Paid CD Key (SMN1-...)";
         licBadge.style.color = "#ffcc66";
       }
     }
@@ -2093,19 +2118,37 @@ async function checkAndOpenFirstTimeSetup(forceOpen = false) {
     if (lockBadge) {
       lockBadge.textContent = isCompleted
         ? "✅ SETUP & HARDWARE LICENSE VERIFIED"
+        : !obRes.license_valid
+        ? "🔒 ENTER PAID CD KEY TO UNLOCK THIS COMPUTER"
         : "🔒 COMPLETE ALL 6 STEPS TO UNLOCK WORKSPACE";
       lockBadge.className = "right-badge " + (isCompleted ? "orca" : "gated");
     }
 
-    // Automatically show mandatory setup modal on first load until setup + license activation are completed
+    // Automatically show mandatory setup modal if unactivated or onboarding incomplete
     if (forceOpen || !isCompleted) {
       $("#setup-walkthrough-modal")?.classList.remove("hidden");
       setSetupWizardStep(obRes.license_valid ? (forceOpen ? 1 : 2) : 1);
+      if (!obRes.license_valid && obRes.license_reason && $("#setup-license-feedback")) {
+        $("#setup-license-feedback").innerHTML = `<div style="padding:8px 10px;border-radius:8px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.4);color:#fde68a">🔐 <strong>${esc(obRes.license_reason)}</strong><br><span class="muted">Send your Hardware ID (<code>${esc(obRes.hwid)}</code>) to the administrator if your key needs to be bound or unlinked.</span></div>`;
+      }
     }
   } catch (e) {
     console.warn("Setup walkthrough check error:", e);
   }
 }
+
+$("#setup-copy-hwid-btn")?.addEventListener("click", async () => {
+  const hwid = ($("#setup-hwid-display")?.textContent || "").trim();
+  if (!hwid) return;
+  try {
+    await navigator.clipboard.writeText(hwid);
+    const btn = $("#setup-copy-hwid-btn");
+    if (btn) {
+      btn.textContent = "✅ Copied HWID!";
+      setTimeout(() => { btn.textContent = "📋 Copy My Computer ID"; }, 1600);
+    }
+  } catch (_) {}
+});
 
 $("#header-setup-wizard-btn")?.addEventListener("click", () => {
   checkAndOpenFirstTimeSetup(true);
@@ -2145,14 +2188,21 @@ async function activateRegistrationKey(keyToActivate) {
   if (res?.ok) {
     setupStateCache ||= {};
     setupStateCache.license_valid = true;
-    setupStateCache.active_key = res.license?.key || key;
+    setupStateCache.active_key = res.key_id || res.license?.key || key;
     if ($("#setup-license-status-badge")) {
-      $("#setup-license-status-badge").textContent = `✅ Hardware-Locked to ${res.hwid}`;
+      $("#setup-license-status-badge").textContent = `✅ Hardware-Locked to ${res.hwid} (${setupStateCache.active_key})`;
       $("#setup-license-status-badge").style.color = "var(--ok)";
     }
     if (fb) {
-      fb.innerHTML = `<div style="padding:8px 10px;border-radius:8px;background:rgba(34,197,94,.14);border:1px solid var(--ok);color:var(--ok)">✅ <strong>${esc(res.message)}</strong><br>Licensed to: <strong>${esc(res.license?.buyer_name || "Authorized User")}</strong> · Bound HWID: <code>${esc(res.hwid)}</code> (1-Computer Lock Enforced)</div>`;
+      const expStr = res.license?.expires_at
+        ? `Expires: <strong>${new Date(res.license.expires_at).toLocaleString()}</strong>`
+        : "Duration: <strong>Lifetime</strong>";
+      fb.innerHTML = `<div style="padding:8px 10px;border-radius:8px;background:rgba(34,197,94,.14);border:1px solid var(--ok);color:var(--ok)">✅ <strong>${esc(res.message)}</strong><br>Licensed to: <strong>${esc(res.license?.buyer_name || "Authorized User")}</strong> · ${expStr} · Bound HWID: <code>${esc(res.hwid)}</code></div>`;
     }
+    if (setupStateCache?.onboarding?.completed) {
+      $("#setup-wizard-close-btn")?.classList.remove("hidden");
+    }
+    await reloadState().catch(() => {});
     return true;
   } else {
     if (fb) {
@@ -2297,7 +2347,9 @@ $("#setup-finish-btn")?.addEventListener("click", async () => {
       GH_TOKEN: ($("#setup-gh-token")?.value || "").trim(),
       GIST_ID: ($("#setup-gist-id")?.value || "").trim(),
       HF_TOKEN: ($("#setup-hf-token")?.value || "").trim(),
+      ORCAROUTER_API_KEY: ($("#setup-orcarouter-key")?.value || "").trim(),
       OPENAI_API_KEY: ($("#setup-openai-key")?.value || "").trim(),
+      ANTHROPIC_API_KEY: ($("#setup-anthropic-key")?.value || "").trim(),
       XAI_API_KEY: ($("#setup-xai-key")?.value || "").trim(),
       OPENROUTER_API_KEY: ($("#setup-openrouter-key")?.value || "").trim(),
       GEMINI_API_KEY: ($("#setup-gemini-key")?.value || "").trim(),
@@ -2422,6 +2474,350 @@ $("#drm-build-obfuscated-btn")?.addEventListener("click", async () => {
     }
   } finally {
     if (btn) btn.disabled = false;
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MASTER EDITION ADMIN TAB: PAID USERS, ED25519 CD-KEYS & BOUND COMPUTERS
+// ══════════════════════════════════════════════════════════════════════════════
+let _masterLicensesCache = null;
+
+function formatRemainingCountdown(sec) {
+  if (sec === null || sec === undefined) return "∞ Lifetime";
+  const n = Number(sec);
+  if (n <= 0) return "⛔ Expired";
+  const d = Math.floor(n / 86400);
+  const h = Math.floor((n % 86400) / 3600);
+  const m = Math.floor((n % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h remaining`;
+  if (h > 0) return `${h}h ${m}m remaining`;
+  return `${m}m ${n % 60}s remaining`;
+}
+
+function renderMasterLicensesTable() {
+  const wrap = $("#mlic-users-table-wrap");
+  if (!wrap || !_masterLicensesCache) return;
+  const users = Array.isArray(_masterLicensesCache.users) ? _masterLicensesCache.users : [];
+  const q = ($("#mlic-search-input")?.value || "").trim().toLowerCase();
+  const filter = $("#mlic-filter-status")?.value || "all";
+
+  const filtered = users.filter((u) => {
+    if (filter === "active" && u.effective_status !== "active") return false;
+    if (filter === "bound" && !u.bound_hwid) return false;
+    if (filter === "unbound" && u.bound_hwid) return false;
+    if (filter === "expired" && u.effective_status !== "expired") return false;
+    if (filter === "revoked" && !u.revoked) return false;
+    if (!q) return true;
+    const hay = `${u.user_name} ${u.user_email} ${u.key_id} ${u.bound_hwid || ""} ${u.bound_hostname || ""} ${u.plan_tier} ${u.notes || ""}`.toLowerCase();
+    return hay.includes(q);
+  });
+
+  if (!filtered.length) {
+    wrap.innerHTML = `<div class="muted" style="padding:20px;text-align:center;border:1px dashed rgba(148,163,184,.25);border-radius:8px">No registered users / CD keys match the current filter. Use the form above to register a paid user and issue a signed Ed25519 CD key.</div>`;
+    return;
+  }
+
+  const rowsHtml = filtered
+    .map((u) => {
+      const st = u.effective_status;
+      const statusBadge =
+        st === "revoked"
+          ? `<span class="right-badge gated" style="background:rgba(244,63,94,.2);color:#ff6b8b;border-color:#f43f5e">🚫 REVOKED</span>`
+          : st === "expired"
+          ? `<span class="right-badge" style="background:rgba(245,158,11,.2);color:#fbbf24;border-color:#f59e0b">⌛ EXPIRED</span>`
+          : `<span class="right-badge orca" style="background:rgba(16,185,129,.18);color:#2ee6a6;border-color:#10b981">✔ ACTIVE</span>`;
+
+      const hwidCell = u.bound_hwid
+        ? `<div><code style="color:#38bdf8;font-weight:700">${esc(u.bound_hwid)}</code></div>
+           <div class="muted" style="font-size:10.5px">${esc(u.bound_hostname || "Bound Workstation")}${u.bound_at ? ` · ${esc(String(u.bound_at).slice(0, 10))}` : ""}</div>`
+        : `<span class="right-badge" style="background:rgba(56,189,248,.12);color:#7dd3fc">🟢 Unbound (Locks on 1st PC)</span>`;
+
+      const timeCell = u.expires_at
+        ? `<div style="font-weight:700;color:${u.is_expired ? "#ff6b8b" : "#fbbf24"}">${esc(formatRemainingCountdown(u.remaining_seconds))}</div>
+           <div class="muted" style="font-size:10.5px">Until ${esc(String(u.expires_at).replace("T", " ").slice(0, 16))} UTC</div>`
+        : `<div style="font-weight:700;color:#2ee6a6">∞ Lifetime</div>
+           <div class="muted" style="font-size:10.5px">No time expiration</div>`;
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:700;color:#f8fafc">${esc(u.user_name)}</div>
+            <div class="muted" style="font-size:11px">${esc(u.user_email || "No email")}</div>
+            <div style="margin-top:3px;font-size:10.5px">
+              <span class="right-badge" style="padding:1px 6px">${esc(u.plan_tier)}</span>
+              <span style="color:#2ee6a6;font-weight:700;margin-left:4px">${esc(u.amount_paid)} (${esc(u.paid_status)})</span>
+            </div>
+          </td>
+          <td>
+            <div><code style="color:#fbbf24;font-weight:800;font-size:12px">${esc(u.key_id)}</code></div>
+            <div class="muted" style="font-size:10px;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(u.cd_key)}">${esc(u.cd_key)}</div>
+            <div style="margin-top:4px">
+              <button type="button" class="primary xs" data-mlic-copy="${esc(u.cd_key)}" data-mlic-kid="${esc(u.key_id)}">📋 Copy CD Key</button>
+            </div>
+          </td>
+          <td>${hwidCell}</td>
+          <td>${timeCell}</td>
+          <td>
+            ${statusBadge}
+            <div class="muted" style="font-size:10px;margin-top:3px">Activations: ${Number(u.activations_count || 0)} · Unlinks: ${Number(u.unlink_count || 0)}</div>
+          </td>
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;max-width:290px">
+              <button type="button" class="ghost xs" data-mlic-addtime="${esc(u.id)}" data-hours="24" title="Add +24 Hours">+24h</button>
+              <button type="button" class="ghost xs" data-mlic-addtime="${esc(u.id)}" data-hours="168" title="Add +7 Days">+7d</button>
+              <button type="button" class="ghost xs" data-mlic-addtime="${esc(u.id)}" data-hours="720" title="Add +30 Days">+30d</button>
+              <button type="button" class="ghost xs" data-mlic-settime="${esc(u.id)}" title="Set custom hours">⏱️ Set Time</button>
+              <button type="button" class="ghost xs" data-mlic-lifetime="${esc(u.id)}" title="Convert to Lifetime">∞ Lifetime</button>
+              <button type="button" class="ghost xs" data-mlic-expire="${esc(u.id)}" style="color:#fbbf24" title="Expire immediately">⌛ Expire</button>
+              <button type="button" class="ghost xs" data-mlic-unlink="${esc(u.id)}" style="color:#38bdf8" title="Unlink bound computer so user can activate on a new PC">🔓 Unlink PC</button>
+              <button type="button" class="ghost xs" data-mlic-bind="${esc(u.id)}" title="Manually bind to a specific computer HWID">🔒 Bind PC</button>
+              <button type="button" class="ghost xs" data-mlic-revoke="${esc(u.id)}" style="color:${u.revoked ? "#2ee6a6" : "#ff6b8b"}">${u.revoked ? "♻️ Restore" : "🚫 Revoke"}</button>
+              <button type="button" class="ghost xs" data-mlic-delete="${esc(u.id)}" style="color:#f43f5e" title="Delete license record">🗑️</button>
+            </div>
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  wrap.innerHTML = `
+    <table class="leaderboard-table" style="font-size:12px;width:100%">
+      <thead>
+        <tr>
+          <th>Registered Paid User</th>
+          <th>Ed25519 Signed CD Key</th>
+          <th>Bound Computer (HWID)</th>
+          <th>Time Limit / Expiry</th>
+          <th>Status</th>
+          <th>Admin Controls (Time · Unlink · Revoke)</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+
+  wrap.querySelectorAll("[data-mlic-copy]").forEach((btn) => {
+    btn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.mlicCopy);
+        const orig = btn.textContent;
+        btn.textContent = `✅ Copied ${btn.dataset.mlicKid}!`;
+        setTimeout(() => { btn.textContent = orig; }, 1400);
+      } catch (_) {}
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-addtime]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicAddtime;
+      const hours = Number(btn.dataset.hours || 24);
+      const r = await postJSON("/api/master/licenses/set-time", { id, mode: "add_hours", hours });
+      if (r?.ok) {
+        status(`⏱️ Added +${hours}h to ${r.user?.key_id} (${r.user?.user_name})`);
+        await window.refreshMasterLicensesView();
+      }
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-settime]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicSettime;
+      const input = window.prompt("Enter number of hours from now for this CD Key (or 0 for Lifetime):", "720");
+      if (input === null) return;
+      const hrs = Number(input);
+      if (Number.isNaN(hrs)) return;
+      const r = await postJSON("/api/master/licenses/set-time", {
+        id,
+        mode: hrs <= 0 ? "lifetime" : "set_iso",
+        expires_at: hrs > 0 ? new Date(Date.now() + hrs * 3_600_000).toISOString() : null,
+      });
+      if (r?.ok) {
+        status(`⏱️ Updated expiration time for ${r.user?.key_id}`);
+        await window.refreshMasterLicensesView();
+      }
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-lifetime]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicLifetime;
+      const r = await postJSON("/api/master/licenses/set-time", { id, mode: "lifetime" });
+      if (r?.ok) {
+        status(`∞ Set ${r.user?.key_id} (${r.user?.user_name}) to Lifetime`);
+        await window.refreshMasterLicensesView();
+      }
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-expire]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicExpire;
+      const r = await postJSON("/api/master/licenses/set-time", { id, mode: "expire_now" });
+      if (r?.ok) {
+        status(`⌛ Expired CD Key ${r.user?.key_id}`);
+        await window.refreshMasterLicensesView();
+      }
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-unlink]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicUnlink;
+      const r = await postJSON("/api/master/licenses/unlink-hwid", { id });
+      if (r?.ok) {
+        status(`🔓 Unlinked computer ${r.previous_hwid || ""} from ${r.user?.key_id} — ready to activate on a new PC!`);
+        await window.refreshMasterLicensesView();
+      }
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-bind]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicBind;
+      const hwid = window.prompt("Enter the buyer's Computer Hardware ID (e.g. SMN-PC-XXXX-XXXX-XXXX):", _masterLicensesCache?.machine_hwid || "");
+      if (!hwid || !hwid.trim()) return;
+      const r = await postJSON("/api/master/licenses/bind-hwid", { id, hwid: hwid.trim() });
+      if (r?.ok) {
+        status(`🔒 Bound ${r.user?.key_id} to computer ${r.user?.bound_hwid}`);
+        await window.refreshMasterLicensesView();
+      }
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-revoke]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicRevoke;
+      const r = await postJSON("/api/master/licenses/revoke", { id });
+      if (r?.ok) {
+        status(`${r.user?.revoked ? "🚫 Revoked" : "♻️ Restored"} CD Key ${r.user?.key_id}`);
+        await window.refreshMasterLicensesView();
+      }
+    };
+  });
+
+  wrap.querySelectorAll("[data-mlic-delete]").forEach((btn) => {
+    btn.onclick = async () => {
+      const id = btn.dataset.mlicDelete;
+      await fetch(`/api/master/licenses/${encodeURIComponent(id)}`, { method: "DELETE" });
+      status(`🗑️ Deleted license record ${id}`);
+      await window.refreshMasterLicensesView();
+    };
+  });
+}
+
+window.refreshMasterLicensesView = async function () {
+  if (window.__COUNCIL_APP_EDITION__ === "client") return;
+  try {
+    const res = await fetch("/api/master/licenses", { cache: "no-store" }).then((r) => r.json());
+    if (!res?.ok) return;
+    _masterLicensesCache = res;
+
+    if ($("#mlic-stat-total")) $("#mlic-stat-total").textContent = String(res.stats?.total_users || 0);
+    if ($("#mlic-stat-active")) $("#mlic-stat-active").textContent = String(res.stats?.active_keys || 0);
+    if ($("#mlic-stat-bound")) $("#mlic-stat-bound").textContent = String(res.stats?.bound_pcs || 0);
+    if ($("#mlic-stat-timed")) $("#mlic-stat-timed").textContent = `${res.stats?.time_limited || 0} / ${res.stats?.expired_keys || 0}`;
+    if ($("#mlic-stat-revoked")) $("#mlic-stat-revoked").textContent = String(res.stats?.revoked_keys || 0);
+    if ($("#mlic-pubkey-fp")) $("#mlic-pubkey-fp").textContent = res.public_key_fingerprint || "ED25519-ACTIVE";
+    if ($("#mlic-master-hwid")) $("#mlic-master-hwid").textContent = res.machine_hwid || "SMN-PC-MASTER";
+    if ($("#mlic-ledger-status")) {
+      $("#mlic-ledger-status").textContent = res.remote_ledger_url
+        ? `Synced (${res.last_synced_at ? String(res.last_synced_at).slice(11, 19) : "Gist"})`
+        : "Local Vault Ready";
+    }
+    renderMasterLicensesTable();
+  } catch (e) {
+    console.warn("Master licenses load error:", e);
+  }
+};
+
+$("#mlic-duration-preset")?.addEventListener("change", () => {
+  const val = $("#mlic-duration-preset")?.value;
+  $("#mlic-custom-hours-wrap")?.classList.toggle("hidden", val !== "custom");
+});
+
+$("#mlic-refresh-btn")?.addEventListener("click", () => window.refreshMasterLicensesView());
+$("#mlic-open-obfuscator-btn")?.addEventListener("click", openDrmStudioModal);
+$("#mlic-search-input")?.addEventListener("input", renderMasterLicensesTable);
+$("#mlic-filter-status")?.addEventListener("change", renderMasterLicensesTable);
+
+$("#mlic-generate-btn")?.addEventListener("click", async () => {
+  const btn = $("#mlic-generate-btn");
+  const fb = $("#mlic-generate-feedback");
+  const user_name = ($("#mlic-user-name")?.value || "").trim() || "Paid Customer";
+  const user_email = ($("#mlic-user-email")?.value || "").trim();
+  const plan_tier = $("#mlic-plan-tier")?.value || "Monthly Pro";
+  const amount_paid = ($("#mlic-amount-paid")?.value || "$49.00").trim();
+  const paid_status = $("#mlic-paid-status")?.value || "paid";
+  const preset = $("#mlic-duration-preset")?.value || "720";
+  const duration_hours = preset === "custom" ? Number($("#mlic-custom-hours")?.value || 48) : Number(preset);
+  const lifetime = duration_hours <= 0 || plan_tier === "Lifetime Studio";
+  const prebind_hwid = ($("#mlic-prebind-hwid")?.value || "").trim();
+  const notes = ($("#mlic-notes")?.value || "").trim();
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await postJSON("/api/master/licenses/generate", {
+      user_name,
+      user_email,
+      plan_tier,
+      amount_paid,
+      paid_status,
+      duration_hours: lifetime ? 0 : duration_hours,
+      lifetime,
+      prebind_hwid: prebind_hwid || null,
+      notes,
+    });
+    if (res?.ok && res.user) {
+      if ($("#mlic-issued-banner")) $("#mlic-issued-banner").classList.remove("hidden");
+      if ($("#mlic-issued-kid")) $("#mlic-issued-kid").textContent = res.user.key_id;
+      if ($("#mlic-issued-token")) $("#mlic-issued-token").value = res.user.cd_key;
+      if ($("#mlic-issued-meta")) {
+        $("#mlic-issued-meta").textContent =
+          `User: ${res.user.user_name} · Plan: ${res.user.plan_tier} (${res.user.duration_label}) · ` +
+          (res.user.bound_hwid ? `Pre-Bound to HWID: ${res.user.bound_hwid}` : "Auto-binds to buyer's 1st computer on activation");
+      }
+      if (fb) fb.innerHTML = `<span style="color:#2ee6a6">✅ Generated signed Ed25519 CD Key <strong>${esc(res.user.key_id)}</strong></span>`;
+      status(`👑 Issued Ed25519 CD Key ${res.user.key_id} for ${res.user.user_name}`);
+      await window.refreshMasterLicensesView();
+    } else if (fb) {
+      fb.innerHTML = `<span style="color:#ff6b8b">❌ ${esc(res?.error || "Generation failed")}</span>`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
+
+$("#mlic-issued-copy-btn")?.addEventListener("click", async () => {
+  const tok = $("#mlic-issued-token")?.value || "";
+  if (!tok) return;
+  try {
+    await navigator.clipboard.writeText(tok);
+    const btn = $("#mlic-issued-copy-btn");
+    if (btn) {
+      btn.textContent = "✅ Copied Full Signed CD Key!";
+      setTimeout(() => { btn.textContent = "📋 Copy Full Signed CD Key"; }, 1500);
+    }
+  } catch (_) {}
+});
+
+$("#mlic-sync-gist-btn")?.addEventListener("click", async () => {
+  const btn = $("#mlic-sync-gist-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Signing & Syncing Ledger…";
+  }
+  try {
+    const res = await postJSON("/api/master/licenses/sync-ledger", {});
+    if (res?.ok) {
+      status(`☁️ ${res.message}`);
+      if ($("#mlic-generate-feedback")) {
+        $("#mlic-generate-feedback").innerHTML = `<span style="color:#2ee6a6">☁️ ${esc(res.message)}</span>`;
+      }
+      await window.refreshMasterLicensesView();
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "☁️ Sync Signed Ledger (Gist)";
+    }
   }
 });
 
@@ -3677,15 +4073,16 @@ const MASTER_UNIFIED_CLI_HELP_TEXT = [
   "║    /save-dir <path>          Set output folder for generated files & builds               ║",
   "║    /vscode                   Export all Council files & open workspace in VS Code         ║",
   "║    /package [cli|script|gui|exe]   Compile & package finished build                       ║",
-  "║    /doctor | /repair         Run Environment Doctor or Workspace Self-Repair              ║",
+  "║    /doctor | /repair         Run Full-App 10-Domain /doctor, Auto-Fix & Repair Guide     ║",
+  "║    /update [check|pull|status] Check & Auto-Pull Git Updates into Desktop App           ║",
   "║    /backup | /rollback       Create or restore workspace snapshot                         ║",
   "║    /ports | /preview | /logs Scan ports, toggle split GUI preview, or stream server logs  ║",
   "║    <cmd> -h  |  /clear       Show syntax help for any command or clear terminal screen    ║",
   "╚════════════════════════════════════════════════════════════════════════════════════════════╝",
 ].join("\n");
 
-async function executeUnifiedCliCommand(cmd, appendLineFn = null) {
-  const outEl = $("#guardian-out");
+async function executeUnifiedCliCommand(cmd, appendLineFn = null, targetOutEl = null) {
+  const outEl = targetOutEl || $("#guardian-out");
   const appendLine =
     appendLineFn ||
     ((text, color = "#e2e8f0", instant = false) => {
@@ -3758,9 +4155,10 @@ async function executeUnifiedCliCommand(cmd, appendLineFn = null) {
       return;
     }
     if (rest.toLowerCase().startsWith("doctor")) {
-      appendLine("🤖 [Claude Code] Running environment & dependency doctor…", "#fb923c", true);
-      const r = await postJSON("/api/forge/env-doctor", { traceback: rest });
-      appendLine(r?.diagnosis || r?.output || JSON.stringify(r, null, 2), "#2ee6a6");
+      const tb = rest.replace(/^doctor\s*/i, "").trim();
+      appendLine(`🤖 [Claude Code] Running Full-App 10-Domain /doctor${tb ? ` (${tb})` : ""}…`, "#fb923c", true);
+      const r = await postJSON("/api/forge/env-doctor", { traceback: tb, auto_fix: !/--no-fix/i.test(tb) });
+      appendLine(r?.output || r?.diagnosis || JSON.stringify(r, null, 2), r?.report?.healthy === false ? "#fbbf24" : "#2ee6a6");
       return;
     }
     appendLine(`🤖 [Claude Code Autonomous Coder] Executing task: "${rest}"…`, "#fb923c", true);
@@ -4252,11 +4650,34 @@ async function executeUnifiedCliCommand(cmd, appendLineFn = null) {
     appendLine("🖥️ Toggled live split GUI preview below terminal.", "#2ee6a6", true);
     return;
   }
-  if (lower === "/doctor" || lower.startsWith("/doctor ") || lower.startsWith("doctor")) {
-    const tb = trimmed.replace(/^\/?doctor\s*/i, "").trim() || "Verify Python, Node, and GPU runtime environment";
-    appendLine(`🩺 Running Environment Doctor: "${tb}"…`, "#2ee6a6", true);
-    const r = await postJSON("/api/forge/env-doctor", { traceback: tb });
-    appendLine(r?.diagnosis || r?.output || JSON.stringify(r), "#2ee6a6");
+  if (lower === "/doctor" || lower.startsWith("/doctor ") || lower === "doctor" || lower.startsWith("doctor ")) {
+    const tb = trimmed.replace(/^\/?doctor\s*/i, "").trim();
+    const autoFix = !/--no-fix/i.test(tb);
+    const runScript = /--run-script/i.test(tb);
+    const generateScript = runScript || /--script/i.test(tb);
+    const cleanedTb = tb.replace(/--(no-fix|run-script|script)/gi, "").trim();
+    appendLine(`🩺 Running Full-App /doctor${cleanedTb ? ` (${cleanedTb})` : ""}${runScript ? " + Repair Script Execution" : ""}…`, "#2ee6a6", true);
+    const r = await postJSON("/api/forge/env-doctor", {
+      traceback: cleanedTb,
+      auto_fix: autoFix,
+      generate_script: generateScript,
+      run_script: runScript,
+    });
+    appendLine(r?.output || r?.diagnosis || JSON.stringify(r, null, 2), r?.report?.healthy === false ? "#fbbf24" : "#2ee6a6");
+    return;
+  }
+  if (lower === "/update" || lower.startsWith("/update ") || lower === "update" || lower.startsWith("update ")) {
+    const sub = trimmed.replace(/^\/?update\s*/i, "").trim().toLowerCase();
+    appendLine(`🔄 Running Git Auto-Updater (${sub || "check & pull"})…`, "#38bdf8", true);
+    let r;
+    if (sub === "pull" || sub === "apply" || sub === "rebuild") {
+      r = await postJSON("/api/updater/pull", { force_rebuild: sub === "rebuild" });
+    } else if (sub === "status") {
+      r = await fetch("/api/updater/status", { cache: "no-store" }).then((x) => x.json());
+    } else {
+      r = await postJSON("/api/updater/check", { auto_apply: true });
+    }
+    appendLine(r?.formatted || r?.message || JSON.stringify(r, null, 2), r?.ok === false ? "#ff6b8b" : "#2ee6a6");
     return;
   }
 
@@ -4523,5 +4944,5 @@ async function executeUnifiedCliCommand(cmd, appendLineFn = null) {
   }
 
   // Default: Council CLI (Shell + Council AI Builder + App Showcase + 4-Format Packager)
-  await runGuardianCommand(trimmed);
+  await runGuardianCommand(trimmed, appendLineFn ? appendLine : null);
 }

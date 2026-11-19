@@ -4,12 +4,18 @@ import path from "path";
 import { exec } from "child_process";
 import {
   COUNCIL_ROOT,
+  COUNCIL_DATA_ROOT,
   RUNTIME_TMP_ROOT,
   ensureRealCliEnvironmentBinaries,
   resolveHostPythonBin,
 } from "../guardian_claude_code.ts";
 
-export { COUNCIL_ROOT as PROJECT_ROOT, RUNTIME_TMP_ROOT, resolveHostPythonBin as resolvePythonBin };
+export {
+  COUNCIL_ROOT as PROJECT_ROOT,
+  COUNCIL_DATA_ROOT as DATA_ROOT,
+  RUNTIME_TMP_ROOT,
+  resolveHostPythonBin as resolvePythonBin,
+};
 
 export const IS_WIN = process.platform === "win32";
 export const TOOLCHAINS_ROOT = path.join(RUNTIME_TMP_ROOT, "toolchains");

@@ -2039,8 +2039,10 @@ function initSectionClis() {
     headerTitle: "SYSTEM, HEALTH, ENDPOINTS & OUTPUT PATH CLI",
     ps1: "system@suomynona-council❯",
     banner: COUNCIL_NG_GRAPHICAL_ASCII_BANNER,
-    menuPrompt: "Commands: '/health', '/endpoints', '/save-dir <path>', '/tool', '/mcp', '/a2a'",
+    menuPrompt: "Commands: '/doctor', '/update', '/health', '/endpoints', '/save-dir <path>', '/tool', '/mcp', '/a2a'",
     autocompleteCatalog: [
+      { value: "/doctor", label: "Run full 10-domain /doctor troubleshooter, auto-repair & step-by-step guide" },
+      { value: "/update", label: "Check & auto-pull latest Git commits into desktop app" },
       { value: "/health", label: "Probe all active Suomynona Council model endpoints & GPU hosts" },
       { value: "/endpoints", label: "Refresh GPU host tunnel URLs from GitHub Gist" },
       { value: "/save-dir ./council_outputs", label: "Set Saved Model Outputs directory path" },
@@ -2050,6 +2052,25 @@ function initSectionClis() {
     ],
     onDirectCommand: async (val, { startFlow, streamText }) => {
       const lower = val.toLowerCase();
+      if (lower === "/doctor" || lower.startsWith("/doctor ") || lower === "doctor" || lower.startsWith("doctor ")) {
+        const tb = val.replace(/^\/?doctor\s*/i, "").trim();
+        streamText(`🩺 Running 10-Domain /doctor${tb ? ` (${tb})` : ""}…`, "#00d4ff", true);
+        const r = await postJSON("/api/doctor", { auto_fix: !/--no-fix/i.test(tb), traceback: tb.replace(/--no-fix/gi, "").trim() }).catch((e) => ({ error: e.message }));
+        streamText(r?.output || r?.error || "Doctor finished.", r?.healthy === false ? "#fbbf24" : "#2ee6a6", true);
+        return true;
+      }
+      if (lower === "/update" || lower.startsWith("/update ") || lower === "update" || lower.startsWith("update ")) {
+        const sub = val.replace(/^\/?update\s*/i, "").trim().toLowerCase();
+        streamText(`🔄 Running Git Auto-Updater (${sub || "check"})…`, "#38bdf8", true);
+        const r =
+          sub === "pull" || sub === "rebuild"
+            ? await postJSON("/api/updater/pull", { force_rebuild: sub === "rebuild" })
+            : sub === "status"
+            ? await getJSON("/api/updater/status")
+            : await postJSON("/api/updater/check", { auto_apply: true });
+        streamText(r?.formatted || r?.message || "Update check complete.", r?.ok === false ? "#ff6b8b" : "#2ee6a6", true);
+        return true;
+      }
       if (val === "1" || lower === "/health" || lower === "health") {
         streamText("🩺 Probing all active Suomynona Council model endpoints…", "#00d4ff", true);
         const h = await getJSON("/api/health").catch(() => ({}));
@@ -4104,9 +4125,10 @@ window.refreshTabbedHostSetupUI = async function (preferredTab) {
               Models: ${modelsCnt} · KV: ${kvGb.toFixed(1)}GB · In-Flight: ${inFlight}
             </div>
             <div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#38bdf8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(url)}">${esc(url)}</div>
-            <div style="display:flex;gap:5px;margin-top:2px">
-              <button type="button" class="ghost xs" data-hs-board-edit="${esc(hk)}" style="flex:1;padding:2px 6px;font-size:10.5px">✎ Configure</button>
-              <button type="button" class="ghost xs" data-hs-board-ping="${esc(hk)}" style="padding:2px 8px;font-size:10.5px;color:#2ee6a6">▶ Ping</button>
+            <div style="display:flex;gap:4px;margin-top:2px">
+              <button type="button" class="ghost xs" data-hs-board-edit="${esc(hk)}" style="flex:1;padding:2px 5px;font-size:10px">✎ Edit</button>
+              <button type="button" class="ghost xs" data-hs-board-fill="${esc(hk)}" style="padding:2px 6px;font-size:10px;color:#fbbf24;border-color:rgba(251,191,36,0.38)" title="Pack Host ${esc(hk.toUpperCase())} up to safe 85% VRAM working cap">⚡ Fill</button>
+              <button type="button" class="ghost xs" data-hs-board-ping="${esc(hk)}" style="padding:2px 6px;font-size:10px;color:#2ee6a6">▶ Ping</button>
             </div>
           </div>
         `;
@@ -4115,9 +4137,19 @@ window.refreshTabbedHostSetupUI = async function (preferredTab) {
 
     board.querySelectorAll("[data-hs-board-pick]").forEach((cardEl) => {
       cardEl.addEventListener("click", (e) => {
-        if (e.target.closest("[data-hs-board-ping]")) return;
+        if (e.target.closest("[data-hs-board-ping], [data-hs-board-fill]")) return;
         const hk = cardEl.getAttribute("data-hs-board-pick") || "a";
         window.refreshTabbedHostSetupUI(hk);
+      });
+    });
+
+    board.querySelectorAll("[data-hs-board-fill]").forEach((fillBtn) => {
+      fillBtn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const hk = fillBtn.getAttribute("data-hs-board-fill") || "a";
+        if (typeof window._runHsFillVram === "function") {
+          window._runHsFillVram(hk, fillBtn);
+        }
       });
     });
 
@@ -4229,6 +4261,44 @@ function initTabbedHostSetupConfigurator() {
     }
   });
 
+  const runHsFillVram = async (hostId = null, triggerBtn = null) => {
+    const outEl = $("#hs-verify-hosts-output");
+    const origTxt = triggerBtn ? triggerBtn.textContent : "";
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = "⏳ Filling…";
+    }
+    const targetLbl = hostId ? `Host ${String(hostId).toUpperCase()}` : "Hosts A–D";
+    if (outEl) outEl.textContent = `⚡ Packing unique models onto ${targetLbl} up to safe 85% VRAM working cap…`;
+    const payload = { target_pct: 85 };
+    if (hostId) payload.host_id = hostId;
+    const res = await postJSON("/api/hosts/fill-vram", payload).catch((e) => ({ ok: false, error: e.message }));
+    await reloadState().catch(() => {});
+    if (typeof syncHostTreeStateFromServer === "function") {
+      await syncHostTreeStateFromServer().catch(() => {});
+    }
+    await window.pollHostHeartbeatNow?.();
+    await window.refreshTabbedHostSetupUI?.(window._activeHostSetupTab || "a");
+    if (triggerBtn) {
+      triggerBtn.disabled = false;
+      triggerBtn.textContent = origTxt;
+    }
+    if (res?.ok) {
+      const msg = `✅ Filled +${res.added_count || 0} model(s) on ${targetLbl} · Cluster VRAM ${res.after?.cluster_used_gb ?? 0}/${res.after?.cluster_total_gb ?? 0}GB (${res.after?.cluster_pressure_pct ?? 0}%)`;
+      if (outEl) outEl.textContent = msg;
+      status(msg);
+    } else if (outEl) {
+      outEl.textContent = `⚠️ VRAM Fill failed: ${res?.error || "Unknown error"}`;
+    }
+  };
+  window._runHsFillVram = runHsFillVram;
+
+  const hsFillAllBtn = $("#hs-fill-all-hosts-vram-btn");
+  if (hsFillAllBtn && !hsFillAllBtn._boundFillAll) {
+    hsFillAllBtn._boundFillAll = true;
+    hsFillAllBtn.addEventListener("click", () => runHsFillVram(null, hsFillAllBtn));
+  }
+
   const hsRebalanceBtn = $("#hs-rebalance-vram-btn");
   if (hsRebalanceBtn && !hsRebalanceBtn._boundRebalance) {
     hsRebalanceBtn._boundRebalance = true;
@@ -4333,25 +4403,31 @@ function initLiveHostHeartbeatMonitor() {
           const usedGb = Number(h.used_vram_gb ?? 0);
           const pct = Number(h.pressure_pct ?? 0);
           const cbState = String(h.circuit_state || "CLOSED");
-          const pLabel = cbState === "OPEN" ? "CB:OPEN" : h.pressure_label || (pct > 90 ? "Overcommitted" : pct >= 75 ? "High Load" : "Nominal");
-          const pCol = cbState === "OPEN" || pct > 90 ? "#f43f5e" : pct >= 75 ? "#f59e0b" : "#2ee6a6";
+          const isBridge = Boolean(h.is_internal_bridge || h.endpoint_mode === "internal_bridge");
+          const hasHostErr = !h.online && !isBridge && Boolean(h.error);
+          const pLabel = cbState === "OPEN" ? "CB:OPEN" : hasHostErr ? (h.error_code || "OFFLINE") : h.pressure_label || (pct > 90 ? "Overcommitted" : pct >= 75 ? "High Load" : "Nominal");
+          const pCol = cbState === "OPEN" || pct > 90 || hasHostErr ? "#f43f5e" : pct >= 75 ? "#f59e0b" : "#2ee6a6";
           const barW = Math.max(2, Math.min(100, Math.round(pct)));
-          const connText = cbState === "OPEN" ? "Bypassed (<1ms)" : h.online ? `${h.latency_ms}ms` : h.configured ? "Tunnel" : "Local/Cfg";
+          const connText = cbState === "OPEN" ? "Bypassed (<1ms)" : isBridge ? "Cloud Bridge" : h.online ? `${h.latency_ms}ms (GPU)` : h.configured ? "⚠️ Offline" : "Local/Cfg";
           const modelsCnt = Number(h.assigned_models_count ?? 0);
           const kvGb = Number(h.kv_vram_gb ?? 0);
           const ctxK = Math.round(Number(h.elastic_ctx || h.context_size || 32768) / 1024);
+          const hoverHelp = h.error_definition
+            ? `${h.error}\nDefinition: ${h.error_definition}${(h.fix_steps || []).length ? `\nFix:\n${h.fix_steps.join("\n")}` : ""}`
+            : `Click to configure Host ${hk.toUpperCase()} (${h.url || ""})`;
           return `
-            <div class="hb-flyout-row" data-hb-jump-host="${esc(hk)}" style="display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:6px 8px" title="Click to configure Host ${esc(hk.toUpperCase())} (${esc(h.url || "")})">
+            <div class="hb-flyout-row" data-hb-jump-host="${esc(hk)}" style="display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:6px 8px" title="${esc(hoverHelp)}">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
                 <div>
                   <strong style="color:#f8fafc">Host ${esc(hk.toUpperCase())}</strong>
-                  <span class="tabular-nums" style="color:#94a3b8;margin-left:5px;font-size:10.5px">${esc(h.accelerator || "G4")} · ${esc(connText)}</span>
+                  <span class="tabular-nums" style="color:${hasHostErr ? "#ff6b8b" : "#94a3b8"};margin-left:5px;font-size:10.5px">${esc(h.accelerator || "G4")} · ${esc(connText)}</span>
                 </div>
                 <span class="tabular-nums" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${pCol}">${usedGb.toFixed(1)}/${totGb}GB (${pct.toFixed(0)}%) · ${esc(pLabel)}</span>
               </div>
               <div style="height:4px;background:rgba(148,163,184,0.16);border-radius:2px;overflow:hidden">
                 <div style="height:100%;width:${barW}%;background:${pCol}"></div>
               </div>
+              ${hasHostErr ? `<div style="font-size:10px;color:#fbbf24;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(h.error)} (Click 🩺 /doctor for steps)</div>` : ""}
               <div class="tabular-nums" style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#94a3b8">
                 <span>Models: ${modelsCnt} · KV(${ctxK}K): ${kvGb.toFixed(1)}GB</span>
                 <span>CB:${esc(cbState)} · Shed:${Number(h.spillover_shed || 0)}/Recv:${Number(h.spillover_received || 0)}</span>
@@ -4440,6 +4516,10 @@ function initLiveHostHeartbeatMonitor() {
   $("#topbar-hb-open-host-cfg")?.addEventListener("click", () => {
     openSlashConfigPopupWindow("host");
   });
+  $("#topbar-hb-doctor-btn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    window.runInteractiveDoctorInWorkspace?.("hosts");
+  });
   $("#topbar-hb-refresh-btn")?.addEventListener("click", async (e) => {
     e.stopPropagation();
     const btn = e.currentTarget;
@@ -4491,6 +4571,7 @@ function classifyFooterStreamCategory(entry = {}) {
   const cat = String(entry.category || "SYS").toUpperCase();
   const lvl = String(entry.level || "info").toLowerCase();
   if (lvl === "error" || cat.includes("ERR") || cat.includes("FAIL") || cat.includes("CRASH")) return "ERROR";
+  if (cat === "CLI" || cat.includes("TERM") || cat.includes("GUARDIAN")) return "CLI";
   if (cat.includes("INPUT") || cat.includes("PROMPT") || cat.includes("REQ") || cat.includes("HTTP") || cat.includes("API")) return "INPUT";
   if (cat.includes("COMPIL") || cat.includes("BUILD") || cat.includes("EXE") || cat.includes("FORGE") || cat.includes("SHELL") || cat.includes("PY") || cat.includes("GO")) return "COMPILER";
   if (cat.includes("INF") || cat.includes("MODEL") || cat.includes("COUNCIL") || cat.includes("SWARM") || cat.includes("JUDGE") || cat.includes("POTATO") || cat.includes("AGENT")) return "INFERENCE";
@@ -4506,6 +4587,8 @@ function renderSingleFooterEventDom(out, ev) {
   const color =
     isErr
       ? "#ff6b8b"
+      : bucket === "CLI"
+      ? (ev._cliColor || "#38bdf8")
       : bucket === "INPUT"
       ? "#38bdf8"
       : bucket === "COMPILER"
@@ -4517,9 +4600,13 @@ function renderSingleFooterEventDom(out, ev) {
   const row = document.createElement("div");
   row.style.cssText =
     `padding:2px 6px;margin-bottom:2px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.4;white-space:pre-wrap;word-break:break-word;` +
-    (isErr ? "background:rgba(244,63,94,0.14);border-left:2px solid #f43f5e;" : "");
+    (isErr
+      ? "background:rgba(244,63,94,0.14);border-left:2px solid #f43f5e;"
+      : bucket === "CLI"
+      ? "background:rgba(15,23,42,0.55);border-left:2px solid rgba(56,189,248,0.55);"
+      : "");
   const ts = ev.ts ? String(ev.ts).slice(-12) : new Date().toISOString().slice(11, 23);
-  row.innerHTML = `<span style="color:#64748b">${esc(ts)}</span> <strong style="color:${color}">[${esc(ev.category || bucket)}]</strong> <span style="color:${isErr ? "#fecdd3" : "#e2e8f0"}">${esc(ev.message || "")}</span>`;
+  row.innerHTML = `<span style="color:#64748b">${esc(ts)}</span> <strong style="color:${color}">[${esc(ev.category || bucket)}]</strong> <span style="color:${isErr ? "#fecdd3" : ev._cliColor || "#e2e8f0"}">${esc(ev.message || "")}</span>`;
   out.appendChild(row);
   while (out.children.length > 260) {
     out.removeChild(out.firstChild);
@@ -4579,6 +4666,10 @@ window.appendGlobalFooterTerminalLog = function (text, color = "#e2e8f0", autoEx
 };
 
 function initGlobalStickyFooterTerminal() {
+  if (typeof window.initUnifiedCommandDeck === "function") {
+    window.initUnifiedCommandDeck();
+    return;
+  }
   const footer = $("#global-footer-terminal");
   const restorePill = $("#gft-restore-pill");
   const minExpBtn = $("#gft-min-exp-btn");
@@ -4693,15 +4784,201 @@ function initGlobalStickyFooterTerminal() {
     window._gftBackendPollTimer = setInterval(pollLiveConsoleStream, 2000);
   }
 
+  // ── Integrated Interactive Suomynona Terminal inside the Bottom Live Backend Stream Area ──
+  const termBtn = $("#gft-terminal-btn");
+  const cliShellSel = $("#gft-cli-shell-select");
+  const cliPs1El = $("#gft-cli-ps1");
+  const cliInput = $("#gft-cli-input");
+  const cliRunBtn = $("#gft-cli-run-btn");
+  const cliDoctorBtn = $("#gft-cli-doctor-btn");
+  const cliDetachBtn = $("#gft-cli-detach-btn");
+
+  const gftAppendLine = (text, color = "#e2e8f0", _instant = true) => {
+    const isErr = String(color).includes("ff6b") || /^❌/i.test(String(text || ""));
+    window.mirrorEventToGlobalFooterStream({
+      ts: new Date().toISOString().slice(11, 23),
+      category: "CLI",
+      level: isErr ? "error" : "info",
+      _cliColor: color,
+      message: String(text || ""),
+    });
+  };
+
+  const syncGftPrompt = () => {
+    const mode = cliShellSel?.value || "council";
+    if (!cliPs1El) return;
+    const map = {
+      council: "suomynona@stream❯",
+      pwsh: "PS stream>",
+      cmd: "CMD stream>",
+      python: "python3 >>>",
+      node: "node >",
+      claude: "claude@stream❯",
+      brain: "brain@stream❯",
+    };
+    cliPs1El.textContent = map[mode] || "suomynona@stream❯";
+  };
+  cliShellSel?.addEventListener("change", () => {
+    syncGftPrompt();
+    cliInput?.focus();
+  });
+  syncGftPrompt();
+
+  let _gftCmdHistory = [];
+  try {
+    _gftCmdHistory = JSON.parse(localStorage.getItem("council-gft-cli-history") || "[]");
+    if (!Array.isArray(_gftCmdHistory)) _gftCmdHistory = [];
+  } catch {
+    _gftCmdHistory = [];
+  }
+  let _gftHistCursor = _gftCmdHistory.length;
+
+  const GFT_SLASH_COMPLETIONS = [
+    "/doctor",
+    "/doctor --script",
+    "/doctor --run-script",
+    "/update",
+    "/update pull",
+    "/vram",
+    "/rebalance",
+    "/hosts",
+    "/bucket",
+    "/boosters",
+    "/clear",
+    "/help",
+  ];
+
+  const runBottomStreamCommand = async (overrideCmd = null) => {
+    const raw = String(overrideCmd !== null ? overrideCmd : cliInput?.value || "").trim();
+    if (!raw) return;
+    if (overrideCmd === null && cliInput) cliInput.value = "";
+    if (_gftCmdHistory[_gftCmdHistory.length - 1] !== raw) {
+      _gftCmdHistory.push(raw);
+      if (_gftCmdHistory.length > 80) _gftCmdHistory.shift();
+      try {
+        localStorage.setItem("council-gft-cli-history", JSON.stringify(_gftCmdHistory));
+      } catch {}
+    }
+    _gftHistCursor = _gftCmdHistory.length;
+
+    setFooterState("expanded");
+    termBtn?.classList.add("on");
+
+    if (raw.toLowerCase() === "clear" || raw.toLowerCase() === "cls" || raw.toLowerCase() === "/clear") {
+      clearBtn?.click();
+      return;
+    }
+
+    const mode = cliShellSel?.value || "council";
+    gftAppendLine(`${cliPs1El?.textContent || "suomynona@stream❯"} ${raw}`, "#38bdf8", true);
+
+    if (cliRunBtn) {
+      cliRunBtn.disabled = true;
+      cliRunBtn.textContent = "…";
+    }
+    try {
+      if (mode === "pwsh" || mode === "cmd" || mode === "python" || mode === "node") {
+        const res = await postJSON("/api/cli/shell-exec", {
+          command: raw,
+          shell: mode,
+          exec_mode: typeof EXEC_MODE !== "undefined" ? EXEC_MODE : "real",
+        });
+        gftAppendLine(res?.output || res?.error || "(Exit 0)", res?.ok !== false ? "#2ee6a6" : "#ff6b8b", true);
+      } else {
+        const prevMode = typeof unifiedTerminalMode !== "undefined" ? unifiedTerminalMode : "council";
+        if (mode === "claude" || mode === "brain") {
+          unifiedTerminalMode = mode;
+        } else if (typeof unifiedTerminalMode !== "undefined" && unifiedTerminalMode !== "council") {
+          unifiedTerminalMode = "council";
+        }
+        try {
+          if (typeof executeUnifiedCliCommand === "function") {
+            await executeUnifiedCliCommand(raw, gftAppendLine, termOut);
+          } else {
+            const res = await postJSON("/api/guardian/run", { prompt: raw, mode: "auto", exec_mode: "real" });
+            gftAppendLine(res?.output || res?.error || "Done.", res?.ok !== false ? "#e2e8f0" : "#ff6b8b", true);
+          }
+        } finally {
+          if (typeof unifiedTerminalMode !== "undefined") unifiedTerminalMode = prevMode;
+        }
+      }
+    } catch (err) {
+      gftAppendLine(`❌ Stream Terminal Error: ${err?.message || err}`, "#ff6b8b", true);
+    } finally {
+      if (cliRunBtn) {
+        cliRunBtn.disabled = false;
+        cliRunBtn.textContent = "Run ↵";
+      }
+      cliInput?.focus();
+    }
+  };
+
+  window.openBottomStreamTerminal = (prefill = "") => {
+    setFooterState("expanded");
+    termBtn?.classList.add("on");
+    if (prefill && cliInput) cliInput.value = prefill;
+    setTimeout(() => cliInput?.focus(), 40);
+  };
+
+  termBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isExp = footer.classList.contains("gft-expanded");
+    if (isExp && document.activeElement === cliInput) {
+      setFooterState("minimized");
+      termBtn.classList.remove("on");
+    } else {
+      window.openBottomStreamTerminal("");
+    }
+  });
+
+  cliRunBtn?.addEventListener("click", () => runBottomStreamCommand());
+  cliDoctorBtn?.addEventListener("click", () => runBottomStreamCommand("/doctor --run-script"));
+  cliDetachBtn?.addEventListener("click", () => {
+    if (window.suomynonaNative?.openDetachedCli) {
+      window.suomynonaNative.openDetachedCli("master");
+    } else if (typeof openCliPopupWindow === "function") {
+      openCliPopupWindow("master");
+    }
+  });
+
+  cliInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runBottomStreamCommand();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (_gftHistCursor > 0) {
+        _gftHistCursor -= 1;
+        cliInput.value = _gftCmdHistory[_gftHistCursor] || "";
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (_gftHistCursor < _gftCmdHistory.length - 1) {
+        _gftHistCursor += 1;
+        cliInput.value = _gftCmdHistory[_gftHistCursor] || "";
+      } else {
+        _gftHistCursor = _gftCmdHistory.length;
+        cliInput.value = "";
+      }
+    } else if (e.key === "Tab") {
+      const val = cliInput.value.trim();
+      const match = GFT_SLASH_COMPLETIONS.find((c) => c.startsWith(val) && c !== val);
+      if (match) {
+        e.preventDefault();
+        cliInput.value = match + " ";
+      }
+    }
+  });
+
   if (grip && termOut) {
     grip.addEventListener("mousedown", (e) => {
       if (!footer.classList.contains("gft-expanded")) return;
       e.preventDefault();
       const startY = e.clientY;
-      const startH = termOut.offsetHeight || 195;
+      const startH = termOut.offsetHeight || 225;
       document.body.style.userSelect = "none";
       const onMove = (ev) => {
-        const nextH = Math.max(90, Math.min(window.innerHeight * 0.6, startH + (startY - ev.clientY)));
+        const nextH = Math.max(90, Math.min(window.innerHeight * 0.62, startH + (startY - ev.clientY)));
         termOut.style.height = `${nextH}px`;
       };
       const onUp = () => {

@@ -8,9 +8,11 @@ import dns from "dns";
 import { exec, execSync, spawn } from "child_process";
 import { PROJECT_ROOT } from "./platform.ts";
 import { COUNCIL_ROOT, PROTECTED_GUARDIAN_FILES, getGuardianHistory, getTerminalCwd, executeRealShellCommand, executeGuardianTask, runCouncilSelfRepair, createGuardianSnapshot, rollbackGuardianSnapshot, listGuardianSnapshots, verifyCouncilSyntax } from "../guardian_claude_code.ts";
-import { CATALOG, SLOT_CHOICES, LINEUP_SLOTS, DEFAULT_LINEUP, ORCA_CYBER_CLOUD_MODELS, COLAB_GPUS, ACCELERATOR_OPTIONS_MAP, DEFAULT_VOICE_PROFILES, DATA_DIR, readJson, writeJson, LIVE_CONSOLE_STREAM, pushLiveConsole, log, QUANTIZATION_SPECS, DATA_TUNING_MODES, DOCS, START, normalizeProvider, normalizeAccelerator, gpuVramGb, gpuModelBudgetGb, providerDisplayLabel, normalizeColabHost, publicColabHost, snapshotHostConfigs, persistHostProfileToBrainMemory, loadColabHosts, saveColabHosts, applyAndPersistHostConfigs, enabledColabHosts, readConf, saveConf, getSettings, loadCustomModels, publicCustomModels, syncCustomCatalogIntoRuntime, loadCustomCatalog, loadHfBuckets, persistModelsAndBucketsToBrainMemory, autoMountCustomModelIntoLineup, loadHostCustomizations, loadTools, loadMcp, loadVoiceProfiles, saveVoiceProfiles, getRecommendedMcpServersForAgent, loadAgents, saveAgents, recordAgentRunTelemetry, computeAgentPerformanceDashboard, optimizeAgentAndTelemetry, loadLineupSave, loadCloudLineup, loadCloudBackends, splitLineup, combineHostLineups, BACKENDS, refreshBackends, loadVaultMemory, loadTurnsMemory, hydrateMemFromDisk, buildBackendSystemPrompt, LIVE_HOST_TUNNELS, HOST_VERIFIED_STATE } from "./state-and-hosts.ts";
-import { HOST_CIRCUIT_BREAKERS, recordHostCircuitSuccess, recordHostCircuitFailure, resetHostCircuit, isBuiltInLoopbackStubUrl, computeHostVramTelemetry, computeClusterVramSnapshot, rebalanceLineupAcrossHostsFFD, probeHostEndpoint, syncGistTunnels, GIST_DAEMON_STATE, runAutoGistTunnelDaemonTick, resolveOrcaRouterTargetModel, callSingleBackendEngine, buildLiveHostDiagnosticSummary, completeBackend, runDesktopTool, executeMcpServerTool, parseToolCalls, stripToolTags } from "./vram-and-inference.ts";
+import { CATALOG, SLOT_CHOICES, LINEUP_SLOTS, DEFAULT_LINEUP, ORCA_CYBER_CLOUD_MODELS, COLAB_GPUS, ACCELERATOR_OPTIONS_MAP, DEFAULT_VOICE_PROFILES, DATA_DIR, readJson, writeJson, LIVE_CONSOLE_STREAM, pushLiveConsole, log, QUANTIZATION_SPECS, DATA_TUNING_MODES, DOCS, START, normalizeProvider, normalizeAccelerator, gpuVramGb, gpuModelBudgetGb, providerDisplayLabel, normalizeColabHost, publicColabHost, snapshotHostConfigs, persistHostProfileToBrainMemory, loadColabHosts, saveColabHosts, applyAndPersistHostConfigs, enabledColabHosts, readConf, saveConf, getSettings, loadCustomModels, publicCustomModels, syncCustomCatalogIntoRuntime, loadCustomCatalog, loadCustomSlots, saveCustomSlots, syncCustomSlotsIntoEnv, CustomSlotKind, CustomSlotRecord, loadHfBuckets, persistModelsAndBucketsToBrainMemory, autoMountCustomModelIntoLineup, loadHostCustomizations, loadTools, loadMcp, loadVoiceProfiles, saveVoiceProfiles, getRecommendedMcpServersForAgent, loadAgents, saveAgents, recordAgentRunTelemetry, computeAgentPerformanceDashboard, optimizeAgentAndTelemetry, loadLineupSave, loadCloudLineup, loadCloudBackends, splitLineup, combineHostLineups, BACKENDS, refreshBackends, loadVaultMemory, loadTurnsMemory, hydrateMemFromDisk, buildBackendSystemPrompt, INTERNAL_BRIDGE_PORTS, isInternalBridgeUrl, getValidGeminiApiKey, inspectGeminiKeyHealth, LIVE_HOST_TUNNELS, HOST_VERIFIED_STATE } from "./state-and-hosts.ts";
+import { HOST_CIRCUIT_BREAKERS, recordHostCircuitSuccess, recordHostCircuitFailure, resetHostCircuit, isBuiltInLoopbackStubUrl, computeHostVramTelemetry, computeClusterVramSnapshot, rebalanceLineupAcrossHostsFFD, fillHostsToSafeVramCapacity, probeHostEndpoint, HostEndpointProbeResult, syncGistTunnels, GIST_DAEMON_STATE, runAutoGistTunnelDaemonTick, resolveOrcaRouterTargetModel, callSingleBackendEngine, buildLiveHostDiagnosticSummary, completeBackend, runDesktopTool, executeMcpServerTool, parseToolCalls, stripToolTags } from "./vram-and-inference.ts";
 import { loadClusterConfig, saveClusterConfig } from "./shared-services.ts";
+import { runComprehensiveDoctor, formatDoctorTerminalReport } from "./doctor.ts";
+import { checkForGitUpdates, pullAndApplyGitUpdate, getAutoUpdaterState, formatUpdaterCliReport } from "./auto-updater.ts";
 const __dirname = PROJECT_ROOT;
 export function registerAgentsHostsGuardianRoutes(app: Express): void {
   // ── Agent Execution (/api/agent and /api/agent/run) ──
@@ -1094,10 +1096,20 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       "HF_TOKEN",
       "KAGGLE_USERNAME",
       "KAGGLE_KEY",
+      "ORCAROUTER_API_KEY",
       "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
       "XAI_API_KEY",
       "OPENROUTER_API_KEY",
       "GEMINI_API_KEY",
+      "GROQ_API_KEY",
+      "DEEPSEEK_API_KEY",
+      "MISTRAL_API_KEY",
+      "TOGETHER_API_KEY",
+      "LOCAL_OLLAMA_URL",
+      "LOCAL_LMSTUDIO_URL",
+      "LOCAL_LLAMACPP_URL",
+      "RUNTIME_PROFILE",
     ]) {
       if (typeof b[k] === "string" && b[k].trim()) {
         confUpdates[k] = b[k].trim();
@@ -1309,29 +1321,17 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
           let reachable = false;
           let latencyMs: number | null = null;
           let remoteModelsCount = 0;
+          let probeRes: HostEndpointProbeResult | null = null;
 
           if (candidateUrl && /^https?:\/\//i.test(candidateUrl)) {
-            const baseClean = candidateUrl.replace(/\/+$/, "");
-            const probeTarget = baseClean.endsWith("/v1") ? `${baseClean}/models` : `${baseClean}/v1/models`;
-            const tStart = Date.now();
-            const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 900);
-            try {
-              const r = await fetch(probeTarget, { method: "GET", signal: ctrl.signal });
-              latencyMs = Math.max(1, Date.now() - tStart);
-              if (r.ok) {
-                reachable = true;
-                const j: any = await r.json().catch(() => ({}));
-                if (Array.isArray(j?.data)) remoteModelsCount = j.data.length;
-              }
-            } catch {
-              reachable = false;
-            } finally {
-              clearTimeout(timer);
-            }
+            probeRes = await probeHostEndpoint(candidateUrl, hObj, 1100);
+            reachable = probeRes.ok;
+            latencyMs = probeRes.ok ? Math.max(1, probeRes.latency_ms) : null;
+            remoteModelsCount = probeRes.models.length;
           }
 
-          const hasExplicitTunnel = reachable || (!isLoopbackStub && /^https?:\/\//i.test(candidateUrl));
+          const isInternalBridge = Boolean(probeRes?.is_internal_bridge || isInternalBridgeUrl(candidateUrl));
+          const hasExplicitTunnel = reachable || (!isLoopbackStub && !isInternalBridge && /^https?:\/\//i.test(candidateUrl));
           const hostVram = vramSnap.hosts_map[hid] || computeHostVramTelemetry(hObj);
           const verState = HOST_VERIFIED_STATE[hid] || ({} as any);
           const computedUsedMib = Math.round(hostVram.used_vram_gb * 1024);
@@ -1340,29 +1340,51 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
             HOST_VERIFIED_STATE[hid] = {
               ...verState,
               tunnel_url: candidateUrl,
+              is_internal_bridge: isInternalBridge,
+              endpoint_mode: isInternalBridge ? "internal_bridge" : "external_gpu",
               gpu_used_mib: computedUsedMib,
               gpu_total_mib: Math.round(vramGb * 1024),
               verified_at: Date.now(),
               error: "",
+              error_code: undefined,
+              error_definition: undefined,
+              fix_steps: undefined,
               online: true,
               ok: true,
               tunnel_ok: true,
               latency_ms: latencyMs,
               checked_at: new Date().toISOString(),
             };
-          } else if (HOST_VERIFIED_STATE[hid]) {
-            HOST_VERIFIED_STATE[hid].online = false;
-            HOST_VERIFIED_STATE[hid].tunnel_ok = false;
-            HOST_VERIFIED_STATE[hid].gpu_used_mib = computedUsedMib;
+          } else {
+            HOST_VERIFIED_STATE[hid] = {
+              ...verState,
+              tunnel_url: candidateUrl,
+              is_internal_bridge: isInternalBridge,
+              endpoint_mode: hasExplicitTunnel ? "offline" : "bridge",
+              gpu_used_mib: computedUsedMib,
+              gpu_total_mib: Math.round(vramGb * 1024),
+              verified_at: Date.now(),
+              online: false,
+              ok: true,
+              tunnel_ok: false,
+              latency_ms: null,
+              checked_at: new Date().toISOString(),
+              http_status: probeRes?.http_status,
+              error: probeRes?.error || "Host endpoint unreachable",
+              error_code: probeRes?.error_code,
+              error_definition: probeRes?.error_definition,
+              fix_steps: probeRes?.fix_steps,
+            };
           }
 
-          if (reachable) {
+          if (reachable || isInternalBridge) {
             recordHostCircuitSuccess(hid);
           } else if (!isLoopbackStub && hasExplicitTunnel) {
-            recordHostCircuitFailure(hid, "Heartbeat probe unreachable");
+            recordHostCircuitFailure(hid, probeRes?.error || "Heartbeat probe unreachable");
           }
 
-          const statusLabel = reachable ? "online" : hasExplicitTunnel ? "configured" : "bridge";
+          const endpointMode = isInternalBridge ? "internal_bridge" : reachable ? "external_gpu" : hasExplicitTunnel ? "offline" : "bridge";
+          const statusLabel = isInternalBridge ? "bridge" : reachable ? "online" : hasExplicitTunnel ? "offline" : "bridge";
           return [
             hid,
             {
@@ -1370,6 +1392,14 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
               name: hObj.name || `Host ${hid.toUpperCase()}`,
               online: reachable,
               configured: hasExplicitTunnel,
+              is_internal_bridge: isInternalBridge,
+              endpoint_mode: endpointMode,
+              engine: probeRes?.engine || "bridge",
+              http_status: probeRes?.http_status,
+              error: reachable ? "" : (probeRes?.error || ""),
+              error_code: reachable ? undefined : probeRes?.error_code,
+              error_definition: reachable ? undefined : probeRes?.error_definition,
+              fix_steps: reachable ? undefined : probeRes?.fix_steps,
               status: statusLabel,
               latency_ms: reachable ? latencyMs : hostVram.ping_ms,
               provider,
@@ -1478,6 +1508,24 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       const result = rebalanceLineupAcrossHostsFFD({
         dryRun,
         deduplicate: b.deduplicate !== false,
+      });
+      res.json({
+        ...result,
+        backends_count: BACKENDS.length,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/hosts/fill-vram", (req: Request, res: Response) => {
+    try {
+      const b = req.body || {};
+      const hostId = typeof b.host_id === "string" ? b.host_id.trim() : undefined;
+      const targetPct = Number(b.target_pct) || 85;
+      const result = fillHostsToSafeVramCapacity({
+        hostId: hostId || undefined,
+        targetPct,
       });
       res.json({
         ...result,
@@ -3325,6 +3373,9 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
   });
 
   app.get("/api/health", (_req: Request, res: Response) => {
+    const confNow = readConf();
+    const validGemKey = getValidGeminiApiKey();
+    const gemHealth = inspectGeminiKeyHealth(process.env.GEMINI_API_KEY || confNow.GEMINI_API_KEY);
     const rows = BACKENDS.map((b) => ({
       name: b.name,
       ok: true,
@@ -3333,8 +3384,8 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
     }));
     rows.push({
       name: "Server-Side Gemini AI Bridge",
-      ok: Boolean(process.env.GEMINI_API_KEY),
-      detail: process.env.GEMINI_API_KEY ? "Connected via environment secret" : "Missing GEMINI_API_KEY",
+      ok: Boolean(validGemKey),
+      detail: validGemKey ? "Connected via valid Gemini API key" : (gemHealth.reason || "Missing GEMINI_API_KEY (run /doctor keys)"),
       kind: "cloud",
     });
     res.json(rows);
@@ -3346,17 +3397,146 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
     res.json({ ok: true, count });
   });
 
+  const STANDARD_VAULT_KEYS = [
+    "ORCAROUTER_API_KEY",
+    "OPENROUTER_API_KEY",
+    "GEMINI_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "XAI_API_KEY",
+    "GROQ_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "MISTRAL_API_KEY",
+    "TOGETHER_API_KEY",
+    "HF_TOKEN",
+    "GH_TOKEN",
+    "GIST_ID",
+    "GH_USERNAME",
+    "USER_EMAIL",
+    "KAGGLE_USERNAME",
+    "KAGGLE_KEY",
+  ] as const;
+
+  const SECRET_KEY_NAMES = new Set([
+    "ORCAROUTER_API_KEY",
+    "OPENROUTER_API_KEY",
+    "GEMINI_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "XAI_API_KEY",
+    "GROQ_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "MISTRAL_API_KEY",
+    "TOGETHER_API_KEY",
+    "HF_TOKEN",
+    "GH_TOKEN",
+    "KAGGLE_KEY",
+  ]);
+
+  function maskSecretValue(val: string, keyName: string): string {
+    const clean = String(val || "").trim();
+    if (!clean) return "";
+    if (!SECRET_KEY_NAMES.has(keyName)) return clean;
+    if (clean === "configured") return "Configured (env)";
+    if (clean.length <= 8) return "••••" + clean.slice(-2);
+    return `${clean.slice(0, 5)}••••${clean.slice(-4)}`;
+  }
+
+  async function probeLocalEndpointAlive(rawUrl: string): Promise<{ online: boolean; models: string[] }> {
+    try {
+      const clean = String(rawUrl || "").trim().replace(/\/+$/, "");
+      if (!clean) return { online: false, models: [] };
+      const u = new URL(clean);
+      const port = Number(u.port || (u.protocol === "https:" ? 443 : 80));
+      if ((u.hostname === "127.0.0.1" || u.hostname === "localhost") && INTERNAL_BRIDGE_PORTS.has(port)) {
+        return { online: false, models: [] };
+      }
+      const r = await fetch(`${clean}/models`, { signal: AbortSignal.timeout(750) });
+      if (!r.ok) return { online: false, models: [] };
+      const j: any = await r.json().catch(() => ({}));
+      const models = Array.isArray(j?.data) ? j.data.map((m: any) => String(m?.id || "")).filter(Boolean).slice(0, 8) : [];
+      return { online: true, models };
+    } catch {
+      return { online: false, models: [] };
+    }
+  }
+
+  async function buildVaultOverviewPayload() {
+    const conf = readConf();
+    const keyStatus: Record<string, { configured: boolean; preview: string }> = {};
+    for (const k of STANDARD_VAULT_KEYS) {
+      const val = k === "GEMINI_API_KEY" ? getValidGeminiApiKey() || "" : String(conf[k] || "").trim();
+      keyStatus[k] = {
+        configured: Boolean(val),
+        preview: maskSecretValue(val, k),
+      };
+    }
+    const localUrls = {
+      ollama: conf.LOCAL_OLLAMA_URL || "http://127.0.0.1:11434/v1",
+      lmstudio: conf.LOCAL_LMSTUDIO_URL || "http://127.0.0.1:1234/v1",
+      llamacpp: conf.LOCAL_LLAMACPP_URL || "http://127.0.0.1:8080/v1",
+    };
+    const [ollamaProbe, lmProbe, llamaProbe] = await Promise.all([
+      probeLocalEndpointAlive(localUrls.ollama),
+      probeLocalEndpointAlive(localUrls.lmstudio),
+      probeLocalEndpointAlive(localUrls.llamacpp),
+    ]);
+    const customSlots = loadCustomSlots().map((s) => ({
+      ...s,
+      value_preview: s.value ? maskSecretValue(s.value, "OPENAI_API_KEY") : "",
+      value: s.kind === "api_key" || s.kind === "token" ? "" : s.value,
+      has_secret: Boolean(s.value),
+    }));
+
+    const readyModes: string[] = [];
+    if (keyStatus.ORCAROUTER_API_KEY?.configured) readyModes.push("OrcaRouter");
+    if (keyStatus.OPENROUTER_API_KEY?.configured) readyModes.push("OpenRouter");
+    if (keyStatus.GEMINI_API_KEY?.configured) readyModes.push("Gemini");
+    if (keyStatus.OPENAI_API_KEY?.configured) readyModes.push("OpenAI");
+    if (keyStatus.ANTHROPIC_API_KEY?.configured) readyModes.push("Anthropic");
+    if (keyStatus.GROQ_API_KEY?.configured) readyModes.push("Groq");
+    if (keyStatus.DEEPSEEK_API_KEY?.configured) readyModes.push("DeepSeek");
+    if (keyStatus.XAI_API_KEY?.configured) readyModes.push("xAI");
+    if (keyStatus.MISTRAL_API_KEY?.configured) readyModes.push("Mistral");
+    if (keyStatus.TOGETHER_API_KEY?.configured) readyModes.push("Together");
+    if (ollamaProbe.online) readyModes.push("Ollama Local");
+    if (lmProbe.online) readyModes.push("LM Studio");
+    if (llamaProbe.online) readyModes.push("llama.cpp");
+    if (customSlots.some((s) => s.enabled && s.kind === "api_key")) readyModes.push("Custom API");
+
+    return {
+      ok: true,
+      runtime_profile: conf.RUNTIME_PROFILE || "auto",
+      keys: keyStatus,
+      local_urls: localUrls,
+      local_status: {
+        ollama: ollamaProbe,
+        lmstudio: lmProbe,
+        llamacpp: llamaProbe,
+      },
+      custom_slots: customSlots,
+      ready_modes: readyModes,
+    };
+  }
+
   app.get("/api/keys", (_req: Request, res: Response) => {
     const conf = readConf();
     res.json({
       HF_TOKEN: conf.HF_TOKEN ? "saved" : "",
       GH_TOKEN: conf.GH_TOKEN ? "saved" : "",
       GIST_ID: conf.GIST_ID ? "saved" : "",
-      GH_USERNAME: conf.GH_USERNAME || "suomynona-council",
-      GEMINI_API_KEY: process.env.GEMINI_API_KEY ? "saved" : "",
+      GH_USERNAME: conf.GH_USERNAME || "",
+      ORCAROUTER_API_KEY: conf.ORCAROUTER_API_KEY ? "saved" : "",
+      GEMINI_API_KEY: getValidGeminiApiKey() ? "saved" : "",
       OPENAI_API_KEY: conf.OPENAI_API_KEY ? "saved" : "",
+      ANTHROPIC_API_KEY: conf.ANTHROPIC_API_KEY ? "saved" : "",
       XAI_API_KEY: conf.XAI_API_KEY ? "saved" : "",
       OPENROUTER_API_KEY: conf.OPENROUTER_API_KEY ? "saved" : "",
+      GROQ_API_KEY: conf.GROQ_API_KEY ? "saved" : "",
+      DEEPSEEK_API_KEY: conf.DEEPSEEK_API_KEY ? "saved" : "",
+      MISTRAL_API_KEY: conf.MISTRAL_API_KEY ? "saved" : "",
+      TOGETHER_API_KEY: conf.TOGETHER_API_KEY ? "saved" : "",
+      RUNTIME_PROFILE: conf.RUNTIME_PROFILE || "auto",
     });
   });
 
@@ -3364,6 +3544,263 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
     saveConf(req.body || {});
     refreshBackends();
     res.json({ ok: true });
+  });
+
+  app.get("/api/vault/overview", async (_req: Request, res: Response) => {
+    try {
+      res.json(await buildVaultOverviewPayload());
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/vault/keys", async (req: Request, res: Response) => {
+    try {
+      const b = req.body || {};
+      const updates: Record<string, any> = {};
+      const keysObj = b.keys && typeof b.keys === "object" ? b.keys : b;
+      for (const k of STANDARD_VAULT_KEYS) {
+        if (keysObj[k] === null || keysObj[k] === "__CLEAR__") {
+          updates[k] = "__CLEAR__";
+        } else if (typeof keysObj[k] === "string" && keysObj[k].trim()) {
+          updates[k] = keysObj[k].trim();
+        }
+      }
+      if (typeof b.runtime_profile === "string" && b.runtime_profile.trim()) {
+        updates.RUNTIME_PROFILE = b.runtime_profile.trim();
+      }
+      if (b.local_urls && typeof b.local_urls === "object") {
+        if (typeof b.local_urls.ollama === "string") updates.LOCAL_OLLAMA_URL = b.local_urls.ollama.trim() || "http://127.0.0.1:11434/v1";
+        if (typeof b.local_urls.lmstudio === "string") updates.LOCAL_LMSTUDIO_URL = b.local_urls.lmstudio.trim() || "http://127.0.0.1:1234/v1";
+        if (typeof b.local_urls.llamacpp === "string") updates.LOCAL_LLAMACPP_URL = b.local_urls.llamacpp.trim() || "http://127.0.0.1:8080/v1";
+      }
+      saveConf(updates);
+      refreshBackends();
+      const overview = await buildVaultOverviewPayload();
+      log(`🔑 [Keys & Vault] Updated credentials / runtime profile (${overview.runtime_profile})`);
+      res.json(overview);
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/vault/slots", (req: Request, res: Response) => {
+    try {
+      const b = req.body || {};
+      const kindRaw = String(b.kind || "api_key").trim().toLowerCase();
+      const validKinds: CustomSlotKind[] = ["api_key", "token", "host", "mcp", "tool"];
+      const kind: CustomSlotKind = validKinds.includes(kindRaw as CustomSlotKind) ? (kindRaw as CustomSlotKind) : "api_key";
+      const name = String(b.name || "").trim();
+      if (!name) return res.status(400).json({ ok: false, error: "Slot name is required." });
+
+      const id = String(b.id || `cslot_${kind}_${Date.now()}_${crypto.randomBytes(2).toString("hex")}`).trim();
+      const slots = loadCustomSlots();
+      const prev = slots.find((x) => x.id === id);
+      const record: CustomSlotRecord = {
+        id,
+        kind,
+        name,
+        env_key: String(b.env_key || prev?.env_key || "").trim() || undefined,
+        value: typeof b.value === "string" && b.value.trim() ? b.value.trim() : prev?.value,
+        base_url: String(b.base_url || prev?.base_url || "").trim() || undefined,
+        default_model: String(b.default_model || prev?.default_model || "").trim() || undefined,
+        command: String(b.command || prev?.command || "").trim() || undefined,
+        args: Array.isArray(b.args)
+          ? b.args.map(String).filter(Boolean)
+          : typeof b.args === "string"
+          ? b.args.split(/\s+/).filter(Boolean)
+          : prev?.args || [],
+        tool_type: String(b.tool_type || prev?.tool_type || "shell_cmd").trim() || undefined,
+        notes: String(b.notes || prev?.notes || "").trim() || undefined,
+        enabled: b.enabled !== undefined ? Boolean(b.enabled) : true,
+        created_at: prev?.created_at || new Date().toISOString(),
+      };
+
+      const nextSlots = [record, ...slots.filter((x) => x.id !== id)];
+      saveCustomSlots(nextSlots);
+
+      // Cross-register into native subsystems so custom slots work seamlessly everywhere
+      if (kind === "host" && record.base_url) {
+        const hosts = loadColabHosts();
+        const hid = `slot_${id.slice(-8)}`;
+        const filteredHosts = hosts.filter((h) => h.id !== hid);
+        filteredHosts.push(
+          normalizeColabHost({
+            id: hid,
+            name: `${record.name} (Custom GPU)`,
+            provider: "custom",
+            accelerator: "CUSTOM",
+            custom_url: record.base_url,
+            enabled: record.enabled,
+          })
+        );
+        saveColabHosts(filteredHosts);
+        LIVE_HOST_TUNNELS[hid] = record.base_url.replace(/\/+$/, "");
+      } else if (kind === "mcp" && record.command) {
+        const mcps = readJson<any[]>("mcp_ng.json", []);
+        const nextMcp = [
+          ...(Array.isArray(mcps) ? mcps.filter((m) => m.id !== id) : []),
+          {
+            id,
+            name: record.name,
+            title: record.name,
+            command: record.command,
+            args: record.args || [],
+            description: record.notes || "Custom Vault MCP Server",
+            custom_slot: true,
+          },
+        ];
+        writeJson("mcp_ng.json", nextMcp);
+      } else if (kind === "tool") {
+        const tools = readJson<any[]>("tools_ng.json", []);
+        const targetVal = record.command || record.base_url || "";
+        const nextTools = [
+          ...(Array.isArray(tools) ? tools.filter((t) => t.id !== id) : []),
+          {
+            id,
+            name: record.name,
+            type: record.tool_type || "shell_cmd",
+            command: targetVal,
+            url: targetVal,
+            description: record.notes || `Custom ${record.tool_type || "shell_cmd"} tool`,
+            created_at: record.created_at,
+          },
+        ];
+        writeJson("tools_ng.json", nextTools);
+      }
+
+      refreshBackends();
+      syncCustomSlotsIntoEnv(nextSlots);
+      log(`🔌 [Custom Slot Added] [${kind.toUpperCase()}] ${record.name}`);
+      res.json({ ok: true, slot: { ...record, value: "", has_secret: Boolean(record.value) } });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete("/api/vault/slots/:id", (req: Request, res: Response) => {
+    const id = String(req.params.id || "").trim();
+    const existing = loadCustomSlots();
+    const target = existing.find((s) => s.id === id);
+    const next = existing.filter((s) => s.id !== id);
+    saveCustomSlots(next);
+
+    if (target?.kind === "host") {
+      const hid = `slot_${id.slice(-8)}`;
+      saveColabHosts(loadColabHosts().filter((h) => h.id !== hid));
+    } else if (target?.kind === "mcp") {
+      const mcps = readJson<any[]>("mcp_ng.json", []);
+      writeJson("mcp_ng.json", (Array.isArray(mcps) ? mcps : []).filter((m) => m.id !== id));
+    } else if (target?.kind === "tool") {
+      const tools = readJson<any[]>("tools_ng.json", []);
+      writeJson("tools_ng.json", (Array.isArray(tools) ? tools : []).filter((t) => t.id !== id));
+    }
+
+    refreshBackends();
+    res.json({ ok: true, remaining: next.length });
+  });
+
+  app.post("/api/vault/test", async (req: Request, res: Response) => {
+    const t0 = Date.now();
+    const target = String(req.body?.target || "").trim().toLowerCase();
+    const conf = readConf();
+    try {
+      let checkUrl = "";
+      const headers: Record<string, string> = {};
+      if (target === "orcarouter") {
+        const key = String(req.body?.key || conf.ORCAROUTER_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No ORCAROUTER_API_KEY entered" });
+        checkUrl = "https://api.orcarouter.ai/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "openrouter") {
+        const key = String(req.body?.key || conf.OPENROUTER_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No OPENROUTER_API_KEY entered" });
+        checkUrl = "https://openrouter.ai/api/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "openai") {
+        const key = String(req.body?.key || conf.OPENAI_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No OPENAI_API_KEY entered" });
+        checkUrl = "https://api.openai.com/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "anthropic") {
+        const key = String(req.body?.key || conf.ANTHROPIC_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No ANTHROPIC_API_KEY entered" });
+        checkUrl = "https://api.anthropic.com/v1/models";
+        headers["x-api-key"] = key;
+        headers["anthropic-version"] = "2023-06-01";
+      } else if (target === "xai") {
+        const key = String(req.body?.key || conf.XAI_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No XAI_API_KEY entered" });
+        checkUrl = "https://api.x.ai/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "groq") {
+        const key = String(req.body?.key || conf.GROQ_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No GROQ_API_KEY entered" });
+        checkUrl = "https://api.groq.com/openai/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "deepseek") {
+        const key = String(req.body?.key || conf.DEEPSEEK_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No DEEPSEEK_API_KEY entered" });
+        checkUrl = "https://api.deepseek.com/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "mistral") {
+        const key = String(req.body?.key || conf.MISTRAL_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No MISTRAL_API_KEY entered" });
+        checkUrl = "https://api.mistral.ai/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "together") {
+        const key = String(req.body?.key || conf.TOGETHER_API_KEY || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No TOGETHER_API_KEY entered" });
+        checkUrl = "https://api.together.xyz/v1/models";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target === "gemini") {
+        const key = String(req.body?.key || getValidGeminiApiKey() || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No valid GEMINI_API_KEY entered" });
+        checkUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`;
+      } else if (target === "gh_token") {
+        const key = String(req.body?.key || conf.GH_TOKEN || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No GH_TOKEN entered" });
+        checkUrl = "https://api.github.com/user";
+        headers.Authorization = `token ${key}`;
+        headers["User-Agent"] = "suomynona-council";
+      } else if (target === "hf_token") {
+        const key = String(req.body?.key || conf.HF_TOKEN || "").trim();
+        if (!key) return res.json({ ok: false, latency_ms: 0, detail: "No HF_TOKEN entered" });
+        checkUrl = "https://huggingface.co/api/whoami-v2";
+        headers.Authorization = `Bearer ${key}`;
+      } else if (target.startsWith("local_")) {
+        const urlMap: Record<string, string> = {
+          local_ollama: req.body?.url || conf.LOCAL_OLLAMA_URL || "http://127.0.0.1:11434/v1",
+          local_lmstudio: req.body?.url || conf.LOCAL_LMSTUDIO_URL || "http://127.0.0.1:1234/v1",
+          local_llamacpp: req.body?.url || conf.LOCAL_LLAMACPP_URL || "http://127.0.0.1:8080/v1",
+        };
+        const probe = await probeLocalEndpointAlive(urlMap[target] || "");
+        return res.json({
+          ok: probe.online,
+          latency_ms: Date.now() - t0,
+          detail: probe.online
+            ? `Online (${probe.models.length} model(s): ${probe.models.slice(0, 3).join(", ") || "ready"})`
+            : `Not reachable at ${urlMap[target]}`,
+        });
+      } else if (target.startsWith("slot:")) {
+        const sid = target.slice(5);
+        const slot = loadCustomSlots().find((s) => s.id === sid);
+        if (!slot) return res.json({ ok: false, latency_ms: 0, detail: "Custom slot not found" });
+        if (!slot.base_url) return res.json({ ok: true, latency_ms: 0, detail: `${slot.kind} slot ready (${slot.env_key || slot.name})` });
+        checkUrl = `${slot.base_url.replace(/\/+$/, "")}/models`;
+        if (slot.value) headers.Authorization = `Bearer ${slot.value}`;
+      }
+
+      if (!checkUrl) return res.status(400).json({ ok: false, latency_ms: 0, detail: "Unknown test target" });
+      const resp = await fetch(checkUrl, { headers, signal: AbortSignal.timeout(5000) });
+      const ms = Date.now() - t0;
+      if (resp.ok) {
+        return res.json({ ok: true, latency_ms: ms, detail: `Verified HTTP ${resp.status} (${ms}ms)` });
+      }
+      return res.json({ ok: false, latency_ms: ms, detail: `Endpoint returned HTTP ${resp.status}` });
+    } catch (e: any) {
+      return res.json({ ok: false, latency_ms: Date.now() - t0, detail: e?.message || "Connection timed out" });
+    }
   });
 
   app.get("/api/cli/sessions/:host", (req: Request, res: Response) => {
@@ -3397,22 +3834,22 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
     });
   });
 
-  app.get("/api/troubleshoot/colab", (_req: Request, res: Response) => {
-    const checks = [
-      { severity: "ok", message: `Suomynona Council server active with ${BACKENDS.length} online model backends.` },
-      ...enabledColabHosts().map((h) => ({
-        severity: "ok",
-        host: h.id,
-        message: `${h.name} (${h.provider.toUpperCase()} · ${h.accelerator}${h.custom_url ? ` · ${h.custom_url}` : h.local_url ? ` · ${h.local_url}` : ""}) is configured and ready (${gpuModelBudgetGb(h)}GB model budget).`,
-      })),
-    ];
-    for (const c of checks) {
-      log(`🩺 ✅ ${c.message}`);
+  app.get("/api/troubleshoot/colab", async (_req: Request, res: Response) => {
+    try {
+      const report = await runComprehensiveDoctor({ autoFix: true });
+      const formatted = formatDoctorTerminalReport(report);
+      const checks = report.checks.map((c) => ({
+        severity: c.status === "ok" || c.status === "repaired" ? "ok" : c.status,
+        host: c.meta?.host,
+        message: `[${c.domain}] ${c.title}: ${c.summary}${c.error_definition ? ` — Definition: ${c.error_definition}` : ""}${c.repair_steps?.length ? ` | Steps: ${c.repair_steps.join(" ")}` : ""}`,
+      }));
+      res.json({ ok: true, checks, report, formatted });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e), checks: [] });
     }
-    res.json({ ok: true, checks });
   });
 
-  function buildMultiHostCliOutput(rawCmd: string, targetHostParam: string): string[] {
+  async function buildMultiHostCliOutput(rawCmd: string, targetHostParam: string): Promise<string[]> {
     const trimmed = String(rawCmd || "sessions").trim();
     let cleanCmd = trimmed.replace(/^!+/, "").trim();
     let lower = cleanCmd.toLowerCase();
@@ -3655,6 +4092,23 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       return lines;
     }
 
+    if (lower === "doctor" || lower.startsWith("doctor ") || lower === "/doctor" || lower.startsWith("/doctor ")) {
+      const arg = cleanCmd.replace(/^\/?doctor\s*/i, "").trim();
+      const autoFix = !/--no-fix/i.test(arg);
+      const report = await runComprehensiveDoctor({ autoFix, traceback: arg.replace(/--no-fix/gi, "").trim() });
+      return formatDoctorTerminalReport(report).split("\n");
+    }
+
+    if (lower === "update" || lower.startsWith("update ") || lower === "/update" || lower.startsWith("/update ")) {
+      const sub = cleanCmd.replace(/^\/?update\s*/i, "").trim().toLowerCase();
+      if (sub === "pull" || sub === "apply" || sub === "rebuild") {
+        const pr = await pullAndApplyGitUpdate({ forceRebuild: sub === "rebuild" });
+        return `${pr.message}\n${formatUpdaterCliReport(pr.state)}`.split("\n");
+      }
+      const st = sub === "status" ? getAutoUpdaterState() : await checkForGitUpdates({ autoApply: true, manual: true });
+      return formatUpdaterCliReport(st).split("\n");
+    }
+
     // Execute real shell command on the host container / local environment and pair with multi-host context
     const shRes = executeRealShellCommand(cleanCmd);
     const outLines = (shRes.output || "(command completed with exit code 0)").split("\n");
@@ -3665,12 +4119,12 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
     return lines;
   }
 
-  app.post("/api/cli/stream", (req: Request, res: Response) => {
+  app.post("/api/cli/stream", async (req: Request, res: Response) => {
     const cmd = String(req.body?.cmd || req.body?.command || "sessions").trim();
     const hostId = String(req.body?.host || "all");
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
-    const lines = buildMultiHostCliOutput(cmd, hostId);
+    const lines = await buildMultiHostCliOutput(cmd, hostId);
     for (const l of lines) {
       res.write(`data: ${l}\n\n`);
     }
@@ -3678,10 +4132,10 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
     res.end();
   });
 
-  app.post("/api/cli/run", (req: Request, res: Response) => {
+  app.post("/api/cli/run", async (req: Request, res: Response) => {
     const cmd = String(req.body?.cmd || req.body?.command || "status").trim();
     const hostId = String(req.body?.host || "all");
-    const lines = buildMultiHostCliOutput(cmd, hostId);
+    const lines = await buildMultiHostCliOutput(cmd, hostId);
     res.json({
       ok: true,
       output: lines.join("\n"),
@@ -3769,11 +4223,13 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       LIVE_HOST_TUNNELS[hostId] ||
       `colab://councilng-${hostId}`;
 
-    let probeRes: { ok: boolean; latency_ms: number; models: string[]; engine: string; error?: string } = {
+    let probeRes: HostEndpointProbeResult = {
       ok: true,
       latency_ms: 12,
       models: [],
       engine: "Council Bridge",
+      active_url: endpoint,
+      is_internal_bridge: false,
       error: "",
     };
     if (endpoint.startsWith("http")) {
@@ -3782,11 +4238,16 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       } catch (_) {}
     }
 
+    const isInternalBridge = Boolean(probeRes.is_internal_bridge || isInternalBridgeUrl(endpoint));
+    const endpointMode = isInternalBridge ? "internal_bridge" : probeRes.ok ? "external_gpu" : endpoint.startsWith("http") ? "offline" : "bridge";
+
     HOST_VERIFIED_STATE[hostId] = {
       online: probeRes.ok,
       ok: true,
       tunnel_ok: probeRes.ok,
       tunnel_url: endpoint,
+      is_internal_bridge: isInternalBridge,
+      endpoint_mode: endpointMode,
       gpu_name: `${host.provider.toUpperCase()} ${host.accelerator}`,
       accelerator_requested: host.accelerator,
       accelerator_actual: host.accelerator,
@@ -3794,18 +4255,31 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       gpu_total_mib: totalMib,
       models_loaded: probeRes.models.length ? probeRes.models : undefined,
       verified_at: Date.now(),
+      http_status: probeRes.http_status,
       error: probeRes.ok ? "" : (probeRes.error || ""),
+      error_code: probeRes.ok ? undefined : probeRes.error_code,
+      error_definition: probeRes.ok ? undefined : probeRes.error_definition,
+      fix_steps: probeRes.ok ? undefined : probeRes.fix_steps,
     };
     const hModels = BACKENDS.filter((b) => b.host === hostId).map((b) => b.name);
     const accelListStr = host.authenticated_accelerators.join(", ");
-    const msg = body.all_accelerators
+    const msg = !probeRes.ok && endpoint.startsWith("http")
+      ? `⚠️ ${host.name} credentials saved, but endpoint check failed (${probeRes.error_code || "UNREACHABLE"}): ${probeRes.error}\n` +
+        (probeRes.error_definition ? `Definition: ${probeRes.error_definition}\n` : "") +
+        (probeRes.fix_steps?.length ? `Steps to fix:\n${probeRes.fix_steps.map((s) => `  • ${s}`).join("\n")}` : "")
+      : body.all_accelerators
       ? `🔑 Authenticated ${host.name} across all accelerators [${accelListStr}] — session councilng-${hostId} active`
       : `🔑 Verified ${host.name} (${host.provider.toUpperCase()} · ${host.accelerator}) — session councilng-${hostId} active (${hModels.length} model(s) loaded)`;
     log(msg);
+    if (!probeRes.ok && endpoint.startsWith("http")) {
+      pushLiveConsole(msg, { category: "HOST", level: "warn", host: hostId.toUpperCase() });
+    }
     res.json({
       ok: true,
-      online: true,
-      status: "green",
+      online: probeRes.ok,
+      status: probeRes.ok ? "green" : "warn",
+      is_internal_bridge: isInternalBridge,
+      endpoint_mode: endpointMode,
       host: hostId,
       name: host.name,
       provider: host.provider,
@@ -3813,6 +4287,10 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       authenticated_accelerators: host.authenticated_accelerators,
       auto_reconnect: Boolean(host.auto_reconnect !== false),
       endpoint,
+      endpoint_warning: probeRes.ok ? undefined : probeRes.error,
+      error_code: probeRes.ok ? undefined : probeRes.error_code,
+      error_definition: probeRes.ok ? undefined : probeRes.error_definition,
+      fix_steps: probeRes.ok ? undefined : probeRes.fix_steps,
       models: hModels,
       hosts: loadColabHosts().map(publicColabHost),
       message: msg,

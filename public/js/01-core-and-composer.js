@@ -116,6 +116,27 @@ function formatInline(str) {
 
 function setCardBodyMarkdown(bodyEl, rawText, streaming = false) {
   bodyEl._rawText = String(rawText || "");
+  const card = bodyEl.closest(".card.ans");
+  if (card) {
+    const snippetEl = card.querySelector(".card-compact-snippet");
+    const metaEl = card.querySelector(".card-meta-pill");
+    const plain = bodyEl._rawText
+      .replace(/```[\s\S]*?```/g, " [code] ")
+      .replace(/[#>*_`]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (snippetEl) {
+      snippetEl.textContent = plain.slice(0, 210) + (plain.length > 210 ? "…" : "") || (streaming ? "Generating response…" : "");
+    }
+    if (metaEl) {
+      const words = bodyEl._rawText ? bodyEl._rawText.trim().split(/\s+/).length : 0;
+      const filesCount = (bodyEl._rawText.match(/===\s*FILE:/g) || []).length;
+      metaEl.textContent = filesCount ? `${words}w · ${filesCount} file${filesCount === 1 ? "" : "s"}` : `${words} words`;
+    }
+    if (!streaming) {
+      window.syncLighthouseIfActive?.(card);
+    }
+  }
   if (streaming) {
     bodyEl.classList.remove("md-rendered");
     bodyEl.textContent = bodyEl._rawText;
@@ -1108,11 +1129,13 @@ $$("[data-open-separate-win]").forEach((btn) => {
 $$(".rail-btn").forEach((b) => b.onclick = () => {
   const sectionTitles = {
     council: "Unrestricted Build Studio",
-    "file-explorer": "Multi-Prompt Model & File Explorer",
+    "file-explorer": "Suomynona Explorer",
+    "vault-hub": "Settings — Keys, Tokens & Custom Slots",
+    "master-licenses": "Paid Users, Ed25519 CD-Keys & Bound Computers",
     "councilng-cli": "Master Terminal CLI",
     lineup: "Models & HF Hub",
     agents: "Specialist Agents & MCP",
-    system: "System & Diagnostics",
+    system: "Settings, Keys & Diagnostics",
     swarm: "RAM Swarm Studio",
   };
   if (b.dataset.dockNav) {
@@ -1127,6 +1150,10 @@ $$(".rail-btn").forEach((b) => b.onclick = () => {
     return;
   }
   if (!b.dataset.view) return;
+  if (b.dataset.view === "vault-hub" && typeof window.openSettingsSection === "function") {
+    window.openSettingsSection("keys");
+    return;
+  }
   $$(".rail-btn").forEach((x) => x.classList.remove("on"));
   b.classList.add("on");
   $$("[data-top-view]").forEach((tb) => tb.classList.toggle("on", tb.dataset.topView === b.dataset.view));
@@ -1142,12 +1169,18 @@ $$(".rail-btn").forEach((b) => b.onclick = () => {
   if (b.dataset.view === "file-explorer") {
     window.refreshFileExplorerView?.();
   }
+  if (b.dataset.view === "vault-hub") {
+    window.refreshVaultHubView?.();
+  }
+  if (b.dataset.view === "master-licenses") {
+    window.refreshMasterLicensesView?.();
+  }
   if (b.dataset.view === "councilng-cli") {
     switchConsoleDockTab("brain-council", { focus: true });
     setUnifiedConsoleLayout("cli");
   }
   if (b.dataset.view === "lineup") { bindLineupWindowTabs(); renderLineup(); }
-  if (b.dataset.view === "system") { runHealth(); renderColabHosts(); loadA2aDashboard(); syncA2aStealthProfileUI(); }
+  if (b.dataset.view === "system") { runHealth(); renderColabHosts(); loadA2aDashboard(); syncA2aStealthProfileUI(); window.refreshVaultHubView?.(); }
   if (b.dataset.view === "swarm") { syncRamSwarmModelsAndSetup(); }
   if (b.dataset.view === "agents") renderAgents();
   if (b.dataset.view === "cli" || b.dataset.view === "guardian") {
@@ -2006,28 +2039,23 @@ function attachTerminalTypingControls(topbarEl, outEl) {
 }
 
 function openLiveTerminalWithOutput(title, terminalLog, cwd, runCmd, ok = true) {
+  if (typeof window.appendUnifiedTerminalEntry === "function") {
+    window.openUnifiedTerminal?.("shell");
+    window.appendUnifiedTerminalEntry({
+      title,
+      command: runCmd || title,
+      output: String(terminalLog || "(starting execution…)"),
+      ok,
+      cwd: cwd || "",
+    });
+    return;
+  }
   const banner =
     `⚡ LIVE TERMINAL · ${title}${cwd ? ` (cwd: ${cwd})` : ""}\n` +
     String(terminalLog || "(starting execution…)");
   if (typeof window.appendGlobalFooterTerminalLog === "function") {
     window.appendGlobalFooterTerminalLog(banner, ok ? "#2ee6a6" : "#fbbf24", true);
   }
-  if (typeof appendInplaceTerminalLog === "function") {
-    appendInplaceTerminalLog(banner, ok ? "#2ee6a6" : "#fbbf24");
-  }
-  if (cwd && $("#gft-cwd-label")) {
-    $("#gft-cwd-label").textContent = cwd;
-  }
-  if (runCmd && $("#gft-cmd-input")) {
-    $("#gft-cmd-input").value = runCmd;
-  }
-  const out = $("#guardian-out");
-  if (!out) return;
-  const headerColor = ok ? "#2ee6a6" : "#ffcc66";
-  const block = document.createElement("div");
-  block.style.cssText = `margin:8px 0;padding:8px 10px;border-left:3px solid ${headerColor};background:rgba(10,16,32,.85);border-radius:6px;white-space:pre-wrap;color:#eef2fb;font-family:Consolas,monospace;font-size:12px`;
-  block.textContent = banner;
-  enqueueTerminalElementTypewriter(out, block);
 }
 
 function resolveBackendIdxForCard(title, explicitIdx) {
@@ -2171,7 +2199,8 @@ function mkCard(title, sub, backendIdx = null) {
   const card = document.createElement("div");
   card.className = "card ans";
   if (typeof backendIdx === "number") card.dataset.backendIdx = String(backendIdx);
-  card.innerHTML = `<h3 class="answer-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="answer-name">${esc(title)}</span>${sub ? `<span class="muted answer-sub">${esc(sub)}</span>` : ""}<button type="button" class="ghost xs card-close-self" title="Close card" style="margin-left:auto;padding:1px 7px">✕</button></h3>
+  card.innerHTML = `<h3 class="answer-head" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><button type="button" class="ghost xs card-dd-toggle" title="Expand/Collapse">▾</button><span class="answer-name">${esc(title)}</span>${sub ? `<span class="muted answer-sub">${esc(sub)}</span>` : ""}<span class="card-meta-pill tabular-nums"></span><button type="button" class="ghost xs card-inspect-btn" title="Open full formatted output popup" style="margin-left:auto">🔍 Popup</button><button type="button" class="ghost xs card-close-self" title="Close card" style="padding:1px 7px">✕</button></h3>
+    <div class="card-compact-snippet muted">Hover to preview full response…</div>
     <div class="body"><span class="caret"></span></div>
     <div class="response-actions">
       <button class="ghost xs card-followup" title="Open a private reply box right here to reply strictly to ${esc(title)}">↩️ Reply to ${esc(title.slice(0, 22))}</button>
@@ -2751,6 +2780,24 @@ function autoGuardReframeClient(rawPrompt) {
 
 $("#ask-btn").onclick = async () => {
   let rawInputPrompt = $("#prompt").value.trim();
+
+  // Support /doctor and /update directly in the main workspace prompt composer
+  const doctorMatch = rawInputPrompt.match(/^\/doctor(?:\s+([\s\S]*))?$/i);
+  if (doctorMatch) {
+    $("#prompt").value = "";
+    if (typeof window.runInteractiveDoctorInWorkspace === "function") {
+      await window.runInteractiveDoctorInWorkspace(doctorMatch[1] || "");
+    }
+    return;
+  }
+  const updateMatch = rawInputPrompt.match(/^\/update(?:\s+([\s\S]*))?$/i);
+  if (updateMatch) {
+    $("#prompt").value = "";
+    if (typeof window.runInteractiveUpdaterInWorkspace === "function") {
+      await window.runInteractiveUpdaterInWorkspace(updateMatch[1] || "check");
+    }
+    return;
+  }
 
   // Support typing /ask, /plan, /build, /cloud, /cloud-council, /hotpotato, /judge, /verdict, /proxies directly in #prompt
   const slashModeMatch = rawInputPrompt.match(/^\/(ask|plan|build|cloud-council|cloud_council|cloud|hotpotato|hot_potato|judge|verdict|proxies)(?:\s+([\s\S]*))?$/i);
@@ -4091,3 +4138,283 @@ async function runInlineHotPotatoPipeline(promptText, cfg = {}) {
     $("#ask-btn").disabled = false;
   }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 🩺 FULL-APP /DOCTOR TROUBLESHOOTER & 🔄 GIT AUTO-UPDATER WORKSPACE INTEGRATION
+// ══════════════════════════════════════════════════════════════════════════════
+async function refreshTopbarGitUpdaterBadge() {
+  const lbl = $("#topbar-git-updater-lbl");
+  const btn = $("#topbar-git-updater-btn");
+  if (!lbl || !btn) return;
+  try {
+    const res = await fetch("/api/updater/status", { cache: "no-store" }).then((r) => r.json());
+    const st = res?.updater;
+    if (!st) return;
+    if (st.status === "pulling" || st.status === "building") {
+      lbl.textContent = "Updating…";
+      btn.style.color = "#38bdf8";
+      btn.style.borderColor = "rgba(56,189,248,0.45)";
+    } else if (st.status === "applied") {
+      lbl.textContent = `Updated ${st.installed_short || ""}`.trim();
+      btn.style.color = "#2ee6a6";
+      btn.style.borderColor = "rgba(46,230,166,0.45)";
+    } else if (st.commits_behind > 0) {
+      lbl.textContent = `${st.commits_behind} Update`;
+      btn.style.color = "#fbbf24";
+      btn.style.borderColor = "rgba(251,191,36,0.5)";
+    } else if (st.status === "error") {
+      lbl.textContent = "Git Err";
+      btn.style.color = "#ff6b8b";
+      btn.style.borderColor = "rgba(255,107,139,0.45)";
+    } else {
+      lbl.textContent = st.installed_short ? `Sync ${st.installed_short}` : "Git Sync ✓";
+      btn.style.color = "#2ee6a6";
+      btn.style.borderColor = "rgba(46,230,166,0.28)";
+    }
+    btn.title = `Git Auto-Updater: ${st.repo_url} (${st.branch}) · Status: ${st.status} · Installed: ${st.installed_short || "?"} · Remote: ${st.remote_short || "checking"} (Click to check & pull)`;
+  } catch (_) {}
+}
+
+window.runInteractiveDoctorInWorkspace = async function (rawArg = "") {
+  const arg = String(rawArg || "").trim();
+  const autoFix = !/--no-fix/i.test(arg);
+  const runScript = /--run-script/i.test(arg);
+  const generateScript = runScript || /--script/i.test(arg);
+  const cleanedArg = arg.replace(/--(no-fix|run-script|script)/gi, "").trim();
+
+  // Switch to main workspace view if currently in Explorer/System
+  const wsBtn = document.querySelector('.rail-btn[data-view="council"]');
+  if (wsBtn && !wsBtn.classList.contains("on")) wsBtn.click();
+
+  const answersEl = $("#answers");
+  if (!answersEl) return null;
+  const body = mkCard(
+    "🩺 Full-App /doctor Diagnostic & Auto-Repair",
+    cleanedArg ? `Scope: ${cleanedArg}` : "All 10 Application Domains"
+  );
+  const card = body.closest(".card.ans");
+  if (card && answersEl.firstChild && answersEl.firstChild !== card) {
+    answersEl.prepend(card);
+  }
+  body.innerHTML = `<div class="muted" style="padding:10px 4px">🩺 Running 10-domain /doctor scan (${autoFix ? "Auto-Repair + Script Generator Armed" : "Read-Only"}) across GPU hosts, credentials, Git updater, toolchains, Python REPL, cloud endpoints, and bundle syntax…</div>`;
+  status("🩺 Running full-app /doctor diagnostics & auto-repair…");
+
+  try {
+    const res = runScript
+      ? await postJSON("/api/doctor/repair-script", { execute: true, traceback: cleanedArg })
+      : await postJSON("/api/doctor", {
+          auto_fix: autoFix,
+          generate_script: generateScript,
+          run_script: runScript,
+          traceback: cleanedArg,
+        });
+    const rep = res?.report || res;
+    if (!rep || !Array.isArray(rep.checks)) {
+      const errTxt = `❌ **/doctor Error:** ${res?.error || "Diagnostic request failed"}`;
+      setCardBodyMarkdown(body, errTxt, false);
+      return res;
+    }
+
+    body._rawText = res.output || res.diagnosis || JSON.stringify(rep, null, 2);
+
+    const badgeStyle = (bg, col) =>
+      `display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;background:${bg};color:${col};border:1px solid ${col}44`;
+
+    const autoRepairBox = rep.auto_repairs?.length
+      ? `<div style="margin:10px 0;padding:10px 12px;border-radius:8px;background:rgba(46,230,166,0.1);border:1px solid rgba(46,230,166,0.35)">
+           <div style="font-weight:700;color:#2ee6a6;margin-bottom:4px">🛠️ Automatic Repairs Applied (${rep.auto_repairs.length})</div>
+           <ul style="margin:0;padding-left:18px;font-size:12px;color:#e2e8f0">${rep.auto_repairs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+         </div>`
+      : "";
+
+    const rs = rep.repair_script || res?.repair_script;
+    const repairScriptBox = rs?.generated
+      ? `<div style="margin:10px 0;padding:10px 12px;border-radius:8px;background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.38)">
+           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+             <strong style="color:#38bdf8;font-size:12.5px">📜 Auto-Generated Repair Script (${esc(rs.platform === "windows_ps1" ? "Windows PowerShell .ps1" : "Bash .sh")})</strong>
+             <span style="${badgeStyle(rs.executed ? (rs.exec_ok ? "rgba(46,230,166,0.16)" : "rgba(251,191,36,0.16)") : "rgba(148,163,184,0.16)", rs.executed ? (rs.exec_ok ? "#2ee6a6" : "#fbbf24") : "#cbd5e1")}">${rs.executed ? (rs.exec_ok ? "Executed ✓ (Exit 0)" : "Executed With Warnings") : "Ready on Disk"}</span>
+           </div>
+           <div class="muted" style="font-size:11.5px;margin-bottom:6px">Saved At: <code>${esc(rs.script_path)}</code>${rs.launcher_path ? ` · One-Click Runner: <code>${esc(rs.launcher_path)}</code>` : ""}</div>
+           ${
+             rs.exec_output
+               ? `<pre style="margin:0 0 8px;max-height:130px;overflow:auto;background:#020612;padding:8px;border-radius:6px;font-size:11px;color:#6ee7b7;white-space:pre-wrap">${esc(rs.exec_output)}</pre>`
+               : ""
+           }
+           <details>
+             <summary style="cursor:pointer;font-size:11.5px;color:#7dd3fc;font-weight:700">View / Inspect Full Repair Script Source (${(rs.script_content || "").split("\n").length} lines)</summary>
+             <pre style="margin:6px 0 0;max-height:240px;overflow:auto;background:#02040a;padding:8px;border-radius:6px;font-size:10.5px;color:#cbd5e1;white-space:pre-wrap">${esc(rs.script_content || "")}</pre>
+           </details>
+           <div class="btn-row" style="margin-top:8px;gap:6px;flex-wrap:wrap">
+             <button type="button" class="ghost xs doctor-copy-script-btn">📋 Copy Repair Script</button>
+             <button type="button" class="ghost xs doctor-open-script-explorer-btn">🗂️ Open in Explorer IDE</button>
+           </div>
+         </div>`
+      : "";
+
+    const rowsHtml = rep.checks
+      .map((c) => {
+        const icon = c.status === "ok" ? "✅" : c.status === "repaired" ? "🛠️" : c.status === "warn" ? "⚠️" : "❌";
+        const borderCol =
+          c.status === "error"
+            ? "rgba(244,63,94,0.45)"
+            : c.status === "warn"
+            ? "rgba(251,191,36,0.45)"
+            : c.status === "repaired"
+            ? "rgba(56,189,248,0.45)"
+            : "rgba(46,230,166,0.22)";
+        const titleCol =
+          c.status === "error" ? "#ff6b8b" : c.status === "warn" ? "#fbbf24" : c.status === "repaired" ? "#38bdf8" : "#2ee6a6";
+
+        const defHtml = c.error_definition
+          ? `<div style="margin-top:6px;padding:7px 10px;border-radius:6px;background:rgba(2,6,23,0.65);border-left:3px solid ${titleCol};font-size:12px;color:#f1f5f9">
+               <strong style="color:${titleCol}">📖 Error Definition${c.error_code ? ` (${esc(c.error_code)})` : ""}:</strong> ${esc(c.error_definition)}
+             </div>`
+          : "";
+        const stepsHtml = c.repair_steps?.length
+          ? `<div style="margin-top:6px;padding:7px 10px;border-radius:6px;background:rgba(15,23,42,0.75);font-size:12px;color:#cbd5e1">
+               <div style="font-weight:700;color:#7dd3fc;margin-bottom:3px">🪜 Step-by-Step Repair Instructions:</div>
+               ${c.repair_steps.map((s) => `<div style="margin-left:6px;line-height:1.45">${esc(s)}</div>`).join("")}
+             </div>`
+          : "";
+
+        return `<div style="padding:9px 11px;margin-bottom:8px;border-radius:8px;background:rgba(15,23,42,0.55);border:1px solid ${borderCol}">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <strong style="color:${titleCol};font-size:12.5px">${icon} ${esc(c.title)}</strong>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8">${esc(c.domain)}</span>
+          </div>
+          <div style="font-size:12px;color:#cbd5e1;margin-top:3px;word-break:break-word">${esc(c.summary)}</div>
+          ${defHtml}
+          ${stepsHtml}
+        </div>`;
+      })
+      .join("");
+
+    body.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <span style="${badgeStyle("rgba(46,230,166,0.14)", "#2ee6a6")}">✅ ${rep.counts?.ok || 0} OK</span>
+        <span style="${badgeStyle("rgba(56,189,248,0.14)", "#38bdf8")}">🛠️ ${rep.counts?.repaired || 0} Auto-Repaired</span>
+        <span style="${badgeStyle("rgba(251,191,36,0.14)", "#fbbf24")}">⚠️ ${rep.counts?.warn || 0} Warnings</span>
+        <span style="${badgeStyle("rgba(244,63,94,0.14)", "#ff6b8b")}">❌ ${rep.counts?.error || 0} Errors</span>
+        <span class="muted" style="font-size:11px;margin-left:auto">${rep.domains?.length || 10} domains · ${rep.duration_ms || 0}ms</span>
+      </div>
+      <div style="font-size:12.5px;color:#e2e8f0;margin-bottom:8px">${esc(rep.repair_summary || "")}</div>
+      <div class="btn-row" style="margin-bottom:10px;gap:6px;flex-wrap:wrap">
+        <button type="button" class="primary xs doctor-rerun-btn">🔧 Re-Run /doctor Auto-Repair</button>
+        <button type="button" class="primary xs doctor-gen-run-script-btn" style="background:linear-gradient(135deg,#0284c7,#2563eb)">⚡ Generate &amp; Run Repair Script</button>
+        <button type="button" class="ghost xs doctor-git-update-btn">🔄 Check &amp; Pull Git Updates</button>
+        <button type="button" class="ghost xs doctor-open-hosts-btn">🖥 Open /host Setup</button>
+        <button type="button" class="ghost xs doctor-open-data-btn">📂 Open Local Data Folder</button>
+      </div>
+      ${autoRepairBox}
+      ${repairScriptBox}
+      ${rowsHtml}
+    `;
+
+    body.querySelector(".doctor-rerun-btn")?.addEventListener("click", () => window.runInteractiveDoctorInWorkspace(cleanedArg));
+    body.querySelector(".doctor-gen-run-script-btn")?.addEventListener("click", () =>
+      window.runInteractiveDoctorInWorkspace(`${cleanedArg} --run-script`.trim())
+    );
+    body.querySelector(".doctor-copy-script-btn")?.addEventListener("click", async (e) => {
+      try {
+        await navigator.clipboard.writeText(rs?.script_content || "");
+        e.currentTarget.textContent = "✅ Copied!";
+        setTimeout(() => {
+          e.currentTarget.textContent = "📋 Copy Repair Script";
+        }, 1400);
+      } catch {}
+    });
+    body.querySelector(".doctor-open-script-explorer-btn")?.addEventListener("click", async () => {
+      const expBtn = document.querySelector('.rail-btn[data-view="file-explorer"]');
+      if (expBtn) expBtn.click();
+      setTimeout(() => {
+        if (rs?.relative_disk_path && typeof window.openExplorerDiskFile === "function") {
+          window.openExplorerDiskFile(rs.relative_disk_path, false);
+        }
+      }, 150);
+    });
+    body.querySelector(".doctor-git-update-btn")?.addEventListener("click", () => window.runInteractiveUpdaterInWorkspace("pull"));
+    body.querySelector(".doctor-open-hosts-btn")?.addEventListener("click", () => window.openSlashConfigPopupWindow?.("host"));
+    body.querySelector(".doctor-open-data-btn")?.addEventListener("click", () => {
+      if (window.suomynonaNative?.openDataFolder) window.suomynonaNative.openDataFolder();
+      else status("Local data directory: %APPDATA%\\Suomynona Council");
+    });
+
+    refreshTopbarGitUpdaterBadge();
+    status(`🩺 /doctor: ${rep.repair_summary}`);
+    return rep;
+  } catch (err) {
+    setCardBodyMarkdown(body, `❌ **/doctor Failed:** ${err.message || err}`, false);
+    status(`❌ /doctor failed: ${err.message || err}`);
+    return null;
+  }
+};
+
+window.runInteractiveUpdaterInWorkspace = async function (subCmd = "check") {
+  const sub = String(subCmd || "check").trim().toLowerCase();
+  const wsBtn = document.querySelector('.rail-btn[data-view="council"]');
+  if (wsBtn && !wsBtn.classList.contains("on")) wsBtn.click();
+
+  const answersEl = $("#answers");
+  if (!answersEl) return null;
+  const body = mkCard("🔄 Git Repository Auto-Updater", `Action: ${sub || "check"}`);
+  const card = body.closest(".card.ans");
+  if (card && answersEl.firstChild && answersEl.firstChild !== card) {
+    answersEl.prepend(card);
+  }
+  body.innerHTML = `<div class="muted" style="padding:10px 4px">🔄 Querying Git repository (${sub === "pull" || sub === "rebuild" ? "pulling commits & rebuilding desktop bundle" : "checking origin/main"})…</div>`;
+  status("🔄 Checking Git repository updates…");
+
+  try {
+    let res;
+    if (sub === "pull" || sub === "apply" || sub === "rebuild") {
+      res = await postJSON("/api/updater/pull", { force_rebuild: sub === "rebuild" });
+    } else if (sub === "status") {
+      res = await fetch("/api/updater/status", { cache: "no-store" }).then((r) => r.json());
+    } else {
+      res = await postJSON("/api/updater/check", { auto_apply: true });
+    }
+    const st = res?.updater || {};
+    body._rawText = res?.formatted || res?.message || JSON.stringify(st, null, 2);
+
+    const errBlock = st.last_error
+      ? `<div style="margin-top:8px;padding:8px 10px;border-radius:6px;background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.4)">
+           <div style="font-weight:700;color:#ff6b8b">❌ ${esc(st.last_error)}</div>
+           ${st.error_definition ? `<div style="font-size:12px;color:#f1f5f9;margin-top:4px"><strong>Definition:</strong> ${esc(st.error_definition)}</div>` : ""}
+           ${st.repair_steps?.length ? `<div style="font-size:12px;color:#cbd5e1;margin-top:4px">${st.repair_steps.map((s) => `<div>${esc(s)}</div>`).join("")}</div>` : ""}
+         </div>`
+      : "";
+
+    body.innerHTML = `
+      <div style="padding:6px 4px;font-size:12.5px;color:#e2e8f0">
+        <div><strong>Repository:</strong> <code>${esc(st.repo_url || "https://github.com/suomynonaew/suomynona-council.git")}</code> (branch <code>${esc(st.branch || "main")}</code>)</div>
+        <div><strong>Repo Folder:</strong> <code>${esc(st.repo_dir || "(auto-clone on pull)")}</code></div>
+        <div><strong>Local HEAD:</strong> <code>${esc(st.local_short || "?")}</code> · <strong>Remote HEAD:</strong> <code>${esc(st.remote_short || "?")}</code> · <strong>Installed:</strong> <code>${esc(st.installed_short || "?")}</code> · <strong>Behind:</strong> ${Number(st.commits_behind || 0)}</div>
+        <div><strong>Status:</strong> <strong style="color:${st.status === "error" ? "#ff6b8b" : "#2ee6a6"}">${esc(String(st.status || "idle").toUpperCase())}</strong> · Auto-Pull: <strong>${st.auto_pull ? "ON" : "OFF"}</strong> (every ${st.poll_interval_sec || 60}s)${st.remote_subject ? ` · "${esc(st.remote_subject)}"` : ""}</div>
+        ${errBlock}
+        <div class="btn-row" style="margin-top:10px;gap:6px;flex-wrap:wrap">
+          <button type="button" class="primary xs updater-pull-now-btn">⬇️ Pull &amp; Rebuild Now</button>
+          <button type="button" class="ghost xs updater-check-now-btn">🔍 Check Remote</button>
+          <button type="button" class="ghost xs updater-doctor-btn">🩺 Run /doctor</button>
+        </div>
+      </div>
+    `;
+    body.querySelector(".updater-pull-now-btn")?.addEventListener("click", () => window.runInteractiveUpdaterInWorkspace("pull"));
+    body.querySelector(".updater-check-now-btn")?.addEventListener("click", () => window.runInteractiveUpdaterInWorkspace("check"));
+    body.querySelector(".updater-doctor-btn")?.addEventListener("click", () => window.runInteractiveDoctorInWorkspace("update"));
+
+    refreshTopbarGitUpdaterBadge();
+    status(`🔄 Git Updater: ${st.status || "checked"}${st.commits_behind > 0 ? ` (${st.commits_behind} commit(s) behind)` : ""}`);
+    return res;
+  } catch (err) {
+    setCardBodyMarkdown(body, `❌ **Updater Error:** ${err.message || err}`, false);
+    status(`❌ Git updater failed: ${err.message || err}`);
+    return null;
+  }
+};
+
+$("#topbar-doctor-btn")?.addEventListener("click", () => window.runInteractiveDoctorInWorkspace(""));
+$("#topbar-git-updater-btn")?.addEventListener("click", () => window.runInteractiveUpdaterInWorkspace("check"));
+setTimeout(refreshTopbarGitUpdaterBadge, 1800);
+setInterval(() => {
+  if (document.visibilityState !== "hidden") refreshTopbarGitUpdaterBadge();
+}, 30000);

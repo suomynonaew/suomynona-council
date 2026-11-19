@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
-import { PROJECT_ROOT } from "./platform.ts";
+import { PROJECT_ROOT, DATA_ROOT } from "./platform.ts";
 
 const __dirname = PROJECT_ROOT;
 
@@ -74,10 +74,10 @@ export const DEFAULT_VOICE_PROFILES: any[] = SERVER_SEEDS.DEFAULT_VOICE_PROFILES
 
 export const VOICES = DEFAULT_VOICE_PROFILES.map((v) => v.id);
 
-// Persistent storage directory inside workspace
-export const DATA_DIR = path.join(__dirname, ".council_data");
-export const WORKSPACE_OUTPUT_ROOT = path.join(__dirname, "council_outputs");
-export const BUILD_ROOT = path.join(__dirname, "council_builds");
+// Persistent storage directory inside writable DATA_ROOT
+export const DATA_DIR = path.join(DATA_ROOT, ".council_data");
+export const WORKSPACE_OUTPUT_ROOT = path.join(DATA_ROOT, "council_outputs");
+export const BUILD_ROOT = path.join(DATA_ROOT, "council_builds");
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(WORKSPACE_OUTPUT_ROOT, { recursive: true });
 fs.mkdirSync(BUILD_ROOT, { recursive: true });
@@ -100,10 +100,44 @@ export function writeJson(filename: string, data: any): void {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 }
 
+// Inspect Gemini API key health (detect template placeholders and ephemeral AI Studio tokens)
+export function inspectGeminiKeyHealth(rawKey?: string): { valid: boolean; reason?: string; code?: string } {
+  const k = String(rawKey || "").trim();
+  if (!k) {
+    return { valid: false, code: "MISSING", reason: "GEMINI_API_KEY is not set" };
+  }
+  if (/^MY_GEMINI_API_KEY$/i.test(k) || /^YOUR_/i.test(k) || /^configured$/i.test(k)) {
+    return {
+      valid: false,
+      code: "PLACEHOLDER",
+      reason: `GEMINI_API_KEY is set to placeholder value '${k}'`,
+    };
+  }
+  if (/^AQ\./.test(k)) {
+    return {
+      valid: false,
+      code: "EPHEMERAL_AISTUDIO_TOKEN",
+      reason:
+        "Token starts with 'AQ.' (ephemeral Google AI Studio proxy token that expires outside AI Studio; local desktop requires a standard 'AIzaSy...' key from https://aistudio.google.com/apikey)",
+    };
+  }
+  return { valid: true };
+}
+
+export function getValidGeminiApiKey(): string {
+  const envKey = String(process.env.GEMINI_API_KEY || "").trim();
+  if (inspectGeminiKeyHealth(envKey).valid) return envKey;
+  const saved = readJson<Record<string, string>>("conf.json", {});
+  const confKey = String(saved?.GEMINI_API_KEY || "").trim();
+  if (inspectGeminiKeyHealth(confKey).valid) return confKey;
+  return "";
+}
+
 // Initialize Gemini client on server side
-export function getGeminiClient(): GoogleGenAI {
+export function getGeminiClient(explicitKey?: string): GoogleGenAI {
+  const resolvedKey = explicitKey || getValidGeminiApiKey() || process.env.GEMINI_API_KEY;
   return new GoogleGenAI({
-    apiKey: process.env.GEMINI_API_KEY,
+    apiKey: resolvedKey,
     httpOptions: {
       headers: {
         "User-Agent": "aistudio-build",
@@ -656,18 +690,33 @@ export function enabledColabHosts(): any[] {
 export function readConf(): Record<string, string> {
   const saved = readJson<Record<string, string>>("conf.json", {});
   const rawOpenAi = process.env.OPENAI_API_KEY || saved.OPENAI_API_KEY || "";
-  const rawOrca = process.env.ORCAROUTER_API_KEY || saved.ORCAROUTER_API_KEY || (rawOpenAi.startsWith("sk-orca-") ? rawOpenAi : "");
+  const rawOrca =
+    process.env.ORCAROUTER_API_KEY ||
+    saved.ORCAROUTER_API_KEY ||
+    saved.ORCA_CYBER_API_KEY ||
+    (rawOpenAi.startsWith("sk-orca-") || rawOpenAi.startsWith("orca_") ? rawOpenAi : "");
   return {
+    ORCAROUTER_API_KEY: rawOrca,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || saved.OPENROUTER_API_KEY || "",
     GEMINI_API_KEY: process.env.GEMINI_API_KEY ? "configured" : (saved.GEMINI_API_KEY || ""),
     OPENAI_API_KEY: rawOpenAi,
-    ORCAROUTER_API_KEY: rawOrca,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || saved.ANTHROPIC_API_KEY || "",
     XAI_API_KEY: process.env.XAI_API_KEY || saved.XAI_API_KEY || "",
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || saved.OPENROUTER_API_KEY || "",
+    GROQ_API_KEY: process.env.GROQ_API_KEY || saved.GROQ_API_KEY || "",
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || saved.DEEPSEEK_API_KEY || "",
+    MISTRAL_API_KEY: process.env.MISTRAL_API_KEY || saved.MISTRAL_API_KEY || "",
+    TOGETHER_API_KEY: process.env.TOGETHER_API_KEY || saved.TOGETHER_API_KEY || "",
     HF_TOKEN: process.env.HF_TOKEN || saved.HF_TOKEN || "",
     GH_TOKEN: process.env.GH_TOKEN || saved.GH_TOKEN || "",
-    GIST_ID: process.env.GIST_ID || saved.GIST_ID || "05a1f96580fa13b373b42d919873dc57",
-    GH_USERNAME: saved.GH_USERNAME || "savingannabel",
-    USER_EMAIL: saved.USER_EMAIL || "goodoldcanadian@gmail.com",
+    GIST_ID: process.env.GIST_ID || saved.GIST_ID || "",
+    GH_USERNAME: saved.GH_USERNAME || "",
+    USER_EMAIL: saved.USER_EMAIL || "",
+    KAGGLE_USERNAME: process.env.KAGGLE_USERNAME || saved.KAGGLE_USERNAME || "",
+    KAGGLE_KEY: process.env.KAGGLE_KEY || saved.KAGGLE_KEY || "",
+    LOCAL_OLLAMA_URL: saved.LOCAL_OLLAMA_URL || "http://127.0.0.1:11434/v1",
+    LOCAL_LMSTUDIO_URL: saved.LOCAL_LMSTUDIO_URL || "http://127.0.0.1:1234/v1",
+    LOCAL_LLAMACPP_URL: saved.LOCAL_LLAMACPP_URL || "http://127.0.0.1:8080/v1",
+    RUNTIME_PROFILE: saved.RUNTIME_PROFILE || "auto",
     ...saved,
   };
 }
@@ -676,11 +725,63 @@ export const loadConf = readConf;
 
 export function saveConf(updates: Record<string, any>) {
   const cur = readJson<Record<string, string>>("conf.json", {});
-  for (const [k, v] of Object.entries(updates)) {
-    if (v !== undefined && v !== null) cur[k] = String(v);
+  for (const [k, v] of Object.entries(updates || {})) {
+    if (v === "__CLEAR__" || v === null) {
+      delete cur[k];
+      if (process.env[k]) delete process.env[k];
+    } else if (v !== undefined) {
+      const clean = String(v).trim();
+      if (clean) {
+        cur[k] = clean;
+        process.env[k] = clean;
+      }
+    }
   }
   writeJson("conf.json", cur);
   persistHostProfileToBrainMemory();
+}
+
+export type CustomSlotKind = "api_key" | "token" | "host" | "mcp" | "tool";
+
+export interface CustomSlotRecord {
+  id: string;
+  kind: CustomSlotKind;
+  name: string;
+  env_key?: string;
+  value?: string;
+  base_url?: string;
+  default_model?: string;
+  command?: string;
+  args?: string[];
+  tool_type?: string;
+  notes?: string;
+  enabled: boolean;
+  created_at: string;
+}
+
+export function loadCustomSlots(): CustomSlotRecord[] {
+  const raw = readJson<CustomSlotRecord[]>("custom_slots.json", []);
+  return Array.isArray(raw) ? raw.filter((s) => s && s.id && s.kind) : [];
+}
+
+export function saveCustomSlots(slots: CustomSlotRecord[]): CustomSlotRecord[] {
+  const cleaned = Array.isArray(slots) ? slots : [];
+  writeJson("custom_slots.json", cleaned);
+  syncCustomSlotsIntoEnv(cleaned);
+  return cleaned;
+}
+
+export function syncCustomSlotsIntoEnv(slotsOverride?: CustomSlotRecord[]): void {
+  const slots = slotsOverride || loadCustomSlots();
+  for (const slot of slots) {
+    if (!slot.enabled) continue;
+    if ((slot.kind === "token" || slot.kind === "api_key") && slot.env_key && slot.value) {
+      const envName = String(slot.env_key).trim().replace(/[^A-Za-z0-9_]/g, "");
+      if (envName) {
+        process.env[envName] = String(slot.value);
+      }
+    }
+  }
 }
 
 export function getSettings() {
@@ -1557,6 +1658,23 @@ export function refreshBackends(): number {
     host: "custom",
     vision: Boolean(m.vision),
   }));
+  const seenIds = new Set<string>(custom.map((c) => c.id));
+  for (const slot of loadCustomSlots()) {
+    if (!slot.enabled || slot.kind !== "api_key" || !slot.base_url || !slot.default_model) continue;
+    const slotBackendId = `slot_${slot.id}`;
+    if (seenIds.has(slotBackendId)) continue;
+    seenIds.add(slotBackendId);
+    custom.push({
+      id: slotBackendId,
+      name: `🔌 ${slot.name || slot.default_model}`,
+      base: String(slot.base_url).replace(/\/+$/, ""),
+      key: slot.value || (slot.env_key ? process.env[slot.env_key] || "" : ""),
+      model: slot.default_model,
+      kind: "custom",
+      host: "custom",
+      vision: false,
+    });
+  }
   BACKENDS.splice(0, BACKENDS.length, ...runtime, ...cloud, ...custom);
   return BACKENDS.length;
 }
@@ -1896,6 +2014,7 @@ export function loadTurnsMemory(): any[] {
 
 export function hydrateMemFromDisk() {
   try {
+    syncCustomSlotsIntoEnv();
     const savedTurns = loadTurnsMemory();
     if (MEM.length === 0 && savedTurns.length > 0) {
       for (const t of savedTurns.slice(-10)) {
@@ -2298,6 +2417,23 @@ export function buildContextualPrompt(prompt: string, rag = true, useMem = true,
   return `${cleanPrompt}\n\n---\n${contextBlocks.join("\n\n")}`;
 }
 
+// Ports hosting in-process Suomynona fallback bridge listeners (8080..8083) so inference never recurses onto itself
+export const INTERNAL_BRIDGE_PORTS = new Set<number>();
+
+export function isInternalBridgeUrl(rawUrl: unknown): boolean {
+  const s = String(rawUrl || "").trim();
+  if (!/^https?:\/\//i.test(s)) return false;
+  try {
+    const u = new URL(s);
+    const host = u.hostname.toLowerCase();
+    if (host !== "127.0.0.1" && host !== "localhost" && host !== "::1") return false;
+    const port = Number(u.port || (u.protocol === "https:" ? 443 : 80));
+    return INTERNAL_BRIDGE_PORTS.has(port);
+  } catch {
+    return false;
+  }
+}
+
 // Track live Cloudflare tunnel URLs and verified hardware telemetry synced from GitHub Gist per host/model
 export const LIVE_HOST_TUNNELS: Record<string, string> = {};
 export const LIVE_TUNNELS: Record<string, string> = LIVE_HOST_TUNNELS;
@@ -2308,6 +2444,8 @@ export const HOST_VERIFIED_STATE: Record<
     ok?: boolean;
     tunnel_ok?: boolean;
     tunnel_url?: string;
+    is_internal_bridge?: boolean;
+    endpoint_mode?: string;
     gpu_name?: string;
     accelerator_requested?: string;
     accelerator_actual?: string;
@@ -2319,6 +2457,10 @@ export const HOST_VERIFIED_STATE: Record<
     hw_reported_used_mib?: number;
     verified_at: number;
     error: string;
+    error_code?: string;
+    error_definition?: string;
+    fix_steps?: string[];
+    http_status?: number;
   }
 > = {};
 

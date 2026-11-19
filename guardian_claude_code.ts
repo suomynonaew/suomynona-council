@@ -12,13 +12,22 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import vm from "vm";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const COUNCIL_ROOT = path.resolve(__dirname);
+const rawDir = path.resolve(__dirname);
+export const COUNCIL_ROOT = process.env.COUNCIL_APP_ROOT
+  ? path.resolve(process.env.COUNCIL_APP_ROOT)
+  : path.basename(rawDir) === "dist-server"
+  ? path.resolve(rawDir, "..")
+  : rawDir;
+export const COUNCIL_DATA_ROOT = process.env.COUNCIL_DATA_ROOT
+  ? path.resolve(process.env.COUNCIL_DATA_ROOT)
+  : COUNCIL_ROOT;
 export const RUNTIME_TMP_ROOT = path.join(os.tmpdir(), "suomynona-council-runtime");
 export const BACKUP_ROOT = path.join(RUNTIME_TMP_ROOT, ".guardian_backups");
 
@@ -56,8 +65,10 @@ export function resolveHostPythonBin(): string {
   return _cachedHostPythonBin;
 }
 
-// Persistent working directory for the real terminal session (focused on COUNCIL_ROOT by default, but can cd anywhere)
-let terminalCwd: string = COUNCIL_ROOT;
+// Persistent working directory for the real terminal session (ASAR-safe on packaged Electron builds)
+const IS_ASAR_ROOT = COUNCIL_ROOT.toLowerCase().includes(".asar");
+const DEFAULT_SAFE_CWD = IS_ASAR_ROOT ? COUNCIL_DATA_ROOT : COUNCIL_ROOT;
+let terminalCwd: string = DEFAULT_SAFE_CWD;
 
 export function normalizeWorkspacePathInput(rawInput: string, baseDir: string = terminalCwd): string {
   const raw = String(rawInput || "").trim().replace(/^["']|["']$/g, "");
@@ -66,31 +77,40 @@ export function normalizeWorkspacePathInput(rawInput: string, baseDir: string = 
   }
   const slashNorm = raw.replace(/\\/g, "/");
   if (slashNorm === "/app/applet" || slashNorm === "/app/applet/") {
-    return COUNCIL_ROOT;
+    return DEFAULT_SAFE_CWD;
   }
   if (slashNorm.startsWith("/app/applet/")) {
     const relSub = slashNorm.slice("/app/applet/".length);
-    return path.resolve(COUNCIL_ROOT, relSub);
+    const inData = path.resolve(COUNCIL_DATA_ROOT, relSub);
+    if (fs.existsSync(inData)) return inData;
+    return IS_ASAR_ROOT ? inData : path.resolve(COUNCIL_ROOT, relSub);
   }
   if (path.isAbsolute(raw)) {
     const resolvedAbs = path.resolve(raw);
     if (fs.existsSync(resolvedAbs)) return resolvedAbs;
     // Fallback if a Linux absolute path inside project was used on Windows
     const stripped = slashNorm.replace(/^\/+/, "");
+    const candidateInData = path.resolve(COUNCIL_DATA_ROOT, stripped);
+    if (fs.existsSync(candidateInData)) return candidateInData;
     const candidateInRoot = path.resolve(COUNCIL_ROOT, stripped);
     if (fs.existsSync(candidateInRoot)) return candidateInRoot;
     return resolvedAbs;
   }
   const fromBase = path.resolve(baseDir, raw);
   if (fs.existsSync(fromBase)) return fromBase;
+  const fromData = path.resolve(COUNCIL_DATA_ROOT, raw);
+  if (fs.existsSync(fromData)) return fromData;
   const fromRoot = path.resolve(COUNCIL_ROOT, raw);
   if (fs.existsSync(fromRoot)) return fromRoot;
   return fromBase;
 }
 
 export function getTerminalCwd(): string {
-  if (!terminalCwd || !fs.existsSync(terminalCwd)) {
-    terminalCwd = COUNCIL_ROOT;
+  if (!terminalCwd || terminalCwd.toLowerCase().includes(".asar") || !fs.existsSync(terminalCwd)) {
+    try {
+      fs.mkdirSync(DEFAULT_SAFE_CWD, { recursive: true });
+    } catch {}
+    terminalCwd = DEFAULT_SAFE_CWD;
   }
   return terminalCwd;
 }
@@ -98,13 +118,17 @@ export function getTerminalCwd(): string {
 export function setTerminalCwd(newDir: string): string {
   const trimmed = String(newDir || "").trim().replace(/^["']|["']$/g, "");
   if (!trimmed || trimmed === "~") {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || COUNCIL_ROOT;
-    terminalCwd = fs.existsSync(homeDir) ? homeDir : COUNCIL_ROOT;
+    const homeDir = process.env.HOME || process.env.USERPROFILE || DEFAULT_SAFE_CWD;
+    terminalCwd = fs.existsSync(homeDir) ? homeDir : DEFAULT_SAFE_CWD;
     return terminalCwd;
   }
   const resolved = normalizeWorkspacePathInput(trimmed, terminalCwd);
+  if (resolved.toLowerCase().includes(".asar")) {
+    terminalCwd = DEFAULT_SAFE_CWD;
+    return terminalCwd;
+  }
   if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
-    throw new Error(`Directory not found: ${resolved} (Council Root is ${COUNCIL_ROOT})`);
+    throw new Error(`Directory not found: ${resolved} (Council Workspace Root is ${DEFAULT_SAFE_CWD})`);
   }
   terminalCwd = resolved;
   return terminalCwd;
@@ -298,37 +322,51 @@ export function verifyCouncilSyntax(): {
 } {
   const checks: { file: string; ok: boolean; detail: string }[] = [];
 
-  const jsFilesToCheck = ["public/app.js"];
-  const publicJsDir = path.join(COUNCIL_ROOT, "public", "js");
-  if (fs.existsSync(publicJsDir)) {
-    for (const f of fs.readdirSync(publicJsDir).sort()) {
-      if (f.endsWith(".js")) jsFilesToCheck.push(`public/js/${f}`);
+  const hasRawPublic = fs.existsSync(path.join(COUNCIL_ROOT, "public", "app.js"));
+  const assetBase = hasRawPublic ? path.join(COUNCIL_ROOT, "public") : path.join(COUNCIL_ROOT, "dist");
+  const assetLabel = hasRawPublic ? "public" : "dist";
+
+  const jsFilesToCheck: string[] = [];
+  if (fs.existsSync(path.join(assetBase, "app.js"))) {
+    jsFilesToCheck.push("app.js");
+  }
+  const jsSubDir = path.join(assetBase, "js");
+  if (fs.existsSync(jsSubDir)) {
+    for (const f of fs.readdirSync(jsSubDir).sort()) {
+      if (f.endsWith(".js")) jsFilesToCheck.push(`js/${f}`);
     }
   }
-  for (const jsRel of jsFilesToCheck) {
+  for (const relSub of jsFilesToCheck) {
+    const displayFile = `${assetLabel}/${relSub}`;
     try {
-      execSync(`node --check "${jsRel}"`, { cwd: COUNCIL_ROOT, stdio: "pipe", timeout: 8000 });
-      checks.push({ file: jsRel, ok: true, detail: "JavaScript syntax valid (node --check OK)" });
+      const jsPath = path.join(assetBase, relSub);
+      const srcCode = fs.readFileSync(jsPath, "utf-8");
+      new vm.Script(srcCode, { filename: displayFile });
+      checks.push({ file: displayFile, ok: true, detail: "JavaScript syntax valid (in-process vm.Script OK)" });
     } catch (err: any) {
       checks.push({
-        file: jsRel,
+        file: displayFile,
         ok: false,
-        detail: (err?.stderr?.toString() || err?.message || "Syntax error").trim(),
+        detail: (err?.stack?.split(/\r?\n/).slice(0, 3).join(" | ") || err?.message || "Syntax error").trim(),
       });
     }
   }
 
+  const indexCandidate = fs.existsSync(path.join(COUNCIL_ROOT, "index.html"))
+    ? path.join(COUNCIL_ROOT, "index.html")
+    : path.join(COUNCIL_ROOT, "dist", "index.html");
+  const indexLabel = indexCandidate.includes("dist") ? "dist/index.html" : "index.html";
   try {
-    const html = fs.readFileSync(path.join(COUNCIL_ROOT, "index.html"), "utf-8");
+    const html = fs.readFileSync(indexCandidate, "utf-8");
     const hasShell = html.includes('class="shell');
     const hasScript = html.includes("/app.js");
     checks.push({
-      file: "index.html",
+      file: indexLabel,
       ok: hasShell && hasScript,
       detail: hasShell && hasScript ? `HTML structure valid (${html.split("\n").length} lines)` : "Missing .shell or /app.js tag",
     });
   } catch (err: any) {
-    checks.push({ file: "index.html", ok: false, detail: err?.message || "Cannot read index.html" });
+    checks.push({ file: indexLabel, ok: false, detail: err?.message || "Cannot read index.html" });
   }
 
   try {
@@ -343,7 +381,7 @@ export function verifyCouncilSyntax(): {
     checks.push({ file: "src/council_catalog.json", ok: false, detail: err?.message || "Invalid JSON" });
   }
 
-  const dataDir = path.join(COUNCIL_ROOT, ".council_data");
+  const dataDir = path.join(COUNCIL_DATA_ROOT, ".council_data");
   if (fs.existsSync(dataDir)) {
     for (const f of fs.readdirSync(dataDir)) {
       if (!f.endsWith(".json")) continue;
@@ -384,7 +422,7 @@ export function safeWriteCouncilFile(
 
     if (rel === "public/app.js" || (rel.startsWith("public/js/") && rel.endsWith(".js"))) {
       try {
-        execSync(`node --check "${rel}"`, { cwd: COUNCIL_ROOT, stdio: "pipe", timeout: 8000 });
+        new vm.Script(newContent, { filename: rel });
       } catch (syntaxErr: any) {
         rollbackGuardianSnapshot(snap.snapshotId);
         return {
@@ -392,7 +430,7 @@ export function safeWriteCouncilFile(
           relPath: rel,
           snapshotId: snap.snapshotId,
           rolledBack: true,
-          error: `Syntax error detected in ${rel} — automatically rolled back to ${snap.snapshotId}!\n${syntaxErr?.stderr?.toString() || syntaxErr?.message}`,
+          error: `Syntax error detected in ${rel} — automatically rolled back to ${snap.snapshotId}!\n${syntaxErr?.message}`,
         };
       }
     } else if (abs.endsWith(".json")) {
@@ -435,7 +473,7 @@ export function runCouncilSelfRepair(): {
   lines.push(`📂 Target Workspace: ${COUNCIL_ROOT}`);
   lines.push(`🔒 Guardian Self-Lock: guardian_claude_code.ts [IMMUTABLE / PROTECTED]`);
 
-  const dataDir = path.join(COUNCIL_ROOT, ".council_data");
+  const dataDir = path.join(COUNCIL_DATA_ROOT, ".council_data");
   fs.mkdirSync(dataDir, { recursive: true });
   for (const f of fs.readdirSync(dataDir)) {
     if (!f.endsWith(".json")) continue;
@@ -517,7 +555,7 @@ export function ensureRealCliEnvironmentBinaries(): {
   const cliBinDir = path.join(RUNTIME_TMP_ROOT, ".cli_bin");
   const localPkgDir = path.join(RUNTIME_TMP_ROOT, ".python_packages");
   const sandboxRoot = path.join(RUNTIME_TMP_ROOT, ".council_sandbox");
-  const dataDir = path.join(COUNCIL_ROOT, ".council_data");
+  const dataDir = path.join(COUNCIL_DATA_ROOT, ".council_data");
   const isWin = process.platform === "win32";
   const sentinelPath = path.join(cliBinDir, isWin ? "_ollama.py" : "ollama");
 

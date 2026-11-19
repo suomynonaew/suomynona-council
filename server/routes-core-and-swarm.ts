@@ -6,17 +6,20 @@ import crypto from "crypto";
 import net from "net";
 import dns from "dns";
 import { exec, execSync, spawn } from "child_process";
-import { PROJECT_ROOT, ensureCliBinReady } from "./platform.ts";
+import { PROJECT_ROOT, DATA_ROOT, IS_WIN, ensureCliBinReady } from "./platform.ts";
 import { COUNCIL_ROOT, getGuardianHistory, getTerminalCwd, executeRealShellCommand, executeGuardianTask } from "../guardian_claude_code.ts";
-import { CATALOG, SLOT_CHOICES, LINEUP_SLOTS, COUNCIL_PRESETS, ACCELERATOR_OPTIONS_MAP, WORKSPACE_OUTPUT_ROOT, BUILD_ROOT, writeJson, LOG, pushLiveConsole, log, MEM, START, HOST_FIELDS, normalizeProvider, normalizeAccelerator, gpuVramGb, providerDisplayLabel, normalizeColabHost, publicColabHost, loadColabHosts, saveColabHosts, enabledColabHosts, readConf, getSettings, isUncensoredId, publicCustomModels, loadCustomCatalog, loadHfBuckets, loadHostCustomizations, loadTools, loadMcp, loadVoiceProfiles, loadAgents, saveAgents, recordAgentRunTelemetry, loadCloudLineup, loadCloudFallback, loadCloudBackends, BACKENDS, refreshBackends, loadPromptHistory, savePromptHistoryEntry, loadLeaderboard, recordLeaderboardFromJudge, loadVaultMemory, addVaultMemory, searchVaultMemory, loadTurnsMemory, rememberTurn, buildBackendSystemPrompt, buildContextualPrompt, LIVE_HOST_TUNNELS, HOST_VERIFIED_STATE, safeWorkspacePath, sanitizeParsedRelativeFilePath, parseResponseFiles } from "./state-and-hosts.ts";
+import { CATALOG, SLOT_CHOICES, LINEUP_SLOTS, COUNCIL_PRESETS, ACCELERATOR_OPTIONS_MAP, WORKSPACE_OUTPUT_ROOT, BUILD_ROOT, writeJson, LOG, pushLiveConsole, log, MEM, START, HOST_FIELDS, normalizeProvider, normalizeAccelerator, gpuVramGb, providerDisplayLabel, normalizeColabHost, publicColabHost, loadColabHosts, saveColabHosts, enabledColabHosts, readConf, getSettings, isUncensoredId, publicCustomModels, loadCustomCatalog, loadCustomSlots, loadHfBuckets, loadHostCustomizations, loadTools, loadMcp, loadVoiceProfiles, loadAgents, saveAgents, recordAgentRunTelemetry, loadCloudLineup, loadCloudFallback, loadCloudBackends, BACKENDS, refreshBackends, loadPromptHistory, savePromptHistoryEntry, loadLeaderboard, recordLeaderboardFromJudge, loadVaultMemory, addVaultMemory, searchVaultMemory, loadTurnsMemory, rememberTurn, buildBackendSystemPrompt, buildContextualPrompt, getValidGeminiApiKey, LIVE_HOST_TUNNELS, HOST_VERIFIED_STATE, safeWorkspacePath, sanitizeParsedRelativeFilePath, parseResponseFiles } from "./state-and-hosts.ts";
 import { isBoosterEnabled, rebalanceLineupAcrossHostsFFD, formatVramCliReport, probeHostEndpoint, syncGistTunnels, sanitizeSystemPromptForUpstream, isUpstreamSafetyRefusal, reframePromptAsArchitecturalSpec, callOrcaRouterModel, synthesizeSpecialistFallback, callSingleBackendEngine, buildLiveHostDiagnosticSummary, completeBackend, lookupLiveCveData, executeMcpServerTool, executeSlotWithLiveCapabilities } from "./vram-and-inference.ts";
 import { writeVsCodeWorkspaceMetadata, compileAndRunDirectoryWithSelfHeal, saveLatestBuiltApp, synthesizeMissingReferencedFiles, scrubSecretsFromArtifactMap, loadClusterConfig, saveClusterConfig, runQueenBossWithAutoRotation, runStatefulPythonInterpreter, appendBackendRunToExplorer } from "./shared-services.ts";
+import { runComprehensiveDoctor, formatDoctorTerminalReport } from "./doctor.ts";
+import { checkForGitUpdates, pullAndApplyGitUpdate, getAutoUpdaterState, formatUpdaterCliReport } from "./auto-updater.ts";
 const __dirname = PROJECT_ROOT;
 export function registerCoreAndSwarmRoutes(app: Express): void {
   // ── Real-Time Backend Input, Action & Error Stream Telemetry Middleware ──
   const QUIET_POLL_PATHS = new Set([
     "/api/live-console",
     "/api/hosts/heartbeat",
+    "/api/updater/status",
     "/api/stats",
     "/api/state",
     "/api/explorer/runs",
@@ -229,6 +232,8 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
       ok: true,
       tunnel_ok: probe.ok,
       tunnel_url: targetUrl,
+      is_internal_bridge: probe.is_internal_bridge,
+      endpoint_mode: probe.is_internal_bridge ? "internal_bridge" : probe.ok ? "external_gpu" : "offline",
       gpu_name: `${host.provider.toUpperCase()} ${host.accelerator}`,
       accelerator_requested: host.accelerator,
       accelerator_actual: host.accelerator,
@@ -236,20 +241,35 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
       gpu_total_mib: totalMib,
       models_loaded: probe.models.length ? probe.models : undefined,
       verified_at: Date.now(),
+      http_status: probe.http_status,
       error: probe.ok ? "" : (probe.error || ""),
+      error_code: probe.ok ? undefined : probe.error_code,
+      error_definition: probe.ok ? undefined : probe.error_definition,
+      fix_steps: probe.ok ? undefined : probe.fix_steps,
     };
+
+    const failMsg =
+      `⚠️ Handshake probe failed for ${targetUrl} (${probe.error_code || "UNREACHABLE"}): ${probe.error || "Connection timed out"}\n` +
+      (probe.error_definition ? `Definition: ${probe.error_definition}\n` : "") +
+      (probe.fix_steps?.length ? `Steps to fix:\n${probe.fix_steps.map((s) => `  • ${s}`).join("\n")}` : "");
 
     res.json({
       ok: probe.ok,
       online: probe.ok,
+      is_internal_bridge: probe.is_internal_bridge,
+      endpoint_mode: probe.is_internal_bridge ? "internal_bridge" : probe.ok ? "external_gpu" : "offline",
       endpoint: targetUrl,
       latency_ms: probe.latency_ms,
       engine: probe.engine,
+      http_status: probe.http_status,
       models: probe.models,
       error: probe.error || null,
+      error_code: probe.ok ? null : (probe.error_code || null),
+      error_definition: probe.ok ? null : (probe.error_definition || null),
+      fix_steps: probe.ok ? [] : (probe.fix_steps || []),
       message: probe.ok
         ? `🟢 Handshake verified for ${host.name}! Latency: ${probe.latency_ms}ms · Engine: ${probe.engine} · ${probe.models.length} model(s) detected`
-        : `⚠️ Handshake probe failed for ${targetUrl}: ${probe.error || "Connection timed out"}`,
+        : failMsg,
     });
   };
   app.post("/api/runtime-hosts/:host_id/handshake", hostHandshakeHandler);
@@ -359,11 +379,19 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
         GH_TOKEN: Boolean(conf.GH_TOKEN),
         GIST_ID: Boolean(conf.GIST_ID),
         GH_USERNAME: Boolean(conf.GH_USERNAME),
-        GEMINI_API_KEY: Boolean(process.env.GEMINI_API_KEY),
+        ORCAROUTER_API_KEY: Boolean(conf.ORCAROUTER_API_KEY),
+        GEMINI_API_KEY: Boolean(getValidGeminiApiKey()),
         OPENAI_API_KEY: Boolean(conf.OPENAI_API_KEY),
+        ANTHROPIC_API_KEY: Boolean(conf.ANTHROPIC_API_KEY),
         XAI_API_KEY: Boolean(conf.XAI_API_KEY),
         OPENROUTER_API_KEY: Boolean(conf.OPENROUTER_API_KEY),
+        GROQ_API_KEY: Boolean(conf.GROQ_API_KEY),
+        DEEPSEEK_API_KEY: Boolean(conf.DEEPSEEK_API_KEY),
+        MISTRAL_API_KEY: Boolean(conf.MISTRAL_API_KEY),
+        TOGETHER_API_KEY: Boolean(conf.TOGETHER_API_KEY),
       },
+      runtime_profile: conf.RUNTIME_PROFILE || "auto",
+      custom_slots_count: loadCustomSlots().length,
       log: LOG,
       memory_on: true,
       colab_hosts: pubHosts,
@@ -633,8 +661,47 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
     const cmd = String(req.body?.cmd || req.body?.command || "").trim();
     if (!cmd) return res.json({ ok: false, error: "Empty command", cwd: getTerminalCwd() });
 
-    // If user typed 'claude ...' or '/doctor' or '/repair', route through executeGuardianTask
-    if (/^(?:claude|\/claude|\/doctor|\/repair|\/backup|\/rollback|\/snapshots|\/status|clear|cls)\b/i.test(cmd)) {
+    if (/^(?:claude\s+doctor|\/doctor|doctor)\b/i.test(cmd)) {
+      const arg = cmd.replace(/^(?:claude\s+)?\/?doctor\s*/i, "").trim();
+      const autoFix = !/--no-fix/i.test(arg);
+      const report = await runComprehensiveDoctor({ autoFix, traceback: arg.replace(/--no-fix/gi, "").trim() });
+      const formatted = formatDoctorTerminalReport(report);
+      return res.json({
+        ok: report.healthy,
+        output: formatted,
+        report,
+        cwd: getTerminalCwd(),
+        exit_code: report.healthy ? 0 : 1,
+        history: getGuardianHistory(),
+      });
+    }
+
+    if (/^(?:\/update|update)\b/i.test(cmd)) {
+      const sub = cmd.replace(/^\/?update\s*/i, "").trim().toLowerCase();
+      if (sub === "pull" || sub === "apply" || sub === "rebuild") {
+        const pullRes = await pullAndApplyGitUpdate({ forceRebuild: sub === "rebuild" });
+        return res.json({
+          ok: pullRes.ok,
+          output: `${pullRes.message}\n${formatUpdaterCliReport(pullRes.state)}`,
+          updater: pullRes.state,
+          cwd: getTerminalCwd(),
+          exit_code: pullRes.ok ? 0 : 1,
+          history: getGuardianHistory(),
+        });
+      }
+      const st = sub === "status" ? getAutoUpdaterState() : await checkForGitUpdates({ autoApply: true, manual: true });
+      return res.json({
+        ok: st.status !== "error",
+        output: formatUpdaterCliReport(st),
+        updater: st,
+        cwd: getTerminalCwd(),
+        exit_code: st.status === "error" ? 1 : 0,
+        history: getGuardianHistory(),
+      });
+    }
+
+    // If user typed 'claude ...' or '/repair', route through executeGuardianTask
+    if (/^(?:claude|\/claude|\/repair|\/backup|\/rollback|\/snapshots|\/status|clear|cls)\b/i.test(cmd)) {
       const gRes = await executeGuardianTask(
         cmd,
         async (msgs) => completeBackend(0, msgs),
@@ -672,6 +739,24 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
         const clean = cmd.replace(/\s+(-h|--help|\/\?)$/i, "").trim().toLowerCase();
         const key = clean.replace(/^\//, "").split(/\s+/)[0] || clean;
         const specificHelp: Record<string, string[]> = {
+          doctor: [
+            `┌── 📖 COMMAND HELP: /DOCTOR ─────────────────────────────────────────────────`,
+            `│ Usage       : /doctor [hosts | keys | update | toolchains | syntax | <error>] [--no-fix]`,
+            `│ Description : Comprehensive 10-domain diagnostic & auto-repair across the`,
+            `│               desktop app, Git updater, credentials, GPU hosts/tunnels, VRAM,`,
+            `│               circuit breakers, local engines, cloud APIs, Python/Go, & bundle.`,
+            `│               Outputs detailed error definitions + step-by-step repair guides.`,
+            `│ Examples    : /doctor | /doctor hosts | /doctor keys | /doctor --no-fix`,
+            `└─────────────────────────────────────────────────────────────────────────────`,
+          ],
+          update: [
+            `┌── 📖 COMMAND HELP: /UPDATE ─────────────────────────────────────────────────`,
+            `│ Usage       : /update [check | pull | status | rebuild]`,
+            `│ Description : Checks GitHub repository origin/main for commits, automatically`,
+            `│               pulls changes, rebuilds dist/, and hot-reloads the .exe runtime.`,
+            `│ Examples    : /update | /update check | /update pull | /update status`,
+            `└─────────────────────────────────────────────────────────────────────────────`,
+          ],
           vram: [
             `┌── 📖 COMMAND HELP: /VRAM ───────────────────────────────────────────────────`,
             `│ Usage       : /vram`,
@@ -738,6 +823,8 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
             `│    • /boosters           — View & toggle all 19 GPU Cluster & Exploit Boosters`,
             `│    • /presets            — Load and balance built-in and custom lineup presets`,
             `│    • /health             — Probe all active model endpoints & response latencies`,
+            `│    • /doctor [scope]     — 10-domain troubleshooter, auto-fix & step-by-step guide`,
+            `│    • /update [pull]      — Check & auto-pull Git repository updates into desktop .exe`,
             `│    • /endpoints          — Sync Colab, Kaggle & custom GPU host tunnel URLs`,
             `│    • /repair             — Inspect workspace & auto-repair broken files`,
             `│    • status              — Show active runtime backend summary`,
@@ -756,6 +843,36 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
 
       if (cmd.toLowerCase() === "/vram" || cmd.toLowerCase() === "vram") {
         return res.json({ ok: true, output: formatVramCliReport() });
+      }
+
+      if (/^\/?doctor\b/i.test(cmd)) {
+        const arg = cmd.replace(/^\/?doctor\s*/i, "").trim();
+        const autoFix = !/--no-fix/i.test(arg);
+        const report = await runComprehensiveDoctor({ autoFix, traceback: arg.replace(/--no-fix/gi, "").trim() });
+        return res.json({
+          ok: true,
+          healthy: report.healthy,
+          report,
+          output: formatDoctorTerminalReport(report),
+        });
+      }
+
+      if (/^\/?update\b/i.test(cmd)) {
+        const sub = cmd.replace(/^\/?update\s*/i, "").trim().toLowerCase();
+        if (sub === "pull" || sub === "apply" || sub === "rebuild") {
+          const pullRes = await pullAndApplyGitUpdate({ forceRebuild: sub === "rebuild" });
+          return res.json({
+            ok: pullRes.ok,
+            updater: pullRes.state,
+            output: `${pullRes.message}\n${formatUpdaterCliReport(pullRes.state)}`,
+          });
+        }
+        const st = sub === "status" ? getAutoUpdaterState() : await checkForGitUpdates({ autoApply: true, manual: true });
+        return res.json({
+          ok: st.status !== "error",
+          updater: st,
+          output: formatUpdaterCliReport(st),
+        });
       }
 
       if (
@@ -1299,15 +1416,61 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
   });
 
   app.post("/api/workspace/open", (req: Request, res: Response) => {
-    const targetPath = String(req.body?.path || WORKSPACE_OUTPUT_ROOT);
     try {
-      exec(`code "${targetPath}"`, { timeout: 4000 }, () => {});
-    } catch {}
-    res.json({
-      ok: true,
-      path: targetPath,
-      vscode_uri: `vscode://file/${targetPath.replace(/\\/g, "/").replace(/^\/+/, "")}`,
-    });
+      const rawPath = String(req.body?.path || WORKSPACE_OUTPUT_ROOT).trim();
+      const candidate = path.isAbsolute(rawPath)
+        ? path.resolve(rawPath)
+        : path.resolve(DATA_ROOT, rawPath);
+      const targetPath = candidate.toLowerCase().includes(".asar")
+        ? path.resolve(WORKSPACE_OUTPUT_ROOT, "active_merged_workspace")
+        : candidate;
+      fs.mkdirSync(targetPath, { recursive: true });
+
+      const writtenFiles: string[] = [];
+      if (Array.isArray(req.body?.files)) {
+        for (const f of req.body.files) {
+          const cleanRel = sanitizeParsedRelativeFilePath(f?.path || "") || String(f?.path || "").replace(/\\/g, "/").replace(/^\/+/, "");
+          if (!cleanRel || cleanRel.includes("..")) continue;
+          const dest = path.resolve(targetPath, cleanRel);
+          if (!dest.startsWith(targetPath + path.sep) && dest !== targetPath) continue;
+          fs.mkdirSync(path.dirname(dest), { recursive: true });
+          fs.writeFileSync(dest, String(f?.content ?? ""), "utf-8");
+          writtenFiles.push(cleanRel);
+        }
+      }
+
+      let openedWith = "staged";
+      try {
+        if (IS_WIN) {
+          let hasCode = false;
+          try {
+            execSync("where.exe code", { stdio: "ignore", timeout: 2500, windowsHide: true });
+            hasCode = true;
+          } catch {}
+          if (hasCode && !req.body?.force_explorer) {
+            exec(`code "${targetPath}"`, { timeout: 4000, windowsHide: true }, () => {});
+            openedWith = "vscode";
+          } else if (req.body?.reveal_in_explorer !== false) {
+            exec(`explorer.exe "${targetPath}"`, { timeout: 4000 }, () => {});
+            openedWith = "explorer";
+          }
+        } else {
+          exec(`code "${targetPath}"`, { timeout: 4000 }, () => {});
+          openedWith = "vscode";
+        }
+      } catch {}
+
+      pushLiveConsole(`💻 [Stage to Disk] ${writtenFiles.length} file(s) synced -> ${targetPath} (${openedWith})`, { category: "COMPILER", level: "ok" });
+      res.json({
+        ok: true,
+        path: targetPath,
+        files_written: writtenFiles,
+        opened_with: openedWith,
+        vscode_uri: `vscode://file/${targetPath.replace(/\\/g, "/").replace(/^\/+/, "")}`,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
   });
 
   app.post("/api/workspace/open-export", (req: Request, res: Response) => {

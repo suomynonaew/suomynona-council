@@ -6,11 +6,21 @@ import crypto from "crypto";
 import net from "net";
 import dns from "dns";
 import { exec, execSync, spawn } from "child_process";
-import { PROJECT_ROOT, IS_WIN, TOOLCHAINS_ROOT, REAL_GO_BIN, REAL_PIP_BIN, getEffectivePythonBin, getEffectiveGoBin, syncRealToolchainWrappersIntoCliBin } from "./platform.ts";
+import { PROJECT_ROOT, DATA_ROOT, IS_WIN, TOOLCHAINS_ROOT, REAL_GO_BIN, REAL_PIP_BIN, getEffectivePythonBin, getEffectiveGoBin, syncRealToolchainWrappersIntoCliBin } from "./platform.ts";
 import { getTerminalCwd, executeRealShellCommand, executeGuardianTask, getCliExecEnv } from "../guardian_claude_code.ts";
-import { SERVER_SEEDS, DATA_DIR, WORKSPACE_OUTPUT_ROOT, readJson, writeJson, LOG, pushLiveConsole, log, loadColabHosts, readConf, saveConf, loadAgents, BACKENDS, refreshBackends, loadVaultMemory, loadTurnsMemory, rememberTurn, buildBackendSystemPrompt, buildContextualPrompt, sanitizeParsedRelativeFilePath, parseResponseFiles } from "./state-and-hosts.ts";
+import { SERVER_SEEDS, DATA_DIR, WORKSPACE_OUTPUT_ROOT, readJson, writeJson, LOG, pushLiveConsole, log, loadColabHosts, readConf, saveConf, loadAgents, BACKENDS, refreshBackends, loadVaultMemory, loadTurnsMemory, rememberTurn, buildBackendSystemPrompt, buildContextualPrompt, sanitizeParsedRelativeFilePath, parseResponseFiles, loadCustomCatalog, syncCustomCatalogIntoRuntime, autoMountCustomModelIntoLineup, persistModelsAndBucketsToBrainMemory } from "./state-and-hosts.ts";
 import { callSingleBackendEngine, buildLiveHostDiagnosticSummary, completeBackend, lookupLiveCveData, runFrontierEscalationBridge, testSingleProxyHandshake, gatherAndTestProxiesToCsv, runDesktopTool, executeSlotWithLiveCapabilities, compileGenuineWindowsPe64Exe } from "./vram-and-inference.ts";
 import { writeVsCodeWorkspaceMetadata, compileAndRunDirectoryWithSelfHeal, saveLatestBuiltApp, loadLatestBuiltApp, synthesizeMissingReferencedFiles, CONFIG_FILE_NAMES, loadClusterConfig, runStatefulPythonInterpreter, loadExplorerRuns, saveExplorerRuns, ACTIVE_MERGED_DIR, loadExplorerActiveWorkspace, saveExplorerActiveWorkspace, extractExplorerFilesFromMarkdown } from "./shared-services.ts";
+import {
+  analyzeFileStatic,
+  buildCompatibilityReport,
+  listAvailableCodingAndJudgeModels,
+  invokeSpecificExplorerModel,
+  startHfGgufDownload,
+  getHfDownloadJobs,
+  cancelHfDownloadJob,
+} from "./explorer-judge-merge.ts";
+import { evaluateCurrentLicenseState, getActiveAppEdition } from "./licensing.ts";
 const __dirname = PROJECT_ROOT;
 export function registerIntelligenceReplExplorerRoutes(app: Express): void {
   // ── CATEGORY V: INTELLIGENCE SYNTHESIS, MEMORY & UX POWER TOOLS (ITEMS 1, 4) ──
@@ -90,8 +100,8 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
             confPct >= 75
               ? "HIGH_CONSENSUS"
               : confPct >= 48
-              ? "SINGLE_SOURCE"
-              : "CONTESTED_RISK";
+                ? "SINGLE_SOURCE"
+                : "CONTESTED_RISK";
 
           segments.push({
             claim: sent,
@@ -235,247 +245,15 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
   });
 
   // ══════════════════════════════════════════════════════════════════════════════
-  // 1. SINGLE-PC HARDWARE-LOCKED REGISTRATION KEY DRM & CODE OBFUSCATION STUDIO
+  // 1. CODE OBFUSCATION & COMMERCIAL RELEASE PACKAGER STUDIO (Master Edition Only)
+  //    (Asymmetric Ed25519 CD-Key authority & hardware binding handled by server/licensing.ts)
   // ══════════════════════════════════════════════════════════════════════════════
-
-  function computeMachineHwid(clientHint = ""): string {
-    const raw = [
-      os.hostname() || "council-host",
-      os.platform(),
-      os.arch(),
-      os.cpus()?.[0]?.model || "cpu",
-      String(os.cpus()?.length || 4),
-      String(Math.round(os.totalmem() / (1024 * 1024 * 1024))),
-      clientHint || "default-pc",
-    ].join("|");
-    const digest = crypto.createHash("sha256").update(raw).digest("hex").toUpperCase();
-    return `CNG-PC-${digest.slice(0, 4)}-${digest.slice(4, 8)}-${digest.slice(8, 12)}`;
-  }
-
-  interface LicenseRecord {
-    key: string;
-    tier: "OWNER_MASTER" | "COMMERCIAL_SINGLE_PC";
-    buyer_name: string;
-    buyer_email: string;
-    bound_hwid: string | null;
-    bound_at: string | null;
-    created_at: string;
-    revoked: boolean;
-    activations_count: number;
-    max_computers: number;
-    notes?: string;
-  }
-
-  interface LicenseStore {
-    owner_secret_hash: string;
-    active_key: string;
-    activated_hwid: string;
-    activated_at: string | null;
-    licenses: LicenseRecord[];
-  }
-
-  function loadLicenseStore(): LicenseStore {
-    const defaultStore: LicenseStore = {
-      owner_secret_hash: "COUNCIL-OWNER-2026",
-      active_key: "",
-      activated_hwid: "",
-      activated_at: null,
-      licenses: [
-        {
-          key: "CNG-OWNER-MASTER-KEY-2026",
-          tier: "OWNER_MASTER",
-          buyer_name: "Suomynona Council Creator / Master Owner",
-          buyer_email: "owner@suomynona-council.local",
-          bound_hwid: null,
-          bound_at: null,
-          created_at: "2026-11-01 00:00",
-          revoked: false,
-          activations_count: 0,
-          max_computers: 1,
-          notes: "Creator Master Key — binds to your primary workstation",
-        },
-        {
-          key: "CNG-PRO-8842-9910-A7F3-LOCK",
-          tier: "COMMERCIAL_SINGLE_PC",
-          buyer_name: "Commercial Buyer Seat #1",
-          buyer_email: "buyer1@client.org",
-          bound_hwid: null,
-          bound_at: null,
-          created_at: "2026-11-01 09:30",
-          revoked: false,
-          activations_count: 0,
-          max_computers: 1,
-          notes: "1-Token / 1-Computer Hardware-Locked Commercial License",
-        },
-        {
-          key: "CNG-PRO-5120-7741-C9E2-LOCK",
-          tier: "COMMERCIAL_SINGLE_PC",
-          buyer_name: "Commercial Buyer Seat #2 (Demo Locked to Other PC)",
-          buyer_email: "shared-attempt@other-pc.org",
-          bound_hwid: "CNG-PC-9999-DEAD-BEEF",
-          bound_at: "2026-10-29 18:12",
-          created_at: "2026-10-29 18:00",
-          revoked: false,
-          activations_count: 1,
-          max_computers: 1,
-          notes: "Already locked to another computer (test sharing rejection)",
-        },
-      ],
-    };
-    const saved = readJson<LicenseStore>("licenses_ng.json", defaultStore);
-    if (!saved || !Array.isArray(saved.licenses) || !saved.licenses.length) {
-      writeJson("licenses_ng.json", defaultStore);
-      return defaultStore;
-    }
-    return saved;
-  }
-
-  function saveLicenseStore(store: LicenseStore) {
-    writeJson("licenses_ng.json", store);
-  }
-
-  app.get("/api/license/status", (req: Request, res: Response) => {
-    const clientFp = String(req.query.fp || req.headers["x-cng-fp"] || "").trim();
-    const hwid = computeMachineHwid(clientFp);
-    const store = loadLicenseStore();
-    const activeLic = store.licenses.find((l) => l.key === store.active_key && !l.revoked);
-    const validForThisPc = Boolean(
-      activeLic && (!activeLic.bound_hwid || activeLic.bound_hwid === hwid)
-    );
-    res.json({
-      ok: true,
-      hwid,
-      activated: validForThisPc,
-      active_key: validForThisPc ? store.active_key : "",
-      active_license: validForThisPc ? activeLic : null,
-      activated_at: store.activated_at,
-      licenses: store.licenses,
-    });
-  });
-
-  app.post("/api/license/activate", (req: Request, res: Response) => {
-    const rawKey = String(req.body?.key || "").trim().toUpperCase();
-    const clientFp = String(req.body?.fp || "").trim();
-    const hwid = computeMachineHwid(clientFp);
-    const store = loadLicenseStore();
-
-    if (!rawKey) {
-      return res.status(400).json({ ok: false, error: "Please enter a valid Suomynona Council Registration Key." });
-    }
-
-    const lic = store.licenses.find((l) => l.key.toUpperCase() === rawKey);
-    if (!lic) {
-      log(`🚫 [DRM License Guard] Rejected unknown registration key: ${rawKey} on HWID ${hwid}`);
-      return res.status(403).json({
-        ok: false,
-        error: "Invalid Registration Key. This token was not issued by the Suomynona Council Licensing Authority.",
-      });
-    }
-
-    if (lic.revoked) {
-      log(`🚫 [DRM License Guard] Rejected revoked registration key: ${rawKey}`);
-      return res.status(403).json({
-        ok: false,
-        error: "This Registration Key has been revoked by the administrator.",
-      });
-    }
-
-    // Enforce strict 1-Token = 1-Computer Hardware Lock
-    if (lic.bound_hwid && lic.bound_hwid !== hwid) {
-      log(`🔒 [DRM Hardware Lock] Blocked key sharing attempt for ${rawKey}! Bound to ${lic.bound_hwid}, attempted on ${hwid}`);
-      return res.status(403).json({
-        ok: false,
-        hwid_mismatch: true,
-        bound_hwid: lic.bound_hwid,
-        attempted_hwid: hwid,
-        error: `HARDWARE LOCK VIOLATION: Token "${rawKey}" is permanently bound to another computer (${lic.bound_hwid}). Each Registration Key is valid on 1 computer only (${hwid} is unauthorized).`,
-      });
-    }
-
-    // Bind key to this computer's HWID permanently
-    const now = new Date().toISOString().replace("T", " ").slice(0, 19);
-    if (!lic.bound_hwid) {
-      lic.bound_hwid = hwid;
-      lic.bound_at = now;
-    }
-    lic.activations_count = (Number(lic.activations_count) || 0) + 1;
-    store.active_key = lic.key;
-    store.activated_hwid = hwid;
-    store.activated_at = now;
-    saveLicenseStore(store);
-
-    log(`🔐 [DRM Hardware Lock] Activated & hardware-locked key ${lic.key} (${lic.buyer_name}) to computer ${hwid}`);
-    res.json({
-      ok: true,
-      hwid,
-      activated: true,
-      license: lic,
-      message: `Registration Key verified and hardware-locked to this computer (${hwid}).`,
-    });
-  });
-
-  app.post("/api/license/generate", (req: Request, res: Response) => {
-    const buyerName = String(req.body?.buyer_name || "Commercial Customer").trim();
-    const buyerEmail = String(req.body?.buyer_email || "").trim();
-    const notes = String(req.body?.notes || "1-PC Hardware-Locked License").trim();
-    const randA = crypto.randomBytes(2).toString("hex").toUpperCase();
-    const randB = crypto.randomBytes(2).toString("hex").toUpperCase();
-    const sig = crypto
-      .createHmac("sha256", "COUNCIL-NG-DRM-SECRET-2026")
-      .update(`${buyerName}|${buyerEmail}|${randA}|${randB}`)
-      .digest("hex")
-      .slice(0, 4)
-      .toUpperCase();
-    const newKey = `CNG-PRO-${randA}-${randB}-${sig}-LOCK`;
-
-    const store = loadLicenseStore();
-    const rec: LicenseRecord = {
-      key: newKey,
-      tier: "COMMERCIAL_SINGLE_PC",
-      buyer_name: buyerName,
-      buyer_email: buyerEmail,
-      bound_hwid: null,
-      bound_at: null,
-      created_at: new Date().toISOString().replace("T", " ").slice(0, 16),
-      revoked: false,
-      activations_count: 0,
-      max_computers: 1,
-      notes,
-    };
-    store.licenses.unshift(rec);
-    saveLicenseStore(store);
-    log(`🔑 [Owner License Generator] Issued new 1-PC Registration Token ${newKey} for ${buyerName}`);
-    res.json({ ok: true, license: rec, licenses: store.licenses });
-  });
-
-  app.post("/api/license/reset-hwid", (req: Request, res: Response) => {
-    const key = String(req.body?.key || "").trim().toUpperCase();
-    const store = loadLicenseStore();
-    const lic = store.licenses.find((l) => l.key.toUpperCase() === key);
-    if (!lic) return res.status(404).json({ ok: false, error: "License key not found" });
-    lic.bound_hwid = null;
-    lic.bound_at = null;
-    saveLicenseStore(store);
-    log(`🔓 [Owner License Manager] Cleared hardware lock (HWID) for token ${lic.key}`);
-    res.json({ ok: true, license: lic, licenses: store.licenses });
-  });
-
-  app.post("/api/license/revoke", (req: Request, res: Response) => {
-    const key = String(req.body?.key || "").trim().toUpperCase();
-    const store = loadLicenseStore();
-    const lic = store.licenses.find((l) => l.key.toUpperCase() === key);
-    if (!lic) return res.status(404).json({ ok: false, error: "License key not found" });
-    lic.revoked = !lic.revoked;
-    if (lic.revoked && store.active_key === lic.key) {
-      store.active_key = "";
-    }
-    saveLicenseStore(store);
-    log(`🛡️ [Owner License Manager] ${lic.revoked ? "Revoked" : "Restored"} token ${lic.key}`);
-    res.json({ ok: true, license: lic, licenses: store.licenses });
-  });
 
   // Code Obfuscation & Commercial Release Packager Studio
   app.get("/api/drm/status", (_req: Request, res: Response) => {
+    if (getActiveAppEdition() !== "master") {
+      return res.status(403).json({ ok: false, error: "Master Edition required." });
+    }
     const releaseDir = path.join(WORKSPACE_OUTPUT_ROOT, "obfuscated_release");
     const exists = fs.existsSync(path.join(releaseDir, "app.obfuscated.js"));
     res.json({
@@ -489,6 +267,9 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
   });
 
   app.post("/api/drm/obfuscate", (req: Request, res: Response) => {
+    if (getActiveAppEdition() !== "master") {
+      return res.status(403).json({ ok: false, error: "Master Edition required." });
+    }
     try {
       const antiDebug = req.body?.anti_debug !== false;
       const hwidLock = req.body?.hwid_lock !== false;
@@ -540,14 +321,14 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       fs.writeFileSync(
         readmePath,
         `# ◈ Suomynona Council — Protected Commercial Release Bundle\n\n` +
-          `- **Generated**: ${new Date().toISOString()}\n` +
-          `- **String Table Encoding**: ${stringArrayEncode ? "ENABLED (Base64 + Chunked Byte Array)" : "STANDARD"}\n` +
-          `- **Anti-Debugger / DevTools Trap**: ${antiDebug ? "ENABLED" : "DISABLED"}\n` +
-          `- **1-Token / 1-Computer Hardware Lock (HWID)**: ${hwidLock ? "ENFORCED" : "OPTIONAL"}\n\n` +
-          `## How to Ship to Buyers\n` +
-          `1. Replace \`public/app.js\` in your customer zip with \`app.obfuscated.js\` (renamed to \`public/app.js\`).\n` +
-          `2. In Suomynona Council's **🔐 License & DRM Studio**, generate a unique \`CNG-PRO-XXXX-XXXX-XXXX-LOCK\` token for the buyer.\n` +
-          `3. When the buyer launches Suomynona Council for the first time, the Mandatory Setup Wizard requires their Registration Token and permanently locks it to their computer's Hardware Fingerprint (\`HWID\`).\n`,
+        `- **Generated**: ${new Date().toISOString()}\n` +
+        `- **String Table Encoding**: ${stringArrayEncode ? "ENABLED (Base64 + Chunked Byte Array)" : "STANDARD"}\n` +
+        `- **Anti-Debugger / DevTools Trap**: ${antiDebug ? "ENABLED" : "DISABLED"}\n` +
+        `- **1-Token / 1-Computer Hardware Lock (HWID)**: ${hwidLock ? "ENFORCED" : "OPTIONAL"}\n\n` +
+        `## How to Ship to Buyers\n` +
+        `1. Replace \`public/app.js\` in your customer zip with \`app.obfuscated.js\` (renamed to \`public/app.js\`).\n` +
+        `2. In Suomynona Council's **🔐 License & DRM Studio**, generate a unique \`CNG-PRO-XXXX-XXXX-XXXX-LOCK\` token for the buyer.\n` +
+        `3. When the buyer launches Suomynona Council for the first time, the Mandatory Setup Wizard requires their Registration Token and permanently locks it to their computer's Hardware Fingerprint (\`HWID\`).\n`,
         "utf-8"
       );
 
@@ -601,28 +382,36 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
     writeJson("onboarding_ng.json", st);
   }
 
-  app.get("/api/onboarding/state", (req: Request, res: Response) => {
+  app.get("/api/onboarding/state", async (_req: Request, res: Response) => {
     const ob = loadOnboardingState();
     const conf = readConf();
-    const licStore = loadLicenseStore();
-    const hwid = computeMachineHwid(String(req.query.fp || ""));
-    const activeLic = licStore.licenses.find((l) => l.key === licStore.active_key && !l.revoked);
-    const licenseValid = Boolean(activeLic && (!activeLic.bound_hwid || activeLic.bound_hwid === hwid));
+    const licEval = await evaluateCurrentLicenseState();
 
     res.json({
       ok: true,
+      edition: licEval.edition,
       onboarding: ob,
-      license_valid: licenseValid,
-      active_key: licenseValid ? licStore.active_key : "",
-      hwid,
+      license_valid: licEval.valid,
+      license_locked: licEval.license_locked,
+      license_code: licEval.code,
+      license_reason: licEval.reason || "",
+      active_key: licEval.active_license?.key_id || "",
+      active_license: licEval.active_license,
+      hwid: licEval.machine_hwid,
+      machine_hostname: licEval.machine_hostname,
+      machine_os: licEval.machine_os,
       tokens_status: {
         GH_TOKEN: Boolean(conf.GH_TOKEN || process.env.GH_TOKEN),
         GIST_ID: Boolean(conf.GIST_ID || process.env.GIST_ID),
         HF_TOKEN: Boolean(conf.HF_TOKEN || process.env.HF_TOKEN),
+        ORCAROUTER_API_KEY: Boolean(conf.ORCAROUTER_API_KEY || process.env.ORCAROUTER_API_KEY),
         OPENAI_API_KEY: Boolean(conf.OPENAI_API_KEY || process.env.OPENAI_API_KEY),
+        ANTHROPIC_API_KEY: Boolean(conf.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY),
         XAI_API_KEY: Boolean(conf.XAI_API_KEY || process.env.XAI_API_KEY),
         OPENROUTER_API_KEY: Boolean(conf.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY),
         GEMINI_API_KEY: Boolean(conf.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        GROQ_API_KEY: Boolean(conf.GROQ_API_KEY || process.env.GROQ_API_KEY),
+        DEEPSEEK_API_KEY: Boolean(conf.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY),
       },
       system_specs: {
         cpu_cores: os.cpus()?.length || 8,
@@ -638,7 +427,19 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
 
     // Save tokens/keys if provided during walkthrough
     const confUpdates: Record<string, string> = {};
-    for (const k of ["GH_TOKEN", "GIST_ID", "HF_TOKEN", "OPENAI_API_KEY", "XAI_API_KEY", "OPENROUTER_API_KEY", "GEMINI_API_KEY"]) {
+    for (const k of [
+      "GH_TOKEN",
+      "GIST_ID",
+      "HF_TOKEN",
+      "ORCAROUTER_API_KEY",
+      "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
+      "XAI_API_KEY",
+      "OPENROUTER_API_KEY",
+      "GEMINI_API_KEY",
+      "GROQ_API_KEY",
+      "DEEPSEEK_API_KEY",
+    ]) {
       if (typeof b[k] === "string" && b[k].trim()) {
         confUpdates[k] = b[k].trim();
       }
@@ -1366,7 +1167,7 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
           });
         } finally {
           if (tmpGoDir) {
-            try { fs.rmSync(tmpGoDir, { recursive: true, force: true }); } catch (_) {}
+            try { fs.rmSync(tmpGoDir, { recursive: true, force: true }); } catch (_) { }
           }
         }
       }
@@ -1430,33 +1231,33 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
         if (IS_WIN) {
           translatedCmd = rawCmd;
         } else {
-        const lower = rawCmd.toLowerCase().trim();
-        if (lower === "ver") {
-          return res.json({
-            ok: true,
-            shell: "cmd",
-            cwd: getTerminalCwd(),
-            output: `${banner}\nMicrosoft Windows [Version 10.0.22631.4317 — SuomynonaCouncil CMD Bridge]`,
-          });
-        } else if (/^dir\b/i.test(rawCmd)) {
-          const arg = rawCmd.replace(/^dir\s*/i, "").replace(/\/[a-z]+/gi, "").trim();
-          translatedCmd = `ls -la ${arg}`;
-        } else if (/^type\s+/i.test(rawCmd)) {
-          const target = rawCmd.replace(/^type\s+/i, "").trim();
-          translatedCmd = `cat ${target}`;
-        } else if (/^ipconfig\b/i.test(rawCmd)) {
-          translatedCmd = `ip addr 2>/dev/null || ifconfig 2>/dev/null || hostname -I`;
-        } else if (/^tasklist\b/i.test(rawCmd)) {
-          translatedCmd = `ps aux | head -n 25`;
-        } else if (/^systeminfo\b/i.test(rawCmd)) {
-          translatedCmd = `uname -a && lscpu 2>/dev/null | head -n 12 && free -h`;
-        } else if (/^netstat\b/i.test(rawCmd)) {
-          translatedCmd = `netstat -tulnp 2>/dev/null || ss -tulnp`;
-        } else if (/^where\s+/i.test(rawCmd)) {
-          translatedCmd = `which ${rawCmd.replace(/^where\s+/i, "").trim()}`;
-        } else if (/^findstr\s+/i.test(rawCmd)) {
-          translatedCmd = `grep -rn ${rawCmd.replace(/^findstr\s+/i, "").trim()}`;
-        }
+          const lower = rawCmd.toLowerCase().trim();
+          if (lower === "ver") {
+            return res.json({
+              ok: true,
+              shell: "cmd",
+              cwd: getTerminalCwd(),
+              output: `${banner}\nMicrosoft Windows [Version 10.0.22631.4317 — SuomynonaCouncil CMD Bridge]`,
+            });
+          } else if (/^dir\b/i.test(rawCmd)) {
+            const arg = rawCmd.replace(/^dir\s*/i, "").replace(/\/[a-z]+/gi, "").trim();
+            translatedCmd = `ls -la ${arg}`;
+          } else if (/^type\s+/i.test(rawCmd)) {
+            const target = rawCmd.replace(/^type\s+/i, "").trim();
+            translatedCmd = `cat ${target}`;
+          } else if (/^ipconfig\b/i.test(rawCmd)) {
+            translatedCmd = `ip addr 2>/dev/null || ifconfig 2>/dev/null || hostname -I`;
+          } else if (/^tasklist\b/i.test(rawCmd)) {
+            translatedCmd = `ps aux | head -n 25`;
+          } else if (/^systeminfo\b/i.test(rawCmd)) {
+            translatedCmd = `uname -a && lscpu 2>/dev/null | head -n 12 && free -h`;
+          } else if (/^netstat\b/i.test(rawCmd)) {
+            translatedCmd = `netstat -tulnp 2>/dev/null || ss -tulnp`;
+          } else if (/^where\s+/i.test(rawCmd)) {
+            translatedCmd = `which ${rawCmd.replace(/^where\s+/i, "").trim()}`;
+          } else if (/^findstr\s+/i.test(rawCmd)) {
+            translatedCmd = `grep -rn ${rawCmd.replace(/^findstr\s+/i, "").trim()}`;
+          }
         }
       }
 
@@ -1961,10 +1762,10 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       const primaryEntryCmd = pyEntry
         ? `python3 "${pyEntry.path}"`
         : jsEntry
-        ? `node "${jsEntry.path}"`
-        : htmlEntry
-        ? `python3 -m http.server 8090`
-        : `ls -la`;
+          ? `node "${jsEntry.path}"`
+          : htmlEntry
+            ? `python3 -m http.server 8090`
+            : `ls -la`;
 
       // Auto-synthesize Deliverable DevOps, Launchers & Smoke-Test Suite (#22 + #46 + #47 Specialists) if missing
       const ensureDeliverableFile = (relName: string, bodyContent: string, executable = false) => {
@@ -1980,8 +1781,8 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       const dockerCmdArr = pyEntry
         ? `["python3", "${pyEntry.path}"]`
         : jsEntry
-        ? `["node", "${jsEntry.path}"]`
-        : `["python3", "-m", "http.server", "8090"]`;
+          ? `["node", "${jsEntry.path}"]`
+          : `["python3", "-m", "http.server", "8090"]`;
 
       ensureDeliverableFile(
         "Dockerfile",
@@ -2192,9 +1993,9 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
               `<details style="margin-bottom:8px;background:#0d1428;border:1px solid #26355e;border-radius:8px;padding:8px 12px">
                 <summary style="cursor:pointer;font-weight:700;color:#2ee6a6;font-family:monospace">📄 ${f.path} (${f.content.split("\n").length} lines)</summary>
                 <pre style="margin-top:8px;overflow:auto;max-height:280px;background:#050811;padding:10px;border-radius:6px;color:#e2e8f0;font-size:12px">${f.content
-                  .replace(/&/g, "&amp;")
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")}</pre>
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")}</pre>
               </details>`
           )
           .join("\n");
@@ -2269,9 +2070,9 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
               `<details style="margin-bottom:8px;background:#091326;border:1px solid rgba(56,189,248,0.28);border-radius:8px;padding:8px 12px">
                 <summary style="cursor:pointer;font-weight:700;color:#38bdf8;font-family:monospace">📄 ${f.path} (${f.content.split("\n").length} lines)</summary>
                 <pre style="margin-top:8px;overflow:auto;max-height:260px;background:#030711;padding:10px;border-radius:6px;color:#e2e8f0;font-size:12px">${f.content
-                  .replace(/&/g, "&amp;")
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")}</pre>
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")}</pre>
               </details>`
           )
           .join("\n");
@@ -2955,12 +2756,12 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       const liveTestCmd = pyFile
         ? `python3 "${path.join(runDir, pyFile.path)}"`
         : jsFile
-        ? `node "${path.join(runDir, jsFile.path)}"`
-        : shFile
-        ? `bash "${path.join(runDir, shFile.path)}"`
-        : htmlFile
-        ? `ls -lh "${path.join(runDir, htmlFile.path)}"`
-        : `ls -la "${runDir}"`;
+          ? `node "${path.join(runDir, jsFile.path)}"`
+          : shFile
+            ? `bash "${path.join(runDir, shFile.path)}"`
+            : htmlFile
+              ? `ls -lh "${path.join(runDir, htmlFile.path)}"`
+              : `ls -la "${runDir}"`;
 
       const liveExec = executeRealShellCommand(liveTestCmd);
       const finalSyntaxAudit = runStaticSyntaxAudit(finalMergedFiles);
@@ -3014,10 +2815,10 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       const primaryEntryCmd = pyFile
         ? `python3 "${pyFile.path}"`
         : jsFile
-        ? `node "${jsFile.path}"`
-        : htmlFile
-        ? `python3 -m http.server 8090`
-        : `ls -la`;
+          ? `node "${jsFile.path}"`
+          : htmlFile
+            ? `python3 -m http.server 8090`
+            : `ls -la`;
 
       let artifactPath = "";
       let downloadName = "";
@@ -3225,9 +3026,9 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       const protocols = Array.isArray(req.body?.protocols)
         ? req.body.protocols.map((p: any) => String(p).toLowerCase())
         : String(req.body?.protocols || "http,socks4,socks5")
-            .split(",")
-            .map((s) => s.trim().toLowerCase())
-            .filter(Boolean);
+          .split(",")
+          .map((s) => s.trim().toLowerCase())
+          .filter(Boolean);
       const maxPerProtocol = Math.max(4, Math.min(50, Number(req.body?.limit_per_protocol) || 18));
       const timeoutMs = Math.max(500, Math.min(4500, Number(req.body?.timeout_ms) || 1800));
       const onlyWorking = req.body?.only_working !== false;
@@ -3304,13 +3105,28 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
         return "";
       }
     };
+    const pyStr = safeExec(`"${getEffectivePythonBin()}" --version`) || "Python 3 (Host)";
+    const pipStr = safeExec(`"${fs.existsSync(REAL_PIP_BIN) ? REAL_PIP_BIN : "pip"}" --version`);
+    const goStr = safeExec(`"${fs.existsSync(REAL_GO_BIN) ? REAL_GO_BIN : "go"}" version`);
+    const cscAvail = IS_WIN && (
+      fs.existsSync("C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe") ||
+      fs.existsSync("C:\\Windows\\Microsoft.NET\\Framework\\v4.0.30319\\csc.exe")
+    );
     res.json({
       ok: true,
-      python: safeExec(`"${getEffectivePythonBin()}" --version`),
-      pip: safeExec(`"${fs.existsSync(REAL_PIP_BIN) ? REAL_PIP_BIN : "pip"}" --version`),
-      go: safeExec(`"${fs.existsSync(REAL_GO_BIN) ? REAL_GO_BIN : "go"}" version`),
+      python: pyStr,
+      python_version: pyStr,
+      pip: pipStr || "pip",
+      real_pypi_pip: Boolean(pipStr),
+      go: goStr || (cscAvail ? "UNAVAILABLE (.NET PE32+ Ready)" : "UNAVAILABLE"),
+      go_version: goStr || (cscAvail ? ".NET csc.exe x64" : "Go 1.22 (fallback)"),
       node: process.version,
-      win_exe_cross_compiler: fs.existsSync(REAL_GO_BIN) ? "Go 1.22.10 Native Windows PE32+ (GOOS=windows GOARCH=amd64)" : "Provisioning",
+      csc_pe64_available: cscAvail,
+      win_exe_cross_compiler: goStr
+        ? `${goStr} (Windows x64 PE32+)`
+        : cscAvail
+          ? "Windows .NET Framework 64-bit csc.exe (PE32+ Native)"
+          : "Provisioning",
     });
   });
 
@@ -3572,7 +3388,7 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       try {
         const oldDisk = path.join(ACTIVE_MERGED_DIR, oldPath);
         if (fs.existsSync(oldDisk)) fs.unlinkSync(oldDisk);
-      } catch {}
+      } catch { }
       const savedWs = saveExplorerActiveWorkspace(ws);
       res.json({ ok: true, workspace: savedWs, renamedTo: newPath });
     } catch (e: any) {
@@ -3591,12 +3407,55 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
     ".cache",
   ]);
 
+  function resolveExplorerDiskPath(rawRelInput: string): { ok: boolean; rel: string; absTarget: string; writable: boolean; error?: string } {
+    const rawRel = String(rawRelInput || "").replace(/\\/g, "/").replace(/^\/+/, "");
+    if (!rawRel || rawRel.includes("..")) {
+      return { ok: false, rel: rawRel, absTarget: "", writable: false, error: "Invalid relative path." };
+    }
+    const topSeg = rawRel.split("/")[0] || "";
+    if (EXPLORER_DISK_SKIP_DIRS.has(topSeg)) {
+      return { ok: false, rel: rawRel, absTarget: "", writable: false, error: "Directory excluded from inspector." };
+    }
+
+    if (rawRel.startsWith("council_outputs/")) {
+      const sub = rawRel.slice("council_outputs/".length);
+      const outBase = path.resolve(WORKSPACE_OUTPUT_ROOT);
+      const absTarget = path.resolve(outBase, sub);
+      if (!absTarget.startsWith(outBase + path.sep) && absTarget !== outBase) {
+        return { ok: false, rel: rawRel, absTarget: "", writable: false, error: "Path outside council_outputs root." };
+      }
+      return { ok: true, rel: rawRel, absTarget, writable: true };
+    }
+
+    if (rawRel.startsWith(".council_data/")) {
+      return { ok: false, rel: rawRel, absTarget: "", writable: false, error: "Internal vault protected." };
+    }
+
+    const candidates = [path.resolve(PROJECT_ROOT), path.resolve(DATA_ROOT)];
+    for (const base of candidates) {
+      const absTarget = path.resolve(base, rawRel);
+      if (absTarget.startsWith(base + path.sep) && fs.existsSync(absTarget) && fs.statSync(absTarget).isFile()) {
+        const writable = !base.toLowerCase().includes(".asar");
+        return { ok: true, rel: rawRel, absTarget, writable };
+      }
+    }
+
+    // Fallback target for creating/writing if not found yet in council_outputs
+    const isAsar = PROJECT_ROOT.toLowerCase().includes(".asar");
+    const targetBase = isAsar ? path.resolve(WORKSPACE_OUTPUT_ROOT) : path.resolve(PROJECT_ROOT);
+    const absFallback = path.resolve(targetBase, rawRel);
+    return { ok: true, rel: rawRel, absTarget: absFallback, writable: true };
+  }
+
   app.get("/api/explorer/disk-tree", (_req: Request, res: Response) => {
     try {
-      const rootDir = process.cwd();
+      const projRoot = path.resolve(PROJECT_ROOT);
+      const outRoot = path.resolve(WORKSPACE_OUTPUT_ROOT);
       const diskFiles: Array<{ path: string; size: number; ext: string; mtime: string }> = [];
-      const walkDisk = (absDir: string, relPrefix: string, depth: number) => {
-        if (depth > 3 || diskFiles.length >= 160) return;
+      const seenRel = new Set<string>();
+
+      const walkDisk = (absDir: string, relPrefix: string, depth: number, maxFiles = 220) => {
+        if (depth > 3 || diskFiles.length >= maxFiles || !fs.existsSync(absDir)) return;
         let entries: fs.Dirent[] = [];
         try {
           entries = fs.readdirSync(absDir, { withFileTypes: true });
@@ -3604,17 +3463,19 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
           return;
         }
         for (const ent of entries) {
-          if (diskFiles.length >= 160) break;
+          if (diskFiles.length >= maxFiles) break;
           if (EXPLORER_DISK_SKIP_DIRS.has(ent.name)) continue;
           if (ent.name.startsWith(".") && ent.name !== ".env.example" && ent.name !== ".aistudio") continue;
           const rel = relPrefix ? `${relPrefix}/${ent.name}` : ent.name;
           const full = path.join(absDir, ent.name);
           if (ent.isDirectory()) {
-            walkDisk(full, rel, depth + 1);
+            walkDisk(full, rel, depth + 1, maxFiles);
           } else if (ent.isFile()) {
+            if (seenRel.has(rel)) continue;
             try {
               const st = fs.statSync(full);
               if (st.size <= 2_500_000) {
+                seenRel.add(rel);
                 diskFiles.push({
                   path: rel,
                   size: st.size,
@@ -3622,17 +3483,20 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
                   mtime: st.mtime.toISOString(),
                 });
               }
-            } catch {}
+            } catch { }
           }
         }
       };
-      walkDisk(rootDir, "", 0);
 
-      // Discover structured Antigravity Artifacts (.aistudio/artifacts + active workspace plans/HTML)
+      // Always include user's generated builds, staged workspaces, and /doctor repair scripts first
+      walkDisk(outRoot, "council_outputs", 0, 140);
+      // Include application workspace files from PROJECT_ROOT (works even when electron cwd = %APPDATA%)
+      walkDisk(projRoot, "", 0, 260);
+
+      // Discover structured Antigravity Artifacts (.aistudio/artifacts + doctor_repairs scripts)
       const artifacts: Array<{ id: string; title: string; path: string; kind: string; size: number; updatedAt: string }> = [];
-      const artifactRoot = path.join(rootDir, ".aistudio", "artifacts");
       const walkArtifacts = (absDir: string, relPrefix: string, depth: number) => {
-        if (depth > 4 || artifacts.length >= 40 || !fs.existsSync(absDir)) return;
+        if (depth > 4 || artifacts.length >= 45 || !fs.existsSync(absDir)) return;
         let entries: fs.Dirent[] = [];
         try {
           entries = fs.readdirSync(absDir, { withFileTypes: true });
@@ -3645,24 +3509,31 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
           const rel = `${relPrefix}/${ent.name}`;
           if (ent.isDirectory()) {
             walkArtifacts(full, rel, depth + 1);
-          } else if (ent.isFile() && /\.(md|html|json|txt)$/i.test(ent.name)) {
+          } else if (ent.isFile() && /\.(md|html|json|txt|ps1|bat|sh)$/i.test(ent.name)) {
             try {
               const st = fs.statSync(full);
               artifacts.push({
                 id: `disk_art::${rel}`,
                 title: ent.name,
                 path: rel,
-                kind: ent.name.includes("plan") ? "Implementation Plan" : ent.name.endsWith(".html") ? "Web Preview" : "Artifact",
+                kind: ent.name.endsWith(".ps1") || ent.name.endsWith(".sh")
+                  ? "Repair Script"
+                  : ent.name.includes("plan")
+                    ? "Implementation Plan"
+                    : ent.name.endsWith(".html")
+                      ? "Web Preview"
+                      : "Artifact",
                 size: st.size,
                 updatedAt: st.mtime.toISOString(),
               });
-            } catch {}
+            } catch { }
           }
         }
       };
-      walkArtifacts(artifactRoot, ".aistudio/artifacts", 0);
+      walkArtifacts(path.join(outRoot, "doctor_repairs"), "council_outputs/doctor_repairs", 0);
+      walkArtifacts(path.join(projRoot, ".aistudio", "artifacts"), ".aistudio/artifacts", 0);
 
-      res.json({ ok: true, diskFiles, artifacts });
+      res.json({ ok: true, diskFiles, artifacts, projectRoot: projRoot, outputRoot: outRoot });
     } catch (e: any) {
       res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
@@ -3670,34 +3541,52 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
 
   app.get("/api/explorer/disk-file", (req: Request, res: Response) => {
     try {
-      const rawRel = String(req.query.path || "").replace(/\\/g, "/").replace(/^\/+/, "");
-      if (!rawRel || rawRel.includes("..")) {
-        return res.status(400).json({ ok: false, error: "Invalid relative path." });
+      const resolved = resolveExplorerDiskPath(String(req.query.path || ""));
+      if (!resolved.ok) {
+        return res.status(resolved.error?.includes("excluded") ? 403 : 400).json({ ok: false, error: resolved.error });
       }
-      const rootDir = process.cwd();
-      const absTarget = path.resolve(rootDir, rawRel);
-      if (!absTarget.startsWith(rootDir + path.sep) && absTarget !== rootDir) {
-        return res.status(403).json({ ok: false, error: "Path outside workspace root." });
-      }
-      const topSeg = rawRel.split("/")[0] || "";
-      if (EXPLORER_DISK_SKIP_DIRS.has(topSeg)) {
-        return res.status(403).json({ ok: false, error: "Directory excluded from inspector." });
-      }
-      if (!fs.existsSync(absTarget) || !fs.statSync(absTarget).isFile()) {
+      if (!fs.existsSync(resolved.absTarget) || !fs.statSync(resolved.absTarget).isFile()) {
         return res.status(404).json({ ok: false, error: "File not found on disk." });
       }
-      const st = fs.statSync(absTarget);
+      const st = fs.statSync(resolved.absTarget);
       if (st.size > 2_000_000) {
         return res.status(413).json({ ok: false, error: "File exceeds 2MB inspector limit." });
       }
-      const content = fs.readFileSync(absTarget, "utf-8");
+      const content = fs.readFileSync(resolved.absTarget, "utf-8");
       res.json({
         ok: true,
-        path: rawRel,
+        path: resolved.rel,
+        absPath: resolved.absTarget,
+        writable: resolved.writable,
         size: st.size,
-        language: path.extname(rawRel).replace(/^\./, "") || "txt",
+        language: path.extname(resolved.rel).replace(/^\./, "") || "txt",
         updatedAt: st.mtime.toISOString(),
         content,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/explorer/disk-save", (req: Request, res: Response) => {
+    try {
+      const rawPath = String(req.body?.path || "").trim();
+      const content = String(req.body?.content ?? "");
+      const resolved = resolveExplorerDiskPath(rawPath);
+      if (!resolved.ok) {
+        return res.status(400).json({ ok: false, error: resolved.error || "Invalid path." });
+      }
+      if (!resolved.writable) {
+        return res.status(403).json({ ok: false, error: "Read-only archive file; saved copy into Active Merged Build instead." });
+      }
+      fs.mkdirSync(path.dirname(resolved.absTarget), { recursive: true });
+      fs.writeFileSync(resolved.absTarget, content, "utf-8");
+      pushLiveConsole(`💾 [Explorer Disk Save] Wrote ${content.length} chars to ${resolved.absTarget}`, { category: "COMPILER", level: "ok" });
+      res.json({
+        ok: true,
+        path: resolved.rel,
+        saved_path: resolved.absTarget,
+        bytes: Buffer.byteLength(content, "utf-8"),
       });
     } catch (e: any) {
       res.status(500).json({ ok: false, error: e?.message || String(e) });
@@ -3713,8 +3602,8 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       let rawFiles = Array.isArray(req.body?.files)
         ? req.body.files
         : Array.isArray(req.body?.selected_files)
-        ? req.body.selected_files
-        : [];
+          ? req.body.selected_files
+          : [];
       if (!rawFiles.length && req.body?.runId && Array.isArray(req.body?.selectedFileIds)) {
         const targetRun = loadExplorerRuns().find((r) => r.id === req.body.runId);
         if (targetRun) {
@@ -3754,19 +3643,46 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
         written.push({ path: rel, content });
       }
 
-      const goEntry = written.find((w) => w.path.endsWith(".go") && /func\s+main\s*\(/.test(w.content)) || written.find((w) => w.path.endsWith(".go"));
-      const pyEntry = written.find((w) => w.path.endsWith(".py") && !w.path.includes("test")) || written.find((w) => w.path.endsWith(".py"));
-      const jsEntry = written.find((w) => w.path.endsWith(".js"));
+      const requestedEntry = String(req.body?.entry_path || "").replace(/\\/g, "/").replace(/^\/+/, "").trim();
+      const explicitEntry = requestedEntry ? written.find((w) => w.path === requestedEntry) : undefined;
+      const goEntry =
+        (explicitEntry && explicitEntry.path.endsWith(".go") ? explicitEntry : undefined) ||
+        written.find((w) => w.path.endsWith(".go") && /func\s+main\s*\(/.test(w.content)) ||
+        written.find((w) => w.path.endsWith(".go"));
+      const pyEntry =
+        (explicitEntry && explicitEntry.path.endsWith(".py") ? explicitEntry : undefined) ||
+        written.find((w) => /(^|\/)(main|app|run|server|cli)\.py$/i.test(w.path)) ||
+        written.find((w) => w.path.endsWith(".py") && /if\s+__name__\s*==\s*['"]__main__['"]/.test(w.content)) ||
+        written.find((w) => w.path.endsWith(".py") && !w.path.includes("test")) ||
+        written.find((w) => w.path.endsWith(".py"));
+      const tsEntry =
+        (explicitEntry && /\.tsx?$/i.test(explicitEntry.path) ? explicitEntry : undefined) ||
+        written.find((w) => /(^|\/)(main|app|index|server|cli)\.tsx?$/i.test(w.path)) ||
+        written.find((w) => /\.tsx?$/i.test(w.path) && !w.path.endsWith(".d.ts"));
+      const jsEntry =
+        (explicitEntry && /\.(js|mjs|cjs)$/i.test(explicitEntry.path) ? explicitEntry : undefined) ||
+        written.find((w) => /(^|\/)(main|index|app|server|cli)\.(js|mjs|cjs)$/i.test(w.path)) ||
+        written.find((w) => !w.path.includes("/") && /\.(js|mjs|cjs)$/i.test(w.path)) ||
+        written.find((w) => /\.(js|mjs|cjs)$/i.test(w.path));
+      const ps1Entry = written.find((w) => w.path.endsWith(".ps1"));
+      const batEntry = written.find((w) => /\.(bat|cmd)$/i.test(w.path));
       const shEntry = written.find((w) => w.path.endsWith(".sh"));
+      const htmlEntry = written.find((w) => /\.(html|htm)$/i.test(w.path));
 
       const pyBin = `"${getEffectivePythonBin()}"`;
       const goBin = `"${getEffectiveGoBin()}"`;
 
-      let primaryCmd = `ls -la`;
+      let primaryCmd = IS_WIN ? `dir /b` : `ls -la`;
       if (goEntry) primaryCmd = `${goBin} run "${goEntry.path}"`;
       else if (pyEntry) primaryCmd = `${pyBin} "${pyEntry.path}"`;
       else if (jsEntry) primaryCmd = `node "${jsEntry.path}"`;
-      else if (shEntry) primaryCmd = `bash "${shEntry.path}"`;
+      else if (tsEntry) primaryCmd = `npx tsx "${tsEntry.path}"`;
+      else if (ps1Entry && IS_WIN) primaryCmd = `powershell -NoProfile -ExecutionPolicy Bypass -File "${ps1Entry.path}"`;
+      else if (batEntry && IS_WIN) primaryCmd = `cmd /c "${batEntry.path}"`;
+      else if (shEntry) {
+        const gitBash = "C:\\Program Files\\Git\\bin\\bash.exe";
+        primaryCmd = IS_WIN && fs.existsSync(gitBash) ? `"${gitBash}" "${shEntry.path}"` : `bash "${shEntry.path}"`;
+      }
 
       if (actionFormat === "exe") {
         const embeddedMap: Record<string, string> = {};
@@ -3814,6 +3730,12 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
           timeout: 25000,
           stdio: ["pipe", "pipe", "pipe"],
         });
+        if (!goEntry && !pyEntry && !jsEntry && !tsEntry && !ps1Entry && !batEntry && !shEntry) {
+          const hint = htmlEntry
+            ? `🌐 Web bundle staged (${htmlEntry.path}) — switch to the 'Artifact Preview' tab above to interact live.\n`
+            : `📄 Staged ${written.length} file(s) to ${buildDir}.\n`;
+          execOut = `${hint}\nFiles:\n${execOut}`;
+        }
       } catch (runErr: any) {
         execOk = false;
         execOut = [String(runErr?.stdout || "").trim(), String(runErr?.stderr || runErr?.message || "").trim()].filter(Boolean).join("\n");
@@ -3826,6 +3748,7 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
       res.json({
         ok: true,
         exec_ok: execOk,
+        exit_status: execOk ? 0 : 1,
         command: primaryCmd,
         buildDir,
         build_dir: buildDir,
@@ -3925,6 +3848,524 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
     } catch (e: any) {
       res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
+  });
+
+  // ── Redesigned Antigravity Explorer APIs: Disk Ops, Compatibility Judge, Coding Merge Agent & HF Coders ──
+  app.post("/api/explorer/disk-mkdir", (req: Request, res: Response) => {
+    try {
+      const resolved = resolveExplorerDiskPath(String(req.body?.path || "").trim());
+      if (!resolved.ok || !resolved.rel) {
+        return res.status(400).json({ ok: false, error: resolved.error || "Invalid folder path." });
+      }
+      if (!resolved.writable) {
+        return res.status(403).json({ ok: false, error: "Target root is read-only." });
+      }
+      fs.mkdirSync(resolved.absTarget, { recursive: true });
+      pushLiveConsole(`📁 [Explorer Mkdir] Created ${resolved.rel}`, { category: "COMPILER", level: "ok" });
+      res.json({ ok: true, path: resolved.rel, absPath: resolved.absTarget });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/explorer/disk-rename", (req: Request, res: Response) => {
+    try {
+      const oldResolved = resolveExplorerDiskPath(String(req.body?.oldPath || "").trim());
+      const newResolved = resolveExplorerDiskPath(String(req.body?.newPath || "").trim());
+      if (!oldResolved.ok || !newResolved.ok) {
+        return res.status(400).json({ ok: false, error: oldResolved.error || newResolved.error || "Invalid path." });
+      }
+      if (!oldResolved.rel.startsWith("council_outputs/") || !newResolved.rel.startsWith("council_outputs/")) {
+        return res.status(403).json({ ok: false, error: "Renaming disk files is restricted to council_outputs/ workspace." });
+      }
+      if (!fs.existsSync(oldResolved.absTarget)) {
+        return res.status(404).json({ ok: false, error: "Source file not found." });
+      }
+      if (fs.existsSync(newResolved.absTarget) && oldResolved.absTarget !== newResolved.absTarget) {
+        return res.status(409).json({ ok: false, error: `Target '${newResolved.rel}' already exists.` });
+      }
+      fs.mkdirSync(path.dirname(newResolved.absTarget), { recursive: true });
+      fs.renameSync(oldResolved.absTarget, newResolved.absTarget);
+      pushLiveConsole(`✎ [Explorer Disk Rename] ${oldResolved.rel} -> ${newResolved.rel}`, { category: "COMPILER", level: "info" });
+      res.json({ ok: true, oldPath: oldResolved.rel, newPath: newResolved.rel });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.delete("/api/explorer/disk-file", (req: Request, res: Response) => {
+    try {
+      const raw = String(req.body?.path || req.query?.path || "").trim();
+      const resolved = resolveExplorerDiskPath(raw);
+      if (!resolved.ok) {
+        return res.status(400).json({ ok: false, error: resolved.error || "Invalid path." });
+      }
+      if (!resolved.rel.startsWith("council_outputs/")) {
+        return res.status(403).json({ ok: false, error: "Deleting disk files is restricted to council_outputs/ so project source stays safe." });
+      }
+      if (!fs.existsSync(resolved.absTarget)) {
+        return res.status(404).json({ ok: false, error: "File not found." });
+      }
+      const st = fs.statSync(resolved.absTarget);
+      if (st.isDirectory()) {
+        fs.rmSync(resolved.absTarget, { recursive: true, force: true });
+      } else {
+        fs.unlinkSync(resolved.absTarget);
+      }
+      pushLiveConsole(`🗑 [Explorer Disk Delete] Removed ${resolved.rel}`, { category: "COMPILER", level: "warn" });
+      res.json({ ok: true, deleted: resolved.rel });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get("/api/explorer/coding-models", async (_req: Request, res: Response) => {
+    try {
+      const data = await listAvailableCodingAndJudgeModels();
+      res.json({ ok: true, ...data });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/explorer/judge-compare", async (req: Request, res: Response) => {
+    try {
+      const b = req.body || {};
+      const files = Array.isArray(b.files) ? b.files : [];
+      if (!files.length) {
+        return res.status(400).json({ ok: false, error: "Provide at least 1 file in the scope to compare and judge." });
+      }
+      const judgeModel = String(b.judge_model || "auto").trim();
+      const useAi = b.use_ai !== false;
+      const wsFiles = loadExplorerActiveWorkspace().files || [];
+      const staticReport = buildCompatibilityReport(files, wsFiles);
+
+      let aiJudgeUsed = false;
+      let usedModel = "static-analyzer";
+      let provider = "local-static";
+      let aiNote = "";
+      let summary =
+        staticReport.conflicts.length === 0
+          ? `Static compatibility scan passed cleanly across ${staticReport.file_matrix.length} path(s) (score ${staticReport.overall_compatibility_score}/100).`
+          : `Static analyzer detected ${staticReport.conflicts.length} issue(s) across ${staticReport.file_matrix.length} path(s) (score ${staticReport.overall_compatibility_score}/100).`;
+      let mergePlan =
+        staticReport.conflicts.length === 0
+          ? "1. Apply clean winners directly into Merged Project.\n2. Run project execution test."
+          : "1. Apply conflict-free winners.\n2. Send colliding or broken files to the Merge Agent to reconcile symbols and syntax.";
+
+      if (useAi) {
+        const snippetBundle = files
+          .slice(0, 14)
+          .map(
+            (f: any, i: number) =>
+              `### [${i + 1}] \`${f.path}\` (from ${f.modelName || "Model"})\n\`\`\`${f.language || ""}\n${String(f.content || "").slice(0, 2200)}\n\`\`\``
+          )
+          .join("\n\n");
+        const sysPrompt =
+          "You are a Principal Code Integration Judge. Analyze multi-model files for syntax validity, import/export compatibility, shared interface alignment, and merge strategy. Return ONLY valid JSON matching: {\"summary\": string, \"merge_plan\": string, \"file_verdicts\": [{\"path\": string, \"recommended_model\": string, \"merge_action\": \"accept_winner\"|\"ai_merge\"|\"fix_required\", \"reason\": string}], \"extra_conflicts\": [{\"severity\": \"high\"|\"medium\"|\"low\", \"path\": string, \"message\": string, \"suggestion\": string}]}.";
+        const userPrompt = `STATIC FINDINGS:\n${JSON.stringify(
+          {
+            score: staticReport.overall_compatibility_score,
+            conflicts: staticReport.conflicts.slice(0, 15),
+            matrix_paths: staticReport.file_matrix.map((r) => ({ path: r.path, status: r.status, cands: r.candidates.map((c) => c.modelName) })),
+          },
+          null,
+          2
+        )}\n\nFILES:\n${snippetBundle}`;
+
+        const aiRes = await invokeSpecificExplorerModel(judgeModel, sysPrompt, userPrompt, 0.1).catch((err: any) => ({
+          ok: false,
+          text: "",
+          usedModel: judgeModel,
+          provider: "error",
+          error: err?.message || String(err),
+        }));
+
+        if (aiRes.ok && aiRes.text) {
+          usedModel = aiRes.usedModel;
+          provider = aiRes.provider;
+          const m = aiRes.text.match(/\{[\s\S]*\}/);
+          if (m) {
+            try {
+              const parsed: any = JSON.parse(m[0]);
+              aiJudgeUsed = true;
+              if (typeof parsed.summary === "string" && parsed.summary.trim()) summary = parsed.summary.trim();
+              if (typeof parsed.merge_plan === "string" && parsed.merge_plan.trim()) mergePlan = parsed.merge_plan.trim();
+              if (Array.isArray(parsed.extra_conflicts)) {
+                for (const ec of parsed.extra_conflicts) {
+                  if (ec && ec.message) {
+                    staticReport.conflicts.push({
+                      severity: ec.severity === "high" || ec.severity === "low" ? ec.severity : "medium",
+                      path: String(ec.path || "project"),
+                      message: `[AI Judge · ${usedModel}] ${String(ec.message)}`,
+                      suggestion: String(ec.suggestion || "Resolve in Merge Agent."),
+                    });
+                  }
+                }
+              }
+              if (Array.isArray(parsed.file_verdicts)) {
+                for (const fv of parsed.file_verdicts) {
+                  const row = staticReport.file_matrix.find((r) => r.path === fv?.path);
+                  if (row) {
+                    if (fv.recommended_model) row.recommended_model = String(fv.recommended_model);
+                    if (fv.merge_action === "ai_merge") row.status = "needs_ai_merge";
+                    else if (fv.merge_action === "fix_required") row.status = "conflict";
+                    if (fv.reason) row.note = String(fv.reason);
+                  }
+                }
+              }
+            } catch {
+              aiJudgeUsed = true;
+              summary = aiRes.text.slice(0, 600);
+            }
+          } else {
+            aiJudgeUsed = true;
+            summary = aiRes.text.slice(0, 600);
+          }
+        } else {
+          aiNote = aiRes.error || "AI Judge offline — showing real static syntax & cross-file import/export analysis.";
+        }
+      }
+
+      pushLiveConsole(
+        `⚖️ [Explorer Judge] Audited ${files.length} file(s) across ${staticReport.file_matrix.length} path(s) · Score ${staticReport.overall_compatibility_score}/100 (${aiJudgeUsed ? usedModel : "Static"})`,
+        { category: "INFERENCE", level: staticReport.conflicts.some((c) => c.severity === "high") ? "warn" : "ok" }
+      );
+
+      res.json({
+        ok: true,
+        used_model: usedModel,
+        provider,
+        ai_judge_used: aiJudgeUsed,
+        ai_note: aiNote,
+        overall_compatibility_score: staticReport.overall_compatibility_score,
+        summary,
+        merge_plan: mergePlan,
+        file_matrix: staticReport.file_matrix,
+        conflicts: staticReport.conflicts,
+        clean_winner_files: staticReport.clean_winner_files,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/explorer/merge-agent", async (req: Request, res: Response) => {
+    try {
+      const b = req.body || {};
+      const files = Array.isArray(b.files) ? b.files : [];
+      if (!files.length) {
+        return res.status(400).json({ ok: false, error: "Queue at least 1 file in Merge Agent before running." });
+      }
+      const codingModel = String(b.coding_model || "auto").trim();
+      const strategy = String(b.strategy || "smart_merge").trim();
+      const extraInstr = String(b.instructions || "").trim();
+      const conflicts = Array.isArray(b.conflicts) ? b.conflicts : [];
+      const mergePlan = String(b.merge_plan || "").trim();
+      const wsFiles = loadExplorerActiveWorkspace().files || [];
+
+      const wsIndex = wsFiles.length
+        ? wsFiles.map((wf: any) => `- ${wf.path} (${wf.fromModelName || "Project"}, ${String(wf.content || "").split(/\r?\n/).length} lines)`).join("\n")
+        : "(Active Project is empty)";
+
+      const filesContext = files
+        .map(
+          (f: any, idx: number) =>
+            `### SOURCE #${idx + 1}: path=\`${f.path}\` | model=\`${f.modelName || "Model"}\`\n\`\`\`${f.language || ""}\n${String(f.content || "").slice(0, 7500)}\n\`\`\``
+        )
+        .join("\n\n");
+
+      const sysPrompt = [
+        "You are an Elite Multi-File Software Integration & Merge Engineer.",
+        `Strategy: ${strategy}.`,
+        "CRITICAL RULES:",
+        "1. Output EVERY merged/fixed file in full with ZERO omissions, ZERO TODOs, ZERO '... existing code ...' placeholders.",
+        "2. Reconcile all cross-file imports, named exports, function signatures, API routes, and HTML DOM IDs so the entire project compiles and runs cohesively together.",
+        "3. Wrap each emitted file strictly as:\n=== FILE: relative/path.ext ===\n```lang\n<complete file contents>\n```",
+      ].join("\n");
+
+      const userPrompt = [
+        extraInstr ? `USER MERGE INSTRUCTIONS:\n${extraInstr}` : "USER MERGE INSTRUCTIONS:\nCombine the best features, fix any conflicts or broken imports, and emit complete runnable files.",
+        mergePlan ? `JUDGE MERGE PLAN:\n${mergePlan}` : "",
+        conflicts.length ? `DETECTED CONFLICTS TO FIX:\n${JSON.stringify(conflicts.slice(0, 15), null, 2)}` : "",
+        `CURRENT ACTIVE PROJECT INDEX:\n${wsIndex}`,
+        `FILES TO MERGE (${files.length}):\n${filesContext}`,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      pushLiveConsole(`🔀 [Merge Agent] Merging ${files.length} file(s) using ${codingModel} (${strategy})…`, {
+        category: "AGENTS",
+        level: "info",
+      });
+
+      const firstAi = await invokeSpecificExplorerModel(codingModel, sysPrompt, userPrompt, 0.12);
+      if (!firstAi.ok || !firstAi.text) {
+        return res.json({
+          ok: false,
+          error: firstAi.error || "Coding model did not return a response.",
+          used_model: firstAi.usedModel,
+          provider: firstAi.provider,
+          needs_model_setup: true,
+        });
+      }
+
+      let rawOutput = firstAi.text;
+      const extractMergedList = (text: string) => {
+        const parsed = parseResponseFiles(text);
+        let list = Object.entries(parsed).map(([p, content]) => ({
+          path: sanitizeParsedRelativeFilePath(p) || p,
+          language: path.extname(p).replace(/^\./, "") || "txt",
+          content,
+        }));
+        if (!list.length && files.length === 1) {
+          const singleFence = text.match(/```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)```/);
+          if (singleFence && singleFence[1].trim()) {
+            const p0 = String(files[0].path || "merged.txt");
+            list = [{ path: p0, language: path.extname(p0).replace(/^\./, "") || "txt", content: singleFence[1] }];
+          }
+        }
+        return list;
+      };
+
+      let mergedList = extractMergedList(rawOutput);
+      let analyzed = mergedList.map((f) => ({ ...f, analysis: analyzeFileStatic(f) }));
+      let broken = analyzed.filter((f) => !f.analysis.valid);
+      let selfHealed = false;
+
+      if (broken.length > 0) {
+        const fixPrompt =
+          `Your previous merge output had syntax/compile errors:\n` +
+          broken.map((bf) => `- ${bf.path}: ${bf.analysis.errors.join("; ")}`).join("\n") +
+          `\n\nPlease fix ALL syntax errors and re-emit ONLY clean complete files using \`=== FILE: path ===\` fenced blocks.\n\nPrevious output:\n${rawOutput.slice(0, 12000)}`;
+        const healAi = await invokeSpecificExplorerModel(
+          firstAi.provider !== "none" ? `${firstAi.provider}:${firstAi.usedModel}` : codingModel,
+          sysPrompt,
+          fixPrompt,
+          0.1
+        );
+        if (healAi.ok && healAi.text) {
+          const healedList = extractMergedList(healAi.text);
+          if (healedList.length) {
+            mergedList = healedList;
+            analyzed = mergedList.map((f) => ({ ...f, analysis: analyzeFileStatic(f) }));
+            rawOutput = healAi.text;
+            selfHealed = true;
+          }
+        }
+      }
+
+      const compatibility_after = buildCompatibilityReport(
+        analyzed.map((f) => ({ path: f.path, content: f.content, language: f.language, modelName: `Merged (${firstAi.usedModel})` })),
+        wsFiles
+      );
+
+      let savedRunId = "";
+      if (b.save_run !== false && analyzed.length) {
+        const runs = loadExplorerRuns();
+        const runEntry = {
+          id: `run_merge_${Date.now()}_${crypto.randomBytes(2).toString("hex")}`,
+          ts: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          pinned: false,
+          label: `Merged (${analyzed.length} files · ${firstAi.usedModel})`,
+          prompt: extraInstr || `Merge Agent (${strategy})`,
+          mode: "merge",
+          verdict: "",
+          models: [
+            {
+              modelId: `merge_${Date.now()}`,
+              modelKey: `merge_${firstAi.usedModel}`,
+              modelName: `🔀 Merge Agent (${firstAi.usedModel})`,
+              host: firstAi.provider,
+              specialistTag: "explorer-merge-agent",
+              responseText: rawOutput,
+              files: analyzed.map((f, idx) => ({
+                id: `merge::${idx}::${f.path}`,
+                path: f.path,
+                language: f.language,
+                content: f.content,
+                size: Buffer.byteLength(f.content, "utf-8"),
+                ext: f.language,
+              })),
+            },
+          ],
+          totalFiles: analyzed.length,
+        };
+        runs.unshift(runEntry);
+        saveExplorerRuns(runs);
+        savedRunId = runEntry.id;
+      }
+
+      res.json({
+        ok: true,
+        used_model: firstAi.usedModel,
+        provider: firstAi.provider,
+        strategy,
+        self_healed: selfHealed,
+        run_id: savedRunId,
+        summary: `Merged ${analyzed.length} file(s) via ${firstAi.usedModel} · Post-merge compatibility ${compatibility_after.overall_compatibility_score}/100${selfHealed ? " (auto-healed syntax)" : ""}.`,
+        raw_output: rawOutput,
+        merged_files: analyzed,
+        compatibility_after,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/explorer/hf-search-coders", async (req: Request, res: Response) => {
+    try {
+      const q = String(req.body?.query || "qwen2.5-coder gguf").trim() || "qwen2.5-coder gguf";
+      const conf = readConf();
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (conf.HF_TOKEN) headers.Authorization = `Bearer ${conf.HF_TOKEN}`;
+      const r = await fetch(
+        `https://huggingface.co/api/models?search=${encodeURIComponent(q)}&sort=downloads&direction=-1&limit=16`,
+        { headers, signal: AbortSignal.timeout(12000) }
+      );
+      if (!r.ok) {
+        return res.json({ ok: false, error: `Hugging Face API returned HTTP ${r.status}`, models: [] });
+      }
+      const arr: any = await r.json().catch(() => []);
+      const models = (Array.isArray(arr) ? arr : []).map((m) => ({
+        repo: String(m.id || m.modelId || ""),
+        downloads: Number(m.downloads || 0),
+        likes: Number(m.likes || 0),
+        gated: Boolean(m.gated),
+        tags: Array.isArray(m.tags) ? m.tags.slice(0, 6) : [],
+        is_gguf: /gguf/i.test(String(m.id || "")) || (Array.isArray(m.tags) && m.tags.includes("gguf")),
+      }));
+      res.json({ ok: true, models });
+    } catch (e: any) {
+      res.json({ ok: false, error: e?.message || String(e), models: [] });
+    }
+  });
+
+  app.post("/api/explorer/coding-models/add-hf", async (req: Request, res: Response) => {
+    try {
+      const b = req.body || {};
+      const repo = String(b.repo || "")
+        .replace(/^https?:\/\/huggingface\.co\//i, "")
+        .replace(/\/+$/, "")
+        .trim();
+      if (!repo) {
+        return res.status(400).json({ ok: false, error: "Hugging Face repo (owner/model) is required." });
+      }
+
+      const conf = readConf();
+      const headers: Record<string, string> = { Accept: "application/json" };
+      if (conf.HF_TOKEN) headers.Authorization = `Bearer ${conf.HF_TOKEN}`;
+
+      let resolvedFile = String(b.file || "").trim();
+      let estimatedGb = Math.max(1, Number(b.gb) || 0);
+      let ggufFiles: string[] = [];
+
+      const metaResp = await fetch(`https://huggingface.co/api/models/${repo}`, {
+        headers,
+        signal: AbortSignal.timeout(10000),
+      }).catch(() => null);
+      if (metaResp && metaResp.ok) {
+        const meta: any = await metaResp.json().catch(() => null);
+        const siblings: any[] = Array.isArray(meta?.siblings) ? meta.siblings : [];
+        const ggufs = siblings.filter((s) => /\.gguf$/i.test(String(s.rfilename || "")) && !/mmproj/i.test(String(s.rfilename || "")));
+        ggufFiles = ggufs.map((s) => String(s.rfilename)).slice(0, 20);
+        if (!resolvedFile && ggufs.length) {
+          const pref = ggufs.find((s) => /q4_k_m/i.test(s.rfilename)) || ggufs[0];
+          resolvedFile = String(pref.rfilename);
+          const sz = Number(pref.size || pref.lfs?.size || 0);
+          if (!estimatedGb && sz > 100 * 1024 * 1024) {
+            estimatedGb = Math.max(1, Math.round((sz / (1024 * 1024 * 1024)) * 10) / 10);
+          }
+        }
+      }
+      if (!estimatedGb) {
+        const m = repo.match(/(\d+(?:\.\d+)?)\s*[bB]\b/);
+        estimatedGb = m ? Math.max(2, Math.round(parseFloat(m[1]) * 0.65)) : 8;
+      }
+
+      const lst = loadCustomCatalog();
+      const slug = repo.toLowerCase().replace(/[^a-z0-9]/g, "").slice(-18);
+      const cid = `hf_code_${slug || Date.now()}`;
+      const entry = {
+        id: cid,
+        name: String(b.name || repo.split("/")[1] || repo).trim(),
+        repo,
+        file: resolvedFile,
+        slot: String(b.slot || "code").trim(),
+        gb: estimatedGb,
+        unc: true,
+        desc: resolvedFile ? `Coding GGUF (${resolvedFile}) from ${repo}` : `Coding model from ${repo}`,
+        saved_at: new Date().toISOString(),
+      };
+      const updated = [...lst.filter((x) => x.id !== cid && x.repo !== entry.repo), entry];
+      writeJson("custom_catalog.json", updated);
+      syncCustomCatalogIntoRuntime(updated);
+      autoMountCustomModelIntoLineup(cid, entry.slot);
+      persistModelsAndBucketsToBrainMemory(updated, undefined, undefined);
+      refreshBackends();
+      pushLiveConsole(`🤗 [Explorer Coding Vault] Added ${entry.name} (${repo}) to slot '${entry.slot}'`, {
+        category: "MODELS",
+        level: "ok",
+      });
+      res.json({ ok: true, model: entry, gguf_files: ggufFiles });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/explorer/coding-models/ollama-pull", async (req: Request, res: Response) => {
+    try {
+      const tag = String(req.body?.tag || "").trim();
+      if (!tag) return res.status(400).json({ ok: false, error: "Ollama model tag is required (e.g. qwen2.5-coder:14b)." });
+      const conf = readConf();
+      const ollamaRoot = String(conf.LOCAL_OLLAMA_URL || "http://127.0.0.1:11434/v1")
+        .trim()
+        .replace(/\/+$/, "")
+        .replace(/\/v1$/, "");
+      const probe = await fetch(`${ollamaRoot}/api/tags`, { signal: AbortSignal.timeout(2000) }).catch(() => null);
+      if (!probe || !probe.ok) {
+        return res.json({
+          ok: false,
+          error: `Ollama does not appear to be running at ${ollamaRoot}. Start Ollama first or run: ollama pull ${tag}`,
+        });
+      }
+      const r = await fetch(`${ollamaRoot}/api/pull`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: tag, stream: false }),
+        signal: AbortSignal.timeout(600_000),
+      });
+      const data: any = await r.json().catch(() => ({}));
+      if (!r.ok || data?.error) {
+        return res.json({ ok: false, error: data?.error || `Ollama pull HTTP ${r.status}`, tag });
+      }
+      pushLiveConsole(`🦙 [Ollama Pull] Pulled ${tag}: ${data?.status || "success"}`, { category: "MODELS", level: "ok" });
+      res.json({ ok: true, tag, status: data?.status || "success" });
+    } catch (e: any) {
+      res.json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/explorer/coding-models/download-gguf", async (req: Request, res: Response) => {
+    try {
+      const repo = String(req.body?.repo || "").trim();
+      const file = String(req.body?.file || "").trim();
+      const out = await startHfGgufDownload(repo, file);
+      res.json(out);
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get("/api/explorer/coding-models/download-status", (_req: Request, res: Response) => {
+    res.json({ ok: true, jobs: getHfDownloadJobs() });
+  });
+
+  app.post("/api/explorer/coding-models/download-cancel", (req: Request, res: Response) => {
+    const id = String(req.body?.id || "").trim();
+    const cancelled = cancelHfDownloadJob(id);
+    res.json({ ok: cancelled, id });
   });
 
   // ── [TODO #1] Live Proxy Auto-Rotator & Dead-Node Pruner ──
@@ -4074,14 +4515,14 @@ export function registerIntelligenceReplExplorerRoutes(app: Express): void {
               type === "email" || /mail/i.test(key)
                 ? "qa_tester@example.org"
                 : type === "password" || /pass/i.test(key)
-                ? "Qa!9x#SafeTest2026"
-                : type === "tel" || /phone/i.test(key)
-                ? "+15550192834"
-                : type === "url"
-                ? "https://example.org"
-                : type === "number"
-                ? "42"
-                : `test_${key.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`,
+                  ? "Qa!9x#SafeTest2026"
+                  : type === "tel" || /phone/i.test(key)
+                    ? "+15550192834"
+                    : type === "url"
+                      ? "https://example.org"
+                      : type === "number"
+                        ? "42"
+                        : `test_${key.replace(/[^a-z0-9]/gi, "_").toLowerCase()}`,
           });
         }
         return fields;
@@ -4272,22 +4713,22 @@ except Exception as e:
       try {
         mxRecords = await dns.promises.resolveMx(domain);
         mxRecords.sort((a, b) => a.priority - b.priority);
-      } catch (_) {}
+      } catch (_) { }
       try {
         const rawTxt = await dns.promises.resolveTxt(domain);
         txtRecords = rawTxt.map((parts) => parts.join(""));
-      } catch (_) {}
+      } catch (_) { }
       try {
         const rawDmarc = await dns.promises.resolveTxt(`_dmarc.${domain}`);
         dmarcRecords = rawDmarc.map((parts) => parts.join(""));
-      } catch (_) {}
+      } catch (_) { }
 
       for (const sel of ["default", "google", "selector1", "selector2", "k1", "mail"]) {
         try {
           const dk = await dns.promises.resolveTxt(`${sel}._domainkey.${domain}`);
           const joined = dk.map((p) => p.join("")).join(" ");
           if (joined) dkimFound.push({ selector: sel, record: joined.slice(0, 140) });
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const spfRecord = txtRecords.find((t) => /^v=spf1\b/i.test(t)) || "";

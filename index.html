@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=85">
+<link rel="stylesheet" href="/styles.css?v=89">
 </head>
 <body>
 <div class="aurora" aria-hidden="true"></div>
@@ -32,26 +32,28 @@
     </div>
 
     <button class="rail-btn on" data-view="council" title="Studio Workspace (Prompt, Multi-Model Build, Swarm &amp; Verdict)" aria-label="Workspace"><span class="rail-icon">⌘</span><span class="rail-label">Workspace</span></button>
-    <button class="rail-btn" data-view="file-explorer" id="rail-file-explorer-btn" title="Antigravity Explorer — Agent-First File Tree, Inline Diffs, Artifacts, @Mentions &amp; Native .EXE Builder" aria-label="File Explorer"><span class="rail-icon">🗂️</span><span class="rail-label">Explorer IDE</span></button>
-    <button id="rail-open-models-tree-btn" class="rail-btn" type="button" title="Open /models Host Tree Builder (Click Host A/B/C/D → Lineup / Agents / Customize → Category → Models)" aria-label="Models &amp; Host Tree"><span class="rail-icon">🌳</span><span class="rail-label">/models Tree</span></button>
-    <button id="rail-open-host-cfg-btn" class="rail-btn" type="button" title="Open /host Configurator (Host A/B/C/D URLs, OAuth, Credentials &amp; VRAM/Quantization)" aria-label="Host Setup"><span class="rail-icon">🖥</span><span class="rail-label">/host Setup</span></button>
-    <button id="rail-open-live-console-btn" class="rail-btn" type="button" title="Open Live Backend Activity &amp; Error Stream Monitor" aria-label="Live Backend Monitor"><span class="rail-icon">📡</span><span class="rail-label">Backend Monitor</span></button>
-    <button class="rail-btn" data-view="system" title="System Settings, MCP Servers, Tools &amp; Diagnostics" aria-label="System"><span class="rail-icon">⚙</span><span class="rail-label">System</span></button>
+    <button class="rail-btn" data-view="file-explorer" id="rail-file-explorer-btn" title="Suomynona Explorer — Model Files, Project View, Judge &amp; Coding Merge Agent" aria-label="Suomynona Explorer"><span class="rail-icon">🗂️</span><span class="rail-label">Suomynona Explorer</span></button>
+    <button id="rail-open-host-cfg-btn" class="rail-btn" type="button" title="Host Configurator — Saved Hosts, Endpoints, Models, VRAM &amp; Specialist Agents" aria-label="Host Configurator"><span class="rail-icon">🖥</span><span class="rail-label">Host Config</span></button>
+    <button id="rail-open-live-console-btn" class="rail-btn" type="button" title="Toggle Live Terminal &amp; Activity Stream Footer" aria-label="Live Terminal"><span class="rail-icon">❯_</span><span class="rail-label">Live Terminal</span></button>
+    <button class="rail-btn" data-view="system" title="Settings — API Keys, Custom Slots, Tools, MCP &amp; Diagnostics" aria-label="Settings"><span class="rail-icon">⚙</span><span class="rail-label">Settings</span></button>
 
-    <!-- Hidden legacy view buttons preserved for JS compatibility -->
+    <!-- Hidden legacy compatibility stubs preserved for JS callers -->
     <button class="rail-btn hidden" hidden data-view="lineup" aria-hidden="true"><span class="rail-icon">⊞</span><span class="rail-label">Models &amp; GPU</span></button>
     <button class="rail-btn hidden" hidden data-view="agents" aria-hidden="true"><span class="rail-icon">◈</span><span class="rail-label">Agents</span></button>
+    <button class="rail-btn hidden" hidden id="rail-vault-hub-btn" type="button" aria-hidden="true"></button>
+    <button class="rail-btn hidden" hidden id="rail-open-models-tree-btn" type="button" aria-hidden="true"></button>
 
-    <div class="rail-divider" title="Suomynona CLI — Unified Command Terminal">
+    <div class="rail-divider hidden" hidden aria-hidden="true" title="Suomynona CLI — Unified Command Terminal">
       <span class="rail-divider-label">SUOMYNONA CLI</span>
     </div>
 
-    <!-- ══ ONE UNIFIED SUOMYNONA CLI LAUNCHER ══ -->
-    <div class="rail-cli-stack" role="group" aria-label="Suomynona CLI Unified Launcher">
-      <button class="rail-btn rail-cli-btn" type="button" data-open-cli="master" title="Suomynona CLI — Unified Programmable Terminal (Claude Brain + Models Router + PowerShell + CMD + Python + Node + Bash + Hosts + Agents + HF Buckets + Boosters)" aria-label="Suomynona CLI"><span class="rail-icon">❯_</span><span class="rail-label">Suomynona CLI</span></button>
+    <!-- ══ Legacy Left-Rail CLI Trigger moved to Bottom Live Terminal Footer ══ -->
+    <div class="rail-cli-stack hidden" hidden aria-hidden="true" role="group" aria-label="Suomynona CLI Unified Launcher">
+      <button class="rail-btn rail-cli-btn" type="button" data-open-cli="master" title="Suomynona CLI — Open in Live Terminal Footer" aria-label="Suomynona CLI"><span class="rail-icon">❯_</span><span class="rail-label">Suomynona CLI</span></button>
     </div>
 
     <div class="rail-spacer"></div>
+    <button id="rail-master-licenses-btn" class="rail-btn rail-master-bottom" data-view="master-licenses" type="button" title="Master Edition — Paid Users, Cryptographic Ed25519 CD-Keys, Bound Computers (HWID), Time Limits &amp; Revocation" aria-label="Paid Users &amp; CD-Keys"><span class="rail-icon">👑</span><span class="rail-label">Users &amp; Keys</span></button>
     <div id="health-dot" class="rail-dot hidden" hidden aria-hidden="true"></div>
   </nav>
 
@@ -64,41 +66,48 @@
         <span id="topbar-active-section" class="topbar-breadcrumb hidden" hidden>Workspace</span>
       </div>
 
-      <!-- Zone 2: Clean Grouped Navigation (No duplicate Workspace or Model Tree buttons) -->
+      <!-- Zone 2: Clean Navigation -->
       <div class="topbar-nav" role="navigation" aria-label="Workspace Sections">
         <!-- Hidden legacy topbar buttons preserved for JS compatibility -->
         <button type="button" class="topbar-nav-link hidden" hidden data-top-view="council">⚡ Workspace</button>
-        <button type="button" id="topbar-open-models-tree-btn" class="topbar-nav-link hidden" hidden>🌳 /models Tree</button>
+        <button type="button" id="topbar-open-models-tree-btn" class="topbar-nav-link hidden" hidden aria-hidden="true"></button>
+        <button type="button" id="topbar-open-host-cfg-btn" class="topbar-nav-link hidden" hidden aria-hidden="true"></button>
 
-        <button type="button" class="topbar-nav-link" data-top-view="file-explorer" id="topbar-file-explorer-btn" style="color:#7dd3fc;font-weight:700" title="Open Dedicated Multi-Prompt &amp; Per-Model File Explorer">🗂️ File Explorer <span id="topbar-explorer-badge" class="tabular-nums" style="font-size:10px;color:#2ee6a6;margin-left:3px"></span></button>
+        <button type="button" class="topbar-nav-link" data-top-view="file-explorer" id="topbar-file-explorer-btn" style="color:#7dd3fc;font-weight:700" title="Open Suomynona Explorer — Model Files, Project View, Judge &amp; Coding Merge Agent">🗂️ Suomynona Explorer <span id="topbar-explorer-badge" class="tabular-nums" style="font-size:10px;color:#2ee6a6;margin-left:3px"></span></button>
+        <button type="button" class="topbar-nav-link" data-top-view="system" data-open-settings-tab="keys" id="topbar-vault-hub-btn" style="color:#fbbf24;font-weight:700" title="Settings &amp; API Keys — OrcaRouter, OpenRouter, Gemini, OpenAI, Custom Slots, Tools &amp; MCP">🔑 Keys &amp; Settings</button>
 
-        <!-- Hover Group 1: Configure (/host, /bucket, /boosters, /agents, /tools, /tuning, /system) -->
-        <div class="hover-flyout-group">
-          <button type="button" class="topbar-nav-link hover-flyout-trigger">⚙️ Configure ▾</button>
-          <div class="hover-flyout-menu">
-            <button type="button" id="topbar-open-host-cfg-btn" class="hover-flyout-item">🖥 /host (URLs, Auth &amp; VRAM)</button>
-            <button type="button" class="hover-flyout-item" data-slash-popup-trigger="bucket">🤗 /bucket (HF Vault Overlay)</button>
-            <button type="button" class="hover-flyout-item" data-slash-popup-trigger="boosters">🚀 /boosters (19 Boosters)</button>
-            <button type="button" class="hover-flyout-item" data-slash-popup-trigger="agents">🤖 /agents (Specialist Agents)</button>
-            <button type="button" class="hover-flyout-item" data-slash-popup-trigger="tools">🧰 /tools &amp; MCP Servers</button>
-            <button type="button" class="hover-flyout-item" data-slash-popup-trigger="tuning">🎛 /tuning (DPO &amp; Quantization)</button>
-            <button type="button" class="hover-flyout-item" data-top-view="system">💾 /system &amp; Diagnostics</button>
+        <!-- Global Whole-App View Mode Switcher -->
+        <div class="hover-flyout-group" id="topbar-view-mode-wrap">
+          <button type="button" class="topbar-nav-link hover-flyout-trigger" id="topbar-view-mode-btn" title="Switch layout across the entire application (List, Tiles, Dropdowns, Lighthouse, Compact)">🪟 View <span id="topbar-view-mode-lbl" class="muted" style="font-size:10px;margin-left:2px">(Tiles)</span> ▾</button>
+          <div class="hover-flyout-menu" style="min-width:240px">
+            <div class="hover-flyout-heading">GLOBAL APP VIEW MODE</div>
+            <button type="button" class="hover-flyout-item app-view-pick-btn" data-app-view-pick="list">📋 List View <span class="muted" style="margin-left:auto;font-size:10px">Hover preview</span></button>
+            <button type="button" class="hover-flyout-item app-view-pick-btn on" data-app-view-pick="tiles">▦ Tile Grid <span class="muted" style="margin-left:auto;font-size:10px">Compact cards</span></button>
+            <button type="button" class="hover-flyout-item app-view-pick-btn" data-app-view-pick="dropdowns">▾ Dropdowns <span class="muted" style="margin-left:auto;font-size:10px">Accordion</span></button>
+            <button type="button" class="hover-flyout-item app-view-pick-btn" data-app-view-pick="lighthouse">🗼 Lighthouse <span class="muted" style="margin-left:auto;font-size:10px">Master-detail</span></button>
+            <button type="button" class="hover-flyout-item app-view-pick-btn" data-app-view-pick="compact">⚡ Compact Focus <span class="muted" style="margin-left:auto;font-size:10px">Dense</span></button>
+            <div class="hover-flyout-sep"></div>
+            <button type="button" id="topbar-open-live-console-btn" class="hover-flyout-item" style="color:#2ee6a6;font-weight:700">❯_ Toggle Live Terminal</button>
+            <div id="workspace-layout-seg" class="hidden" hidden aria-hidden="true">
+              <button type="button" class="on" data-wlayout="grid"></button>
+              <button type="button" data-wlayout="focus"></button>
+            </div>
           </div>
         </div>
 
-        <!-- Hover Group 2: View & Consoles (Grid / Wide Focus + Live Console) -->
-        <div class="hover-flyout-group">
-          <button type="button" class="topbar-nav-link hover-flyout-trigger">🪟 View ▾</button>
-          <div class="hover-flyout-menu">
-            <div class="hover-flyout-heading">WORKSPACE VIEW</div>
-            <div id="workspace-layout-seg" style="display:contents">
-              <button type="button" class="hover-flyout-item on" data-wlayout="grid">🪟 Grid View</button>
-              <button type="button" class="hover-flyout-item" data-wlayout="focus">🎯 Wide Focus Stream</button>
-              <button type="button" class="hover-flyout-item hidden" hidden data-wlayout="split">◫ Split IDE</button>
-            </div>
+        <!-- Hover Group 3: Global Multi-Theme Engine (7 Themes) -->
+        <div class="hover-flyout-group" id="topbar-theme-wrap">
+          <button type="button" class="topbar-nav-link hover-flyout-trigger" id="topbar-theme-btn" title="Select visual color theme">🎨 <span id="topbar-theme-lbl">Obsidian</span> ▾</button>
+          <div class="hover-flyout-menu" id="topbar-theme-menu" style="min-width:215px">
+            <div class="hover-flyout-heading">APPLICATION THEME</div>
+            <button type="button" class="hover-flyout-item app-theme-pick-btn on" data-theme-pick="obsidian"><span class="theme-swatch-dot" style="background:#38bdf8"></span>Obsidian Neon</button>
+            <button type="button" class="hover-flyout-item app-theme-pick-btn" data-theme-pick="midnight"><span class="theme-swatch-dot" style="background:#60a5fa"></span>Midnight Slate</button>
+            <button type="button" class="hover-flyout-item app-theme-pick-btn" data-theme-pick="cyberpunk"><span class="theme-swatch-dot" style="background:#f472b6"></span>Synthwave Cyber</button>
+            <button type="button" class="hover-flyout-item app-theme-pick-btn" data-theme-pick="emerald"><span class="theme-swatch-dot" style="background:#10b981"></span>Matrix Terminal</button>
+            <button type="button" class="hover-flyout-item app-theme-pick-btn" data-theme-pick="amber"><span class="theme-swatch-dot" style="background:#f59e0b"></span>Solar Amber</button>
             <div class="hover-flyout-sep"></div>
-            <button type="button" id="topbar-open-live-console-btn" class="hover-flyout-item" style="color:#2ee6a6;font-weight:700">📡 Live Background Console</button>
-            <button type="button" class="hover-flyout-item" data-top-view="councilng-cli">⌨️ Full Suomynona CLI</button>
+            <button type="button" class="hover-flyout-item app-theme-pick-btn" data-theme-pick="daylight"><span class="theme-swatch-dot" style="background:#e2e8f0;border:1px solid #64748b"></span>☀️ Daylight Studio</button>
+            <button type="button" class="hover-flyout-item app-theme-pick-btn" data-theme-pick="frost"><span class="theme-swatch-dot" style="background:#bae6fd;border:1px solid #0284c7"></span>❄️ Arctic Frost</button>
           </div>
         </div>
 
@@ -107,8 +116,15 @@
         <button type="button" class="topbar-nav-link hidden" hidden data-top-view="agents">Agents</button>
       </div>
 
-      <!-- Zone 3: Visible Command Palette (⌘K) + Live Hosts Heartbeat + Active Models Count -->
+      <!-- Zone 3: Visible Command Palette (⌘K) + Git Updater + /doctor + Live Hosts Heartbeat + Active Models Count -->
       <div class="topbar-actions" style="display:flex;align-items:center;gap:8px">
+        <button type="button" id="topbar-git-updater-btn" class="ghost sm" title="Git Repository Auto-Updater (Checks origin/main automatically · Click to check &amp; pull updates · /update)">
+          <span>🔄</span>
+          <span id="topbar-git-updater-lbl">Git Sync</span>
+        </button>
+        <button type="button" id="topbar-doctor-btn" class="ghost sm" style="color:#2ee6a6;border-color:rgba(46,230,166,0.35)" title="Run Full-App /doctor Troubleshooter &amp; Step-by-Step Repair Guide (/doctor)">
+          <span>🩺 /doctor</span>
+        </button>
         <button type="button" id="cmd-palette-trigger" class="ghost sm topbar-cmd-palette-btn" title="Open Universal Command Palette (⌘K / Ctrl+K)">
           <span style="color:#38bdf8;font-weight:800">⌘K</span>
           <span>Command Palette</span>
@@ -162,8 +178,9 @@
               </select>
             </div>
             <div style="display:flex;gap:6px;padding:4px 6px 2px">
-              <button type="button" id="topbar-hb-rebalance-btn" class="ghost xs" style="flex:1;color:#2ee6a6;border-color:rgba(46,230,166,0.35);font-weight:700" title="Deduplicate models &amp; pack across Hosts A–D via First-Fit Decreasing (FFD)">⚖️ Rebalance VRAM (A–D)</button>
-              <button type="button" id="topbar-hb-open-host-cfg" class="ghost xs" style="color:#38bdf8;font-weight:700">🖥 /host Setup</button>
+              <button type="button" id="topbar-hb-rebalance-btn" class="ghost xs" style="flex:1;color:#2ee6a6;border-color:rgba(46,230,166,0.35);font-weight:700" title="Deduplicate models &amp; pack across Hosts A–D via First-Fit Decreasing (FFD)">⚖️ Rebalance VRAM</button>
+              <button type="button" id="topbar-hb-doctor-btn" class="ghost xs" style="color:#fbbf24;font-weight:700" title="Diagnose &amp; repair host endpoints (/doctor hosts)">🩺 /doctor</button>
+              <button type="button" id="topbar-hb-open-host-cfg" class="ghost xs" style="color:#38bdf8;font-weight:700">🖥 Host Configurator</button>
             </div>
           </div>
         </div>
@@ -743,7 +760,15 @@
             <button id="send-all-files" class="primary xs" type="button" style="background:linear-gradient(135deg,#0284c7,#2563eb);border-color:#38bdf8;color:#fff">💻 Send to VS Code ↗</button>
           </div>
 
-          <div id="answers" class="grid"></div>
+          <div id="answers-stage-wrap" class="answers-stage-wrap">
+            <div id="answers" class="grid"></div>
+            <aside id="answers-lighthouse-pane" class="answers-lighthouse-pane hidden" aria-label="Lighthouse Detail Spotlight">
+              <div class="answers-lighthouse-empty">
+                <strong>🗼 Lighthouse Spotlight</strong>
+                <div class="muted" style="font-size:12px;margin-top:4px">Hover or click any model response card on the left to inspect its full rendered code, explanation, and actions here.</div>
+              </div>
+            </aside>
+          </div>
 
           <div id="verdict" class="card hidden">
             <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
@@ -1639,6 +1664,7 @@
                   <option value="strict_pin">Policy: Pinned (Failover Only)</option>
                 </select>
                 <button type="button" id="hs-rebalance-vram-btn" class="ghost xs" style="border-color:rgba(46,230,166,0.45);color:#2ee6a6;font-weight:700" title="Deduplicate redundant clones &amp; rebalance model weights + KV-cache across Hosts A–D">⚖️ Rebalance VRAM (A–D)</button>
+                <button type="button" id="hs-fill-all-hosts-vram-btn" class="primary xs" title="Fill all configured hosts with diverse unique models up to safe 85% VRAM working cap">⚡ Fill All Hosts (85%)</button>
                 <button type="button" id="hs-verify-all-saved-hosts-btn" class="primary xs">▶ Ping &amp; Verify All Hosts</button>
                 <button type="button" id="hs-standardize-local-ports-btn" class="ghost xs" title="Bind Local Ports :8080–:8083 across Hosts A–D">⚡ Bind Local :8080–:8083</button>
               </div>
@@ -1655,7 +1681,7 @@
               <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
                 <div>
                   <h3 style="margin:0;font-size:13.5px;color:#f8fafc">🖥 Host Endpoint, Colab/Kaggle Login &amp; Hardware Setup</h3>
-                  <div class="muted" style="font-size:11px;margin-top:2px">Select Host A, B, C, or D — set its URL/site &amp; RAM, then click Save. (Model selection lives in 🌳 Model Tree.)</div>
+                  <div class="muted" style="font-size:11px;margin-top:2px">Select Host A, B, C, or D — set its URL/site &amp; RAM, then Save. Switch to the Models &amp; VRAM tab above to assign models.</div>
                 </div>
               </div>
 
@@ -1837,8 +1863,8 @@
                   <label><span class="field-lbl">Accelerator</span><select class="select slim" data-new-host-field="accelerator"><option value="G4" selected>G4 (96GB)</option><option value="H100">H100 (80GB)</option><option value="A100">A100 (40GB)</option><option value="L4">L4 (24GB)</option><option value="T4">T4 (16GB)</option></select></label>
                   <label><span class="field-lbl">Endpoint / GPU URL</span><input class="input slim" data-new-host-field="custom_url" placeholder="https://api.your-gpu-host.com/v1"></label>
                   <label><span class="field-lbl">Timeout (s)</span><input type="number" class="input slim" data-new-host-field="runtime_timeout" value="21600"></label>
-                  <label><span class="field-lbl">Account Email</span><input class="input slim" data-new-host-field="google_account" value="goodoldcanadian@gmail.com"></label>
-                  <label><span class="field-lbl">GitHub User</span><input class="input slim" data-new-host-field="gh_username" value="savingannabel"></label>
+                  <label><span class="field-lbl">Account Email</span><input class="input slim" data-new-host-field="google_account" placeholder="you@domain.com"></label>
+                  <label><span class="field-lbl">GitHub User</span><input class="input slim" data-new-host-field="gh_username" placeholder="Optional GitHub user"></label>
                   <label><span class="field-lbl">Kaggle User</span><input class="input slim" data-new-host-field="kaggle_username"></label>
                   <label><span class="field-lbl">Profile Name</span><input class="input slim" data-new-host-field="guest_username"></label>
                   <label><span class="field-lbl">Kernel Slug</span><input class="input slim" data-new-host-field="kaggle_kernel_slug"></label>
@@ -1872,14 +1898,16 @@
                 <button id="hs-save-global-auth-btn" class="primary xs" type="button" style="font-weight:800">💾 Save Credentials Vault</button>
               </div>
               <div class="host-setup-grid" id="host-setup-global-auth-form">
-                <label><span class="field-lbl">Account Email</span><input id="hs-auth-email" class="input slim" value="goodoldcanadian@gmail.com"></label>
+                <label><span class="field-lbl">🦈 OrcaRouter API Key</span><input id="hs-auth-orcarouter-key" type="password" class="input slim" placeholder="sk-orca-... / orca_..."></label>
+                <label><span class="field-lbl">OpenRouter API Key</span><input id="hs-auth-openrouter-key" type="password" class="input slim" placeholder="sk-or-v1-..."></label>
+                <label><span class="field-lbl">Anthropic API Key</span><input id="hs-auth-anthropic-key" type="password" class="input slim" placeholder="sk-ant-..."></label>
                 <label><span class="field-lbl">GitHub Token (GH_TOKEN)</span><input id="hs-auth-gh-token" type="password" class="input slim" placeholder="ghp_..."></label>
                 <label><span class="field-lbl">Hugging Face Token (HF_TOKEN)</span><input id="hs-auth-hf-token" type="password" class="input slim" placeholder="hf_..."></label>
-                <label><span class="field-lbl">GitHub Gist ID (Tunnel Wall)</span><input id="hs-auth-gist-id" class="input slim" value="05a1f96580fa13b373b42d919873dc57"></label>
-                <label><span class="field-lbl">GitHub Username</span><input id="hs-auth-gh-user" class="input slim" value="savingannabel"></label>
-                <label><span class="field-lbl">Kaggle Username</span><input id="hs-auth-kaggle-user" class="input slim"></label>
-                <label><span class="field-lbl">Kaggle API Key</span><input id="hs-auth-kaggle-key" type="password" class="input slim"></label>
-                <label><span class="field-lbl">OpenRouter / Cloud API Key</span><input id="hs-auth-openrouter-key" type="password" class="input slim"></label>
+                <label><span class="field-lbl">GitHub Gist ID (Tunnel Wall)</span><input id="hs-auth-gist-id" class="input slim" placeholder="Optional Gist ID"></label>
+                <label><span class="field-lbl">GitHub Username</span><input id="hs-auth-gh-user" class="input slim" placeholder="Optional GitHub user"></label>
+                <label><span class="field-lbl">Account Email</span><input id="hs-auth-email" class="input slim" placeholder="you@domain.com"></label>
+                <label><span class="field-lbl">Kaggle Username</span><input id="hs-auth-kaggle-user" class="input slim" placeholder="Optional Kaggle user"></label>
+                <label><span class="field-lbl">Kaggle API Key</span><input id="hs-auth-kaggle-key" type="password" class="input slim" placeholder="Optional Kaggle key"></label>
               </div>
               <div id="hs-global-auth-status" class="muted" style="font-size:11px;margin-top:8px;color:#2ee6a6"></div>
               <details style="margin-top:8px">
@@ -2025,138 +2053,351 @@
       </div>
     </section>
 
-    <!-- ══ SYSTEM (ORGANIZED GRAPHICAL DROPDOWNS & CARDS FOR CUSTOM TOOLS, 20 MCP SERVERS, HEALTH TABLE & A2A BRIDGE) ══ -->
-    <section id="view-system" class="view">
-      <!-- 1. TWO ORGANIZED GRAPHICAL CARDS SIDE-BY-SIDE: (LEFT) CUSTOM AGENT TOOLS (10 EXECUTION TYPES) | (RIGHT) CONNECTED MCP SERVERS (20 BUILT-IN + CUSTOM) -->
-      <div class="grid2" style="align-items:start;gap:12px;margin-bottom:12px">
-        <!-- LEFT GRAPHICAL CARD: CUSTOM AGENT TOOLS (10 EXECUTION TYPES) -->
-        <div class="card" style="margin:0">
-          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-            <h2 style="margin:0;font-size:14px;color:#2ee6a6">🧰 Custom Agent Tools (10 Execution Types)</h2>
-            <span class="right-badge">10 RUNTIME TYPES</span>
-          </div>
-          <div class="tune-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <label>Tool Name
-              <input id="ct-name" class="input slim" placeholder="e.g. port_scanner or sql_audit">
-            </label>
-            <label>Execution Type Dropdown
-              <select id="ct-type" class="select slim">
-                <option value="shell_cmd">Shell Command (shell_cmd)</option>
-                <option value="python_script">Python Script (python_script)</option>
-                <option value="node_script">Node.js Script (node_script)</option>
-                <option value="mcp_bridge">MCP Server Bridge (mcp_bridge)</option>
-                <option value="filesystem_op">Filesystem Operation (filesystem_op)</option>
-                <option value="sql_query">SQL Query (sql_query)</option>
-                <option value="osint_recon">OSINT Recon (osint_recon)</option>
-                <option value="browser_scrape">Browser Scraper (browser_scrape)</option>
-                <option value="webget">Web Fetch (webget)</option>
-                <option value="http">HTTP Webhook / REST (http)</option>
-              </select>
-            </label>
-          </div>
-          <div class="row" style="gap:8px;margin-bottom:10px">
-            <input id="ct-url" class="input slim" style="flex:1;margin:0" placeholder="Command template, script path, or endpoint URL (use {{input}} for args)…">
-            <button id="ct-add" class="primary sm" type="button">＋ Add Tool</button>
-          </div>
-          <div id="ct-list" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
-        </div>
+    <!-- ══ SETTINGS: UNIFIED API KEYS, CUSTOM SLOTS, TOOLS, 20 MCP SERVERS, HEALTH TABLE & A2A BRIDGE ══ -->
+    <section id="view-system" class="view" aria-label="Settings — API Keys, Custom Slots, Tools, MCP &amp; Diagnostics">
+      <div class="settings-subtabs" id="settings-subtabs" role="tablist" aria-label="Settings Sections">
+        <button type="button" class="settings-subtab on" data-settings-tab="keys" role="tab" aria-selected="true">🔑 Keys, Tokens &amp; Custom Slots</button>
+        <button type="button" class="settings-subtab" data-settings-tab="tools" role="tab" aria-selected="false">🧰 Tools &amp; 20 MCP Servers</button>
+        <button type="button" class="settings-subtab" data-settings-tab="health" role="tab" aria-selected="false">🩺 Health, A2A &amp; Paths</button>
+      </div>
 
-        <!-- RIGHT GRAPHICAL CARD: CONNECTED MCP SERVERS (20 BUILT-IN + CUSTOM) -->
-        <div class="card" style="margin:0">
-          <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px">
-            <h2 style="margin:0;font-size:14px;color:#38bdf8">🔌 Connected MCP Servers (20 Built-In + Custom)</h2>
-            <div class="row" style="gap:6px;align-items:center">
-              <button id="mc-test-all-btn" class="primary xs" type="button" title="Run a live diagnostic probe across all 20 built-in + custom MCP servers">⚡ Test All 20 MCP Servers Live</button>
-              <span class="right-badge">MODEL CONTEXT PROTOCOL</span>
+      <!-- TAB 1 (DEFAULT): COMPACT UNIFIED API KEYS, TOKENS, LOCAL ENGINES & UNIVERSAL CUSTOM SLOTS -->
+      <div id="view-vault-hub" class="settings-tab-pane on" data-settings-pane="keys" aria-label="Unified API Keys, Platform Tokens, Local Engines &amp; Custom Connections">
+        <!-- Compact Flexible BYOS Header & 4 Profile Tiles -->
+        <div class="card vault-hero-card">
+          <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <div class="row" style="gap:7px;align-items:center;flex-wrap:wrap">
+              <span class="right-badge orca">🔓 FLEXIBLE BYOS</span>
+              <strong style="font-size:13.5px">API Keys, Platform Tokens &amp; Custom Slots</strong>
+              <span class="muted" style="font-size:11px">Use any single key, add custom slots, or run 100% free locally.</span>
+            </div>
+            <div class="row" style="gap:6px;align-items:center;flex-wrap:wrap">
+              <div id="vault-ready-modes-strip" class="row" style="gap:4px;flex-wrap:wrap"></div>
+              <span id="vault-save-feedback" class="muted" style="font-size:11px"></span>
+              <button type="button" id="vault-refresh-btn" class="ghost xs">↻ Refresh</button>
+              <button type="button" id="vault-save-all-btn" class="primary xs">💾 Save All</button>
             </div>
           </div>
-          <div class="tune-grid" style="grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px">
-            <label>Server Name
-              <input id="mc-name" class="input slim" placeholder="e.g. github-mcp">
-            </label>
-            <label>Command
-              <input id="mc-cmd" class="input slim" placeholder="npx or python3">
-            </label>
-            <label>Arguments
-              <input id="mc-args" class="input slim" placeholder="-y @modelcontextprotocol/server-git">
-            </label>
-            <button id="mc-add" class="primary sm" type="button">＋ Attach MCP</button>
+
+          <div class="vault-profile-grid" id="vault-runtime-profiles" role="radiogroup" aria-label="Runtime Profile">
+            <button type="button" class="vault-profile-card on" data-runtime-profile="auto">
+              <strong>🔄 Auto / Hybrid</strong>
+              <span class="muted">Remote Hosts + Cloud Keys + Local GPU</span>
+            </button>
+            <button type="button" class="vault-profile-card" data-runtime-profile="local_only">
+              <strong>💻 100% Local Free</strong>
+              <span class="muted">Zero cloud keys (Ollama, LM Studio, llama.cpp)</span>
+            </button>
+            <button type="button" class="vault-profile-card" data-runtime-profile="cloud_only">
+              <strong>☁️ Bring Any Cloud Key</strong>
+              <span class="muted">Routes across any cloud key(s) you enter</span>
+            </button>
+            <button type="button" class="vault-profile-card" data-runtime-profile="hybrid">
+              <strong>🖥 Remote GPU + BYOK</strong>
+              <span class="muted">Colab / Kaggle / Custom Hosts + failover</span>
+            </button>
           </div>
-          <div id="mc-list" style="max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
-          <pre id="mc-live-test-output" class="code-block" style="margin-top:8px;max-height:150px;overflow:auto;padding:8px 10px;background:#050811;border:1px solid rgba(56,189,248,0.35);border-radius:7px;font-family:'JetBrains Mono',Consolas,monospace;font-size:11px;color:#6ee7b7">🔌 MCP Live Diagnostic Terminal Ready — Click "⚡ Test Live" on any server or "⚡ Test All 20 MCP Servers Live" above.</pre>
+        </div>
+
+        <!-- Compact Side-by-Side: (Left) Cloud Provider API Keys in 2-col grid | (Right) Platform Tokens + Local Engines -->
+        <div class="vault-compact-grid">
+          <div class="card vault-compact-card">
+            <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px">
+              <strong style="font-size:12.5px;color:var(--accent2)">🤖 Cloud Provider API Keys</strong>
+              <span class="muted" style="font-size:10px">Saved in <code>conf.json</code></span>
+            </div>
+            <div class="vault-keys-list" id="vault-cloud-keys-list">
+              <div class="vault-key-row" data-vkey="ORCAROUTER_API_KEY" data-vtest="orcarouter">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>🦈 OrcaRouter</strong><span class="muted">ORCAROUTER_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="sk-orca-... / orca_..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="OPENROUTER_API_KEY" data-vtest="openrouter">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>🔀 OpenRouter</strong><span class="muted">OPENROUTER_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="sk-or-v1-..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="GEMINI_API_KEY" data-vtest="gemini">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>✨ Gemini</strong><span class="muted">GEMINI_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="AIzaSy..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="OPENAI_API_KEY" data-vtest="openai">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>🧠 OpenAI</strong><span class="muted">OPENAI_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="sk-..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="ANTHROPIC_API_KEY" data-vtest="anthropic">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>🎭 Anthropic</strong><span class="muted">ANTHROPIC_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="sk-ant-..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="GROQ_API_KEY" data-vtest="groq">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>⚡ Groq</strong><span class="muted">GROQ_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="gsk_..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="DEEPSEEK_API_KEY" data-vtest="deepseek">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>🌊 DeepSeek</strong><span class="muted">DEEPSEEK_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="sk-..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="XAI_API_KEY" data-vtest="xai">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>✕ xAI Grok</strong><span class="muted">XAI_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="xai-..."><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="MISTRAL_API_KEY" data-vtest="mistral">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>🌬️ Mistral</strong><span class="muted">MISTRAL_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="Mistral key"><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+              <div class="vault-key-row" data-vkey="TOGETHER_API_KEY" data-vtest="together">
+                <div class="vault-key-meta"><span class="vault-dot"></span><strong>🤝 Together</strong><span class="muted">TOGETHER_API_KEY</span></div>
+                <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="Together key"><button type="button" class="ghost xs vault-eye-btn" title="Show/Hide">👁</button><button type="button" class="ghost xs vault-test-btn" title="Test live connection">⚡</button><button type="button" class="ghost xs vault-clear-btn" title="Clear">✕</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vault-right-stack">
+            <div class="card vault-compact-card">
+              <strong style="display:block;margin-bottom:5px;font-size:12.5px;color:#2ee6a6">🔐 Platform &amp; Hub Tokens</strong>
+              <div class="vault-tokens-grid" id="vault-platform-tokens-list">
+                <div class="vault-key-row" data-vkey="HF_TOKEN" data-vtest="hf_token">
+                  <div class="vault-key-meta"><span class="vault-dot"></span><strong>🤗 HF</strong><span class="muted">HF_TOKEN</span></div>
+                  <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="hf_..."><button type="button" class="ghost xs vault-eye-btn">👁</button><button type="button" class="ghost xs vault-test-btn">⚡</button><button type="button" class="ghost xs vault-clear-btn">✕</button></div>
+                </div>
+                <div class="vault-key-row" data-vkey="GH_TOKEN" data-vtest="gh_token">
+                  <div class="vault-key-meta"><span class="vault-dot"></span><strong>🐙 GitHub</strong><span class="muted">GH_TOKEN</span></div>
+                  <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="ghp_..."><button type="button" class="ghost xs vault-eye-btn">👁</button><button type="button" class="ghost xs vault-test-btn">⚡</button><button type="button" class="ghost xs vault-clear-btn">✕</button></div>
+                </div>
+                <div class="vault-key-row" data-vkey="GIST_ID">
+                  <div class="vault-key-meta"><span class="vault-dot"></span><strong>📡 Gist ID</strong><span class="muted">GIST_ID</span></div>
+                  <div class="vault-key-controls"><input type="text" class="input slim vault-key-input" placeholder="Tunnel Gist ID"><button type="button" class="ghost xs vault-clear-btn">✕</button></div>
+                </div>
+                <div class="vault-key-row" data-vkey="GH_USERNAME">
+                  <div class="vault-key-meta"><span class="vault-dot"></span><strong>👤 GH User</strong><span class="muted">GH_USERNAME</span></div>
+                  <div class="vault-key-controls"><input type="text" class="input slim vault-key-input" placeholder="GitHub handle"><button type="button" class="ghost xs vault-clear-btn">✕</button></div>
+                </div>
+                <div class="vault-key-row" data-vkey="KAGGLE_USERNAME">
+                  <div class="vault-key-meta"><span class="vault-dot"></span><strong>🦆 Kaggle User</strong><span class="muted">KAGGLE_USERNAME</span></div>
+                  <div class="vault-key-controls"><input type="text" class="input slim vault-key-input" placeholder="Kaggle handle"><button type="button" class="ghost xs vault-clear-btn">✕</button></div>
+                </div>
+                <div class="vault-key-row" data-vkey="KAGGLE_KEY">
+                  <div class="vault-key-meta"><span class="vault-dot"></span><strong>🔑 Kaggle Key</strong><span class="muted">KAGGLE_KEY</span></div>
+                  <div class="vault-key-controls"><input type="password" class="input slim vault-key-input" placeholder="Kaggle key"><button type="button" class="ghost xs vault-eye-btn">👁</button><button type="button" class="ghost xs vault-clear-btn">✕</button></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card vault-compact-card">
+              <strong style="display:block;margin-bottom:5px;font-size:12.5px;color:#fbbf24">💻 Local Free Engines</strong>
+              <div class="vault-local-list">
+                <div class="vault-key-row">
+                  <div class="vault-key-meta"><span class="vault-dot" id="vault-dot-ollama"></span><strong>🦙 Ollama</strong><span class="muted" id="vault-stat-ollama">:11434</span></div>
+                  <div class="vault-key-controls"><input id="vault-local-ollama" class="input slim" value="http://127.0.0.1:11434/v1"><button type="button" class="ghost xs vault-test-local-btn" data-ltest="local_ollama">⚡ Probe</button></div>
+                </div>
+                <div class="vault-key-row">
+                  <div class="vault-key-meta"><span class="vault-dot" id="vault-dot-lmstudio"></span><strong>🧪 LM Studio</strong><span class="muted" id="vault-stat-lmstudio">:1234</span></div>
+                  <div class="vault-key-controls"><input id="vault-local-lmstudio" class="input slim" value="http://127.0.0.1:1234/v1"><button type="button" class="ghost xs vault-test-local-btn" data-ltest="local_lmstudio">⚡ Probe</button></div>
+                </div>
+                <div class="vault-key-row">
+                  <div class="vault-key-meta"><span class="vault-dot" id="vault-dot-llamacpp"></span><strong>⚡ llama.cpp</strong><span class="muted" id="vault-stat-llamacpp">:8080</span></div>
+                  <div class="vault-key-controls"><input id="vault-local-llamacpp" class="input slim" value="http://127.0.0.1:8080/v1"><button type="button" class="ghost xs vault-test-local-btn" data-ltest="local_llamacpp">⚡ Probe</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compact Universal Custom Slots Builder (API Keys, Env Tokens, GPU Hosts, MCP Servers, Agent Tools) -->
+        <div class="card vault-compact-card">
+          <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+            <strong style="font-size:12.5px;color:#c084fc">🧩 Universal Custom Slots (API Keys · Env Tokens · GPU Hosts · MCP · Tools)</strong>
+            <div class="seg xs" id="vault-slot-filter-seg">
+              <button type="button" data-slot-filter="all" class="on">All</button>
+              <button type="button" data-slot-filter="api_key">🔑 API</button>
+              <button type="button" data-slot-filter="token">🔐 Tokens</button>
+              <button type="button" data-slot-filter="host">🖥 Hosts</button>
+              <button type="button" data-slot-filter="mcp">🔌 MCP</button>
+              <button type="button" data-slot-filter="tool">🧰 Tools</button>
+            </div>
+          </div>
+
+          <div class="vault-slot-builder" id="vault-slot-builder">
+            <label>Type
+              <select id="vault-slot-kind" class="select slim">
+                <option value="api_key">🔑 Custom API Provider</option>
+                <option value="token">🔐 Env Token / Secret</option>
+                <option value="host">🖥 Custom GPU Host</option>
+                <option value="mcp">🔌 Custom MCP Server</option>
+                <option value="tool">🧰 Custom Agent Tool</option>
+              </select>
+            </label>
+            <label>Name
+              <input id="vault-slot-name" class="input slim" placeholder="Fireworks / RunPod / Tool">
+            </label>
+            <label data-slot-field="env_key">Env Var
+              <input id="vault-slot-env-key" class="input slim" placeholder="FIREWORKS_API_KEY">
+            </label>
+            <label data-slot-field="value">Secret / Key
+              <input id="vault-slot-value" type="password" class="input slim" placeholder="Paste key or token…">
+            </label>
+            <label data-slot-field="base_url">Endpoint URL
+              <input id="vault-slot-base-url" class="input slim" placeholder="https://api.example.com/v1">
+            </label>
+            <label data-slot-field="default_model">Model ID
+              <input id="vault-slot-model" class="input slim" placeholder="model-id">
+            </label>
+            <label data-slot-field="command" class="hidden">Cmd
+              <input id="vault-slot-command" class="input slim" placeholder="npx / python3">
+            </label>
+            <label data-slot-field="args" class="hidden">Args
+              <input id="vault-slot-args" class="input slim" placeholder="-y @mcp/server">
+            </label>
+            <label data-slot-field="tool_type" class="hidden">Tool Type
+              <select id="vault-slot-tool-type" class="select slim">
+                <option value="shell_cmd">Shell Command</option>
+                <option value="python_script">Python Script</option>
+                <option value="node_script">Node.js Script</option>
+                <option value="http">HTTP Webhook</option>
+              </select>
+            </label>
+            <label>Notes
+              <input id="vault-slot-notes" class="input slim" placeholder="Optional note…">
+            </label>
+            <div style="display:flex;align-items:flex-end">
+              <button type="button" id="vault-slot-add-btn" class="primary xs" style="width:100%;height:26px">＋ Add Slot</button>
+            </div>
+          </div>
+
+          <div id="vault-slots-list" class="vault-slots-grid"></div>
         </div>
       </div>
 
-      <!-- 2. GRAPHICAL CLUSTER HEALTH TABLE, GIST ENDPOINTS & A2A STEALTH BRIDGE CARD -->
-      <div class="card" style="margin:0 0 12px">
-        <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
-            <h2 style="margin:0;font-size:14px;color:#fbbf24">🩺 Live Cluster Health Table, Gist Endpoints &amp; A2A Bridge</h2>
-            <span id="a2a-active-stealth-badge" class="right-badge gated">ISO-27001 / NIST CSF</span>
+      <!-- TAB 2: CUSTOM AGENT TOOLS & 20 MCP SERVERS -->
+      <div class="settings-tab-pane hidden" data-settings-pane="tools">
+        <div id="system-tools-mcp-grid" class="grid2" style="align-items:start;gap:10px;margin-bottom:10px">
+          <!-- LEFT GRAPHICAL CARD: CUSTOM AGENT TOOLS (10 EXECUTION TYPES) -->
+          <div class="card" style="margin:0;padding:10px 12px">
+            <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+              <h2 style="margin:0;font-size:13.5px;color:#2ee6a6">🧰 Custom Agent Tools (10 Execution Types)</h2>
+              <span class="right-badge">10 RUNTIME TYPES</span>
+            </div>
+            <div class="tune-grid" style="grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+              <label>Tool Name
+                <input id="ct-name" class="input slim" placeholder="e.g. port_scanner or sql_audit">
+              </label>
+              <label>Execution Type
+                <select id="ct-type" class="select slim">
+                  <option value="shell_cmd">Shell Command (shell_cmd)</option>
+                  <option value="python_script">Python Script (python_script)</option>
+                  <option value="node_script">Node.js Script (node_script)</option>
+                  <option value="mcp_bridge">MCP Server Bridge (mcp_bridge)</option>
+                  <option value="filesystem_op">Filesystem Operation (filesystem_op)</option>
+                  <option value="sql_query">SQL Query (sql_query)</option>
+                  <option value="osint_recon">OSINT Recon (osint_recon)</option>
+                  <option value="browser_scrape">Browser Scraper (browser_scrape)</option>
+                  <option value="webget">Web Fetch (webget)</option>
+                  <option value="http">HTTP Webhook / REST (http)</option>
+                </select>
+              </label>
+            </div>
+            <div class="row" style="gap:6px;margin-bottom:8px">
+              <input id="ct-url" class="input slim" style="flex:1;margin:0" placeholder="Command template, script path, or endpoint URL (use {{input}} for args)…">
+              <button id="ct-add" class="primary xs" type="button">＋ Add Tool</button>
+            </div>
+            <div id="ct-list" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
           </div>
-          <div class="row" style="gap:6px;flex-wrap:wrap">
-            <button id="health-refresh" class="ghost xs" type="button">↻ Re-run Health Check</button>
-            <button id="reload-btn" class="ghost xs" type="button">↻ Refresh URLs from Gist</button>
-            <button id="a2a-test-rpc-btn" class="primary xs" type="button">⚡ Test /a2a JSON-RPC</button>
+
+          <!-- RIGHT GRAPHICAL CARD: CONNECTED MCP SERVERS (20 BUILT-IN + CUSTOM) -->
+          <div class="card" style="margin:0;padding:10px 12px">
+            <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+              <h2 style="margin:0;font-size:13.5px;color:#38bdf8">🔌 Connected MCP Servers (20 Built-In + Custom)</h2>
+              <div class="row" style="gap:6px;align-items:center">
+                <button id="mc-test-all-btn" class="primary xs" type="button" title="Run a live diagnostic probe across all 20 built-in + custom MCP servers">⚡ Test All 20 MCP Servers Live</button>
+              </div>
+            </div>
+            <div class="tune-grid" style="grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:end;margin-bottom:8px">
+              <label>Server Name
+                <input id="mc-name" class="input slim" placeholder="e.g. github-mcp">
+              </label>
+              <label>Command
+                <input id="mc-cmd" class="input slim" placeholder="npx or python3">
+              </label>
+              <label>Arguments
+                <input id="mc-args" class="input slim" placeholder="-y @modelcontextprotocol/server-git">
+              </label>
+              <button id="mc-add" class="primary xs" type="button">＋ Attach</button>
+            </div>
+            <div id="mc-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
+            <pre id="mc-live-test-output" class="code-block" style="margin-top:6px;max-height:95px;overflow:auto;padding:6px 8px;background:#050811;border:1px solid rgba(56,189,248,0.35);border-radius:6px;font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;color:#6ee7b7">🔌 MCP Live Diagnostic Ready — Click "⚡ Test Live" or "⚡ Test All 20 MCP Servers Live".</pre>
           </div>
-        </div>
-
-        <span id="reload-info" class="muted" style="font-size:11px;display:block;margin-bottom:6px"></span>
-        <div id="health-table" style="margin-bottom:10px"></div>
-
-        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;padding:8px 10px;background:rgba(8,13,26,.75);border:1px solid var(--border);border-radius:8px">
-          <span class="muted" style="font-size:11.5px;font-weight:600">A2A Compliance Profile Dropdown:</span>
-          <select id="a2a-stealth-profile-select" class="select slim" style="width:auto;min-width:220px">
-            <option value="enterprise_resilience">Standard Corporate IT Security</option>
-            <option value="financial_compliance">Banking &amp; Finance Risk Checker</option>
-            <option value="healthcare_hipaa">Healthcare &amp; Medical Compliance</option>
-            <option value="cloud_sre_diagnostics">Cloud Server Uptime Checker</option>
-          </select>
-          <button id="a2a-stealth-apply-btn" class="ghost xs" type="button">Apply Profile</button>
-          <button id="a2a-firewall-test-btn" class="ghost xs" type="button">Test Privacy Scrubber</button>
-          <button id="a2a-mcp-bridge-test-btn" class="ghost xs" type="button">Test MCP Bridge</button>
-          <button id="a2a-multicloud-run-btn" class="ghost xs" type="button">Multi-Cloud Check</button>
-          <span id="a2a-cat3-status" class="muted" style="font-size:11px"></span>
-          <span id="a2a-code-status" class="muted" style="font-size:11px"></span>
-        </div>
-
-        <div class="a2a-endpoint-strip" style="margin-bottom:8px">
-          <div class="a2a-ep-pill"><span class="muted">Discovery:</span> <code id="a2a-card-url-display">/.well-known/agent.json</code></div>
-          <div class="a2a-ep-pill"><span class="muted">Endpoint:</span> <code id="a2a-rpc-url-display">/a2a</code></div>
-          <div class="a2a-ep-pill"><span class="muted">Token:</span> <code id="a2a-token-display">cng-a2a-sovereign-token-2026</code></div>
-          <button id="a2a-copy-card-url" class="ghost xs" type="button">Copy Discovery URL</button>
-          <button id="a2a-copy-rpc-url" class="ghost xs" type="button">Copy /a2a URL</button>
-          <button id="a2a-inspect-card-btn" class="ghost xs" type="button">Preview Agent Card</button>
-        </div>
-        <pre id="a2a-card-preview" class="code-block hidden"></pre>
-        <div id="a2a-cat3-output" class="hidden"></div>
-        <div id="a2a-remote-agents-grid" class="a2a-agents-grid"></div>
-        <div id="a2a-tasks-list"></div>
-
-        <div class="hidden" hidden aria-hidden="true">
-          <input id="a2a-firewall-test-input" value="Audit gateway 10.240.18.92 on auth-vault.corp.internal using key sk-live-9876543210abcdef123456 for admin@acme-sec.io">
-          <button id="a2a-toggle-add-agent" type="button"></button>
-          <button id="a2a-refresh-tasks-btn" type="button"></button>
-          <div id="a2a-add-agent-form"><input id="a2a-new-name"><input id="a2a-new-provider" value="Google Cloud Vertex AI"><input id="a2a-new-url"><input id="a2a-new-card-url"><select id="a2a-new-auth"><option value="Bearer">Bearer</option></select><input id="a2a-new-token"><input id="a2a-new-features"><input id="a2a-new-triggers"><button id="a2a-save-new-agent" type="button"></button><button id="a2a-cancel-new-agent" type="button"></button></div>
         </div>
       </div>
 
-      <!-- 3. COMPACT BOTTOM UTILITY FOOTER BAR (SAVE MODEL FILES, LAUNCHER .BAT, IMPORT/EXPORT CONFIG, SETUP & LICENSE) -->
-      <div id="bottom-system-utility-bar" class="card bottom-utility-bar">
-        <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;flex:1">
-          <span class="muted" style="font-size:11px;font-weight:600;white-space:nowrap">Save Outputs Path:</span>
-          <input id="file-output-dir" class="input slim" value="council_outputs" placeholder="council_outputs" style="width:180px;margin:0;font-family:'JetBrains Mono',monospace;font-size:11px">
-          <button id="file-output-browse" class="ghost xs" type="button">Browse</button>
-          <button id="file-output-save" class="primary xs" type="button">Save Path</button>
+      <!-- TAB 3: CLUSTER HEALTH, GIST ENDPOINTS, A2A BRIDGE & UTILITY PATHS -->
+      <div class="settings-tab-pane hidden" data-settings-pane="health">
+        <div class="card" style="margin:0 0 10px;padding:10px 12px">
+          <div class="row" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+              <h2 style="margin:0;font-size:13.5px;color:#fbbf24">🩺 Live Cluster Health Table, Gist Endpoints &amp; A2A Bridge</h2>
+              <span id="a2a-active-stealth-badge" class="right-badge gated">ISO-27001 / NIST CSF</span>
+            </div>
+            <div class="row" style="gap:6px;flex-wrap:wrap">
+              <button id="health-refresh" class="ghost xs" type="button">↻ Re-run Health Check</button>
+              <button id="reload-btn" class="ghost xs" type="button">↻ Refresh URLs from Gist</button>
+              <button id="a2a-test-rpc-btn" class="primary xs" type="button">⚡ Test /a2a JSON-RPC</button>
+            </div>
+          </div>
+
+          <span id="reload-info" class="muted" style="font-size:11px;display:block;margin-bottom:6px"></span>
+          <div id="health-table" style="margin-bottom:8px"></div>
+
+          <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;padding:6px 8px;background:rgba(8,13,26,.75);border:1px solid var(--border);border-radius:7px">
+            <span class="muted" style="font-size:11px;font-weight:600">A2A Profile:</span>
+            <select id="a2a-stealth-profile-select" class="select slim" style="width:auto;min-width:210px">
+              <option value="enterprise_resilience">Standard Corporate IT Security</option>
+              <option value="financial_compliance">Banking &amp; Finance Risk Checker</option>
+              <option value="healthcare_hipaa">Healthcare &amp; Medical Compliance</option>
+              <option value="cloud_sre_diagnostics">Cloud Server Uptime Checker</option>
+            </select>
+            <button id="a2a-stealth-apply-btn" class="ghost xs" type="button">Apply</button>
+            <button id="a2a-firewall-test-btn" class="ghost xs" type="button">Privacy Scrubber</button>
+            <button id="a2a-mcp-bridge-test-btn" class="ghost xs" type="button">MCP Bridge</button>
+            <button id="a2a-multicloud-run-btn" class="ghost xs" type="button">Multi-Cloud Check</button>
+            <span id="a2a-cat3-status" class="muted" style="font-size:11px"></span>
+            <span id="a2a-code-status" class="muted" style="font-size:11px"></span>
+          </div>
+
+          <div class="a2a-endpoint-strip" style="margin-bottom:6px">
+            <div class="a2a-ep-pill"><span class="muted">Discovery:</span> <code id="a2a-card-url-display">/.well-known/agent.json</code></div>
+            <div class="a2a-ep-pill"><span class="muted">Endpoint:</span> <code id="a2a-rpc-url-display">/a2a</code></div>
+            <div class="a2a-ep-pill"><span class="muted">Token:</span> <code id="a2a-token-display">cng-a2a-sovereign-token-2026</code></div>
+            <button id="a2a-copy-card-url" class="ghost xs" type="button">Copy Discovery URL</button>
+            <button id="a2a-copy-rpc-url" class="ghost xs" type="button">Copy /a2a URL</button>
+            <button id="a2a-inspect-card-btn" class="ghost xs" type="button">Preview Agent Card</button>
+          </div>
+          <pre id="a2a-card-preview" class="code-block hidden"></pre>
+          <div id="a2a-cat3-output" class="hidden"></div>
+          <div id="a2a-remote-agents-grid" class="a2a-agents-grid"></div>
+          <div id="a2a-tasks-list"></div>
+
+          <div class="hidden" hidden aria-hidden="true">
+            <input id="a2a-firewall-test-input" value="Audit gateway 10.240.18.92 on auth-vault.corp.internal using key sk-live-9876543210abcdef123456 for admin@acme-sec.io">
+            <button id="a2a-toggle-add-agent" type="button"></button>
+            <button id="a2a-refresh-tasks-btn" type="button"></button>
+            <div id="a2a-add-agent-form"><input id="a2a-new-name"><input id="a2a-new-provider" value="Google Cloud Vertex AI"><input id="a2a-new-url"><input id="a2a-new-card-url"><select id="a2a-new-auth"><option value="Bearer">Bearer</option></select><input id="a2a-new-token"><input id="a2a-new-features"><input id="a2a-new-triggers"><button id="a2a-save-new-agent" type="button"></button><button id="a2a-cancel-new-agent" type="button"></button></div>
+          </div>
         </div>
-        <div class="row" style="gap:6px;align-items:center;flex-wrap:wrap">
-          <input type="file" id="config-import-input" multiple accept=".json,.txt" hidden>
-          <button id="config-import-btn" class="ghost xs" type="button">Import Config</button>
-          <button id="config-export-btn" class="ghost xs" type="button">Export Backup</button>
-          <a href="/api/system/windows-launcher" download="START_SUOMYNONA_COUNCIL.bat" class="ghost xs" style="text-decoration:none;display:inline-flex;align-items:center">Download START_SUOMYNONA_COUNCIL.bat</a>
-          <button id="header-setup-wizard-btn" class="ghost xs" type="button">Setup Guide</button>
-          <button id="header-drm-studio-btn" class="ghost xs" type="button">License Key</button>
-          <span id="config-import-status" class="muted" style="font-size:11px"></span>
+
+        <div id="bottom-system-utility-bar" class="card bottom-utility-bar">
+          <div class="row" style="gap:6px;align-items:center;flex-wrap:wrap;flex:1">
+            <span class="muted" style="font-size:11px;font-weight:600;white-space:nowrap">Save Outputs Path:</span>
+            <input id="file-output-dir" class="input slim" value="council_outputs" placeholder="council_outputs" style="width:170px;margin:0;font-family:'JetBrains Mono',monospace;font-size:11px">
+            <button id="file-output-browse" class="ghost xs" type="button">Browse</button>
+            <button id="file-output-save" class="primary xs" type="button">Save Path</button>
+          </div>
+          <div class="row" style="gap:5px;align-items:center;flex-wrap:wrap">
+            <input type="file" id="config-import-input" multiple accept=".json,.txt" hidden>
+            <button id="config-import-btn" class="ghost xs" type="button">Import Config</button>
+            <button id="config-export-btn" class="ghost xs" type="button">Export Backup</button>
+            <a href="/api/system/windows-launcher" download="START_SUOMYNONA_COUNCIL.bat" class="ghost xs" style="text-decoration:none;display:inline-flex;align-items:center">Download .bat</a>
+            <button id="header-setup-wizard-btn" class="ghost xs" type="button">Setup Guide</button>
+            <button id="header-drm-studio-btn" class="ghost xs" type="button">License Key</button>
+            <span id="config-import-status" class="muted" style="font-size:11px"></span>
+          </div>
         </div>
       </div>
 
@@ -2169,344 +2410,578 @@
       </div>
     </section>
 
-    <!-- ══ ANTIGRAVITY IDE AGENT-FIRST EXPLORER, INLINE DIFF REVIEW & ARTIFACTS WORKBENCH (#view-file-explorer) ══ -->
-    <section id="view-file-explorer" class="view ag-ide-root" data-ag-layout="swe" data-ag-surface="editor">
-      <!-- TOP ANTIGRAVITY WORKBENCH BAR -->
-      <header class="ag-topbar">
-        <div class="ag-topbar-brand">
-          <div class="ag-topbar-title-row">
-            <span class="ag-glyph" aria-hidden="true">◆</span>
-            <h2 class="ag-topbar-title">Antigravity Explorer</h2>
-            <span class="ag-meta-sep">·</span>
-            <span id="explorer-toolchains-pill" class="ag-toolchain-readout tabular-nums">Python 3 + PyPI pip · Go 1.22 · Windows x64 PE32+</span>
-          </div>
-          <div class="ag-topbar-sub">Agent-first workspace tree · inline Myers diff review · structured artifacts · <code>@file</code> context composer</div>
-        </div>
-
-        <!-- Antigravity Layout & Surface Segmented Controls -->
-        <div class="ag-topbar-switches">
-          <div class="ag-seg-group" role="group" aria-label="Antigravity Interface Layout">
-            <button type="button" id="ag-layout-swe-btn" class="ag-seg-btn is-active" data-ag-set-layout="swe" title="Software Engineering Layout: Code tree, modified diffs, project disk, and compiler drawer">Software Engineering</button>
-            <button type="button" id="ag-layout-kw-btn" class="ag-seg-btn" data-ag-set-layout="kw" title="Knowledge Work Layout: Streamlined for Artifacts, Plans, Syntheses, and Agent collaboration">Knowledge Work</button>
-          </div>
-          <div class="ag-seg-group" role="group" aria-label="Antigravity Workbench Surface">
-            <button type="button" id="ag-surface-editor-btn" class="ag-seg-btn is-active" data-ag-set-surface="editor" title="3-Pane Editor, Inline Diff &amp; Agent Side Panel">Editor View</button>
-            <button type="button" id="ag-surface-manager-btn" class="ag-seg-btn" data-ag-set-surface="manager" title="Parallel Multi-Agent Mission Control &amp; Diff Matrix">Agent Manager</button>
+    <!-- ══ SUOMYNONA EXPLORER (#view-file-explorer) — Normal File Explorer + By Model / Project View / Judge / Coding Merge Agent ══ -->
+    <section id="view-file-explorer" class="view agx-root" aria-label="Suomynona Explorer">
+      <!-- TOP HEADER BAR -->
+      <header class="agx-header">
+        <div class="agx-brand">
+          <span class="agx-brand-icon" aria-hidden="true">🗂️</span>
+          <div>
+            <div class="agx-brand-title-row">
+              <h2 class="agx-title">Suomynona Explorer</h2>
+              <span id="agx-toolchain-pill" class="agx-pill tabular-nums">Python 3 · Node · Windows PE32+</span>
+            </div>
+            <div class="agx-subtitle">Browse model outputs like real folders, switch to Project View, Judge compatibility &amp; merge with coding models</div>
           </div>
         </div>
 
-        <!-- Primary Workbench Actions -->
-        <div class="ag-topbar-actions">
-          <button type="button" id="ag-new-file-toggle-btn" class="ghost sm ag-nowrap" title="Create a new file directly in Active Merged Build">＋ New File</button>
-          <button type="button" id="explorer-pin-active-run-btn" class="ghost sm ag-nowrap" title="Lock/Pin selected run in memory so its model files stay across future runs">📌 Pin Selected Run</button>
-          <button type="button" id="explorer-stage-checked-btn" class="primary sm ag-nowrap" title="Swap all checked files into Active Merged Build">⇄ Swap Checked</button>
-          <button type="button" id="explorer-sync-latest-btn" class="ghost sm ag-nowrap" title="Sync latest Workspace run into Antigravity Explorer">↻ Sync</button>
-          <button type="button" id="ag-toggle-agent-pane-btn" class="ghost sm ag-nowrap is-on" title="Toggle Right Agent Side Panel">⇔ Agent Panel</button>
-          <button type="button" id="explorer-back-workspace-btn" class="ghost sm ag-nowrap">⌘ Workspace</button>
+        <!-- 4 PRIMARY MODES -->
+        <div class="agx-mode-tabs" role="tablist" aria-label="Explorer Modes">
+          <button type="button" id="agx-tab-models" class="agx-mode-tab is-active" role="tab" aria-selected="true" title="Browse folders organized by Run and Model">🤖 By Model</button>
+          <button type="button" id="agx-tab-project" class="agx-mode-tab" role="tab" aria-selected="false" title="See all assembled project files or workspace disk together">📦 Project View</button>
+          <button type="button" id="agx-tab-judge" class="agx-mode-tab" role="tab" aria-selected="false" title="Compare colliding files side-by-side and audit compatibility">⚖️ Judge &amp; Compare</button>
+          <button type="button" id="agx-tab-merge" class="agx-mode-tab" role="tab" aria-selected="false" title="Use a coding model to merge files &amp; download stronger HF/Ollama coders">🔀 Merge Agent</button>
+        </div>
+
+        <!-- GLOBAL ACTIONS -->
+        <div class="agx-header-actions">
+          <button type="button" id="agx-sync-btn" class="ghost sm agx-nowrap" title="Sync latest Workspace responses &amp; refresh disk tree">↻ Sync</button>
+          <button type="button" id="agx-open-pc-btn" class="ghost sm agx-nowrap" title="Open the active workspace folder in OS File Explorer / VS Code">📂 Open Folder</button>
+          <button type="button" id="agx-back-council-btn" class="ghost sm agx-nowrap" title="Return to main Council Workspace">⌘ Council</button>
         </div>
       </header>
 
-      <!-- 3-COLUMN ANTIGRAVITY IDE GRID -->
-      <div class="ag-workbench-grid" id="ag-workbench-grid">
-        <!-- ZONE 1: CUSTOMIZABLE LEFT EXPLORER SIDEBAR -->
-        <aside class="ag-sidebar vsc-sidebar" aria-label="Antigravity Explorer Sidebar">
-          <div class="ag-sidebar-head">
-            <div class="ag-sidebar-head-top">
-              <span class="ag-sidebar-kicker">EXPLORER</span>
-              <span id="explorer-checked-counter" class="ag-checked-readout tabular-nums">0 checked</span>
-              <div class="ag-sidebar-icon-btns">
-                <button type="button" id="explorer-expand-all-btn" class="ag-icon-btn" title="Expand All Folders">▾</button>
-                <button type="button" id="explorer-collapse-all-btn" class="ag-icon-btn" title="Collapse All Folders">▸</button>
-                <button type="button" id="ag-customize-sections-btn" class="ag-icon-btn" title="Customize Sidebar Sections" aria-expanded="false">⚙</button>
-              </div>
-            </div>
-
-            <!-- Customize Sidebar Sections Popover -->
-            <div id="ag-sections-popover" class="ag-sections-popover hidden" role="menu" aria-label="Customize Explorer Sections">
-              <div class="ag-popover-title">SIDEBAR SECTIONS</div>
-              <label class="ag-sec-check"><input type="checkbox" data-ag-sec-toggle="modified" checked> <span>Agent Edits &amp; Modified</span></label>
-              <label class="ag-sec-check"><input type="checkbox" data-ag-sec-toggle="artifacts" checked> <span>Artifacts &amp; Plans</span></label>
-              <label class="ag-sec-check"><input type="checkbox" data-ag-sec-toggle="active-ws" checked> <span>Active Merged Build</span></label>
-              <label class="ag-sec-check"><input type="checkbox" data-ag-sec-toggle="runs" checked> <span>Multi-Run Agent Roots</span></label>
-              <label class="ag-sec-check"><input type="checkbox" data-ag-sec-toggle="disk" checked> <span>Project Disk Tree</span></label>
-            </div>
-
-            <!-- Inline New File Bar -->
-            <div id="ag-new-file-bar" class="ag-new-file-bar hidden">
-              <input type="text" id="ag-new-file-input" class="input slim ag-mono-input" placeholder="src/module.ts or index.html…">
-              <button type="button" id="ag-new-file-create-btn" class="primary xs ag-nowrap">Create</button>
-              <button type="button" id="ag-new-file-cancel-btn" class="ghost xs">✕</button>
-            </div>
-
-            <!-- Filter & Batch Selection -->
-            <input type="text" id="explorer-history-search" class="input slim ag-search-input" placeholder="Filter files, @models, artifacts, or runs…">
-            <div class="ag-sidebar-batch-bar">
-              <button type="button" id="explorer-select-all-files-btn" class="ag-link-btn">Check Run</button>
-              <span class="ag-meta-sep">·</span>
-              <button type="button" id="explorer-unselect-all-btn" class="ag-link-btn">Uncheck</button>
-              <button type="button" id="explorer-clear-history-btn" class="ag-link-btn danger" title="Clears unpinned runs (Pinned runs stay protected)">Clear Unpinned</button>
-            </div>
+      <!-- PANE 1: NORMAL FILE EXPLORER BROWSER (By Model & Project View) -->
+      <div id="agx-pane-browse" class="agx-pane">
+        <!-- Navigation & View Toolbar -->
+        <div class="agx-toolbar">
+          <div class="agx-nav-btns">
+            <button type="button" id="agx-nav-back-btn" class="agx-tool-btn" title="Back">←</button>
+            <button type="button" id="agx-nav-fwd-btn" class="agx-tool-btn" title="Forward">→</button>
+            <button type="button" id="agx-nav-up-btn" class="agx-tool-btn" title="Up one folder">↑</button>
           </div>
 
-          <div class="ag-sidebar-scroll" id="ag-sidebar-scroll">
-            <!-- SECTION 1: MODIFIED FILES / AGENT EDITS -->
-            <div class="ag-tree-section" id="ag-sec-modified" data-ag-sec="modified">
-              <div class="ag-sec-hdr" data-ag-collapse-sec="modified">
-                <span class="ag-sec-hdr-label"><span class="ag-sec-chev">▾</span> AGENT EDITS &amp; DIFFS</span>
-                <div class="ag-sec-hdr-right">
-                  <span id="ag-modified-count" class="ag-sec-count tabular-nums">0</span>
-                  <button type="button" id="ag-accept-all-mod-btn" class="ag-hdr-act accept" title="Accept all candidate/unsaved changes into Active Merged Build">Accept All</button>
-                  <button type="button" id="ag-reject-all-mod-btn" class="ag-hdr-act reject" title="Discard unsaved buffer edits or revert last workspace swap">Revert</button>
-                </div>
-              </div>
-              <div id="ag-modified-list" class="ag-sec-body"></div>
-            </div>
+          <div id="agx-breadcrumbs" class="agx-breadcrumbs" aria-label="Address Bar"></div>
 
-            <!-- SECTION 2: ANTIGRAVITY ARTIFACTS -->
-            <div class="ag-tree-section" id="ag-sec-artifacts" data-ag-sec="artifacts">
-              <div class="ag-sec-hdr" data-ag-collapse-sec="artifacts">
-                <span class="ag-sec-hdr-label"><span class="ag-sec-chev">▾</span> ARTIFACTS</span>
-                <span id="ag-artifacts-count" class="ag-sec-count tabular-nums">0</span>
-              </div>
-              <div id="ag-artifacts-list" class="ag-sec-body"></div>
-            </div>
-
-            <!-- SECTION 3: ACTIVE MERGED BUILD -->
-            <div class="ag-tree-section" id="ag-sec-active-ws" data-ag-sec="active-ws">
-              <div class="ag-sec-hdr" id="vsc-toggle-active-ws-sec" data-ag-collapse-sec="active-ws">
-                <span class="ag-sec-hdr-label"><span class="ag-sec-chev">▾</span> ACTIVE MERGED BUILD</span>
-                <div class="ag-sec-hdr-right">
-                  <span id="vsc-active-ws-count" class="ag-sec-count tabular-nums">0 files</span>
-                  <button type="button" id="ag-ws-quick-new-btn" class="ag-hdr-act" title="New file in Active Merged Build">＋</button>
-                  <button type="button" id="vsc-clear-active-ws-btn" class="ag-hdr-act reject" title="Clear Active Merged Workspace">Clear</button>
-                </div>
-              </div>
-              <div id="vsc-active-workspace-tree" class="ag-sec-body vsc-tree-container"></div>
-            </div>
-
-            <!-- SECTION 4: MULTI-RUN AGENT & MODEL ROOTS -->
-            <div class="ag-tree-section ag-sec-grow" id="ag-sec-runs" data-ag-sec="runs">
-              <div class="ag-sec-hdr" data-ag-collapse-sec="runs">
-                <span class="ag-sec-hdr-label"><span class="ag-sec-chev">▾</span> AGENT &amp; MODEL RUNS</span>
-                <span id="explorer-active-prompt-sub" class="ag-sec-count tabular-nums">0 runs</span>
-              </div>
-              <div id="explorer-runs-list" class="hidden" hidden></div>
-              <div id="explorer-models-buckets" class="ag-sec-body vsc-tree-container" role="tree" tabindex="0" aria-label="Multi-Run Agent and Model File Tree"></div>
-            </div>
-
-            <!-- SECTION 5: REAL WORKSPACE PROJECT DISK -->
-            <div class="ag-tree-section" id="ag-sec-disk" data-ag-sec="disk">
-              <div class="ag-sec-hdr" id="ag-toggle-disk-sec" data-ag-collapse-sec="disk">
-                <span class="ag-sec-hdr-label"><span class="ag-sec-chev">▸</span> PROJECT DISK</span>
-                <div class="ag-sec-hdr-right">
-                  <span id="ag-disk-count" class="ag-sec-count tabular-nums">0</span>
-                  <button type="button" id="ag-refresh-disk-btn" class="ag-hdr-act" title="Refresh Project Disk Tree">↻</button>
-                </div>
-              </div>
-              <div id="ag-disk-tree" class="ag-sec-body hidden"></div>
-            </div>
-          </div>
-        </aside>
-
-        <!-- ZONE 2: CENTER EDITOR, INLINE DIFF REVIEW, ARTIFACT PREVIEW & AGENT MANAGER -->
-        <div class="ag-center-stage vsc-editor-stage">
-          <!-- SURFACE A: AGENT MANAGER MATRIX (parallel multi-agent mission control) -->
-          <div id="ag-manager-surface" class="ag-manager-surface hidden">
-            <div class="ag-manager-head">
-              <div>
-                <h3 class="ag-manager-title">Agent Manager · Parallel Output &amp; Diff Matrix</h3>
-                <p class="ag-manager-sub" id="ag-manager-summary">Inspect parallel model &amp; specialist outputs side-by-side, review line deltas against your Active Merged Build, and accept individual files or entire agent folders.</p>
-              </div>
-              <div class="ag-manager-head-actions">
-                <button type="button" id="ag-manager-accept-best-btn" class="primary sm ag-nowrap">Accept Selected Run Models</button>
-                <button type="button" id="ag-manager-back-editor-btn" class="ghost sm ag-nowrap">Return to Editor</button>
-              </div>
-            </div>
-            <div id="ag-manager-cards-grid" class="ag-manager-grid"></div>
+          <!-- Project Sub-Scope Switcher (visible in Project View) -->
+          <div id="agx-project-scope-group" class="agx-seg hidden" role="group" aria-label="Project Scope">
+            <button type="button" id="agx-scope-merged" class="agx-seg-btn is-active" title="Curated files merged into your Active Project">Merged Project</button>
+            <button type="button" id="agx-scope-combined" class="agx-seg-btn" title="Combined file tree across all models in the active run">All Models Combined</button>
+            <button type="button" id="agx-scope-disk" class="agx-seg-btn" title="Real workspace &amp; council_outputs files on disk">Workspace Disk</button>
           </div>
 
-          <!-- SURFACE B: EDITOR / INLINE DIFF / ARTIFACT PREVIEW -->
-          <div id="ag-editor-surface" class="ag-editor-surface">
-            <!-- Open Tabs + View Mode Switcher -->
-            <div class="ag-tabs-bar-wrap">
-              <div id="vsc-open-tabs-bar" class="vsc-tabs-strip ag-tabs-strip">
-                <div class="vsc-tab-empty">No file open — select a file, diff, or artifact from the Explorer</div>
-              </div>
-              <div class="ag-canvas-modes" role="tablist" aria-label="Editor Canvas Mode">
-                <button type="button" id="ag-mode-code-btn" class="ag-mode-tab is-active" data-ag-canvas-mode="code" role="tab" aria-selected="true">Code</button>
-                <button type="button" id="ag-mode-diff-btn" class="ag-mode-tab" data-ag-canvas-mode="diff" role="tab" aria-selected="false">Inline Diff <span id="ag-diff-tab-badge" class="ag-tab-delta tabular-nums"></span></button>
-                <button type="button" id="ag-mode-preview-btn" class="ag-mode-tab" data-ag-canvas-mode="preview" role="tab" aria-selected="false">Artifact Preview</button>
-              </div>
-            </div>
+          <!-- Model View Options (visible in By Model View) -->
+          <div id="agx-model-opts-group" class="agx-inline-opt">
+            <label class="agx-check-label" title="Show all models from recent runs at top level instead of grouping under Run folders">
+              <input type="checkbox" id="agx-flatten-runs-cb">
+              <span>Flatten Runs</span>
+            </label>
+          </div>
 
-            <!-- Breadcrumb & File Actions -->
-            <div class="ag-breadcrumb-bar vsc-breadcrumb-bar">
-              <div class="ag-breadcrumb-meta">
-                <strong id="explorer-inspector-title" class="ag-breadcrumb-path">Select a file or artifact in Antigravity Explorer</strong>
-                <div class="ag-breadcrumb-sub-row">
-                  <span id="explorer-inspector-provenance" class="ag-provenance-text">Pin runs in memory, compare inline diffs against Active Merged Build, or mention @files in the Agent Panel.</span>
-                  <span class="ag-meta-sep">·</span>
-                  <span id="ag-cursor-telemetry" class="ag-cursor-readout tabular-nums">Ln 1, Col 1</span>
-                </div>
-              </div>
-              <div class="ag-breadcrumb-actions">
-                <button type="button" id="ag-mention-current-btn" class="ghost xs ag-nowrap" title="Send @file into the Right Agent Side Panel">＠ Mention</button>
-                <button type="button" id="explorer-swap-current-btn" class="primary xs ag-nowrap" title="Accept / Swap this file into Active Merged Build">⇄ Swap Into Build</button>
-                <button type="button" id="explorer-save-file-edit-btn" class="ghost xs ag-nowrap" title="Save buffer edits (Ctrl/Cmd+S)">Save</button>
-                <button type="button" id="explorer-download-single-btn" class="ghost xs ag-nowrap" title="Download file">Download</button>
-              </div>
-            </div>
+          <input type="search" id="agx-search-input" class="input slim agx-search" placeholder="Search files or models…">
 
-            <!-- ANTIGRAVITY FLOATING INLINE DIFF REVIEW BAR -->
-            <div id="ag-diff-review-bar" class="ag-diff-review-bar hidden" role="region" aria-label="Agent Change Review Bar">
-              <div class="ag-diff-review-left">
-                <span class="ag-review-indicator"></span>
-                <span id="ag-diff-stats-label" class="ag-diff-stats tabular-nums">+0 −0 vs Active Merged Build</span>
-                <span class="ag-meta-sep">·</span>
-                <span id="ag-diff-origin-label" class="ag-diff-origin">Candidate Agent Edit</span>
-              </div>
-              <div class="ag-diff-review-right">
-                <div class="ag-seg-group slim">
-                  <button type="button" id="ag-diff-unified-btn" class="ag-seg-btn is-active" data-ag-diff-style="unified">Unified</button>
-                  <button type="button" id="ag-diff-split-btn" class="ag-seg-btn" data-ag-diff-style="split">Split</button>
-                </div>
-                <button type="button" id="ag-diff-prev-btn" class="ghost xs ag-nowrap" title="Previous Changed Hunk">↑ Prev</button>
-                <button type="button" id="ag-diff-next-btn" class="ghost xs ag-nowrap" title="Next Changed Hunk">↓ Next</button>
-                <button type="button" id="ag-diff-accept-btn" class="ag-review-btn accept ag-nowrap" title="Accept this file into Active Merged Build">✓ Accept File</button>
-                <button type="button" id="ag-diff-reject-btn" class="ag-review-btn reject ag-nowrap" title="Discard unsaved edits or revert workspace file to prior version">✕ Reject / Revert</button>
-              </div>
-            </div>
-
-            <!-- MAIN EDITOR / DIFF / PREVIEW CANVAS -->
-            <div class="ag-canvas-body" id="ag-canvas-body">
-              <!-- MODE 1: LINE-NUMBERED CODE EDITOR -->
-              <div id="ag-code-pane" class="ag-code-pane">
-                <div id="ag-line-gutter" class="ag-line-gutter tabular-nums" aria-hidden="true">1</div>
-                <textarea id="explorer-inspector-editor" class="explorer-code-editor ag-code-textarea" spellcheck="false" placeholder="Select any file from Active Merged Build, Agent Runs, or Project Disk to inspect, edit, or diff…"></textarea>
-              </div>
-
-              <!-- MODE 2: REAL MYERS/LCS INLINE DIFF VIEWER -->
-              <div id="ag-diff-pane" class="ag-diff-pane hidden">
-                <div id="ag-diff-table-wrap" class="ag-diff-table-wrap"></div>
-              </div>
-
-              <!-- MODE 3: ARTIFACT MARKDOWN & LIVE HTML PREVIEW -->
-              <div id="ag-preview-pane" class="ag-preview-pane hidden">
-                <div id="ag-markdown-preview" class="ag-markdown-preview"></div>
-                <iframe id="ag-html-preview-frame" class="ag-html-preview-frame hidden" title="Live Artifact HTML Preview" sandbox="allow-scripts allow-forms allow-modals"></iframe>
-              </div>
-            </div>
-
-            <!-- COLLAPSIBLE COMPILER & EXECUTION TERMINAL DRAWER (SWE Layout) -->
-            <div id="ag-terminal-drawer" class="ag-terminal-drawer vsc-build-drawer">
-              <div class="ag-terminal-head">
-                <div class="ag-terminal-head-left">
-                  <button type="button" id="ag-toggle-terminal-btn" class="ag-icon-btn" title="Collapse / Expand Build Terminal">▾</button>
-                  <span class="ag-terminal-kicker">TERMINAL &amp; BUILD RUNNER</span>
-                  <span class="ag-meta-sep">·</span>
-                  <span id="explorer-build-source-pill" class="ag-terminal-target tabular-nums">Target: Auto (Active Merged Build → Checked → Open File)</span>
-                </div>
-                <div class="ag-terminal-actions">
-                  <button type="button" id="explorer-run-active-ws-btn" class="primary xs ag-nowrap">▶ Run Active Build</button>
-                  <button type="button" id="explorer-compile-run-btn" class="ghost xs ag-nowrap">▶ Run Checked</button>
-                  <button type="button" id="explorer-build-win-exe-btn" class="primary xs ag-nowrap">🪟 Build x64 .EXE</button>
-                  <button type="button" id="explorer-open-vscode-btn" class="ghost xs ag-nowrap">💻 Stage to Disk</button>
-                  <button type="button" id="explorer-send-crucible-btn" class="ghost xs ag-nowrap">⚔️ 3-Model Crucible</button>
-                </div>
-              </div>
-              <div id="ag-terminal-body" class="ag-terminal-body">
-                <div id="explorer-action-output" class="explorer-compile-out">Ready — select files across runs, review inline diffs, or execute your Active Merged Build with real Python 3, Go 1.22, Node.js, or Windows PE32+ cross-compilation.</div>
-              </div>
-            </div>
+          <div class="agx-seg" role="group" aria-label="Folder Layout">
+            <button type="button" id="agx-view-details-btn" class="agx-seg-btn is-active" title="Detailed List View">☰ Details</button>
+            <button type="button" id="agx-view-icons-btn" class="agx-seg-btn" title="Large Folder &amp; File Icons">▦ Icons</button>
           </div>
         </div>
 
-        <!-- ZONE 3: RIGHT ANTIGRAVITY AGENT SIDE PANEL -->
-        <aside id="ag-agent-panel" class="ag-agent-panel" aria-label="Antigravity Agent Side Panel">
-          <div class="ag-agent-head">
-            <div class="ag-agent-head-left">
-              <span class="ag-agent-dot"></span>
-              <span class="ag-sidebar-kicker">AGENT SIDE PANEL</span>
-              <span id="ag-agent-context-count" class="ag-sec-count tabular-nums">1 ctx</span>
+        <!-- Action Ribbon (100% Real Buttons) -->
+        <div class="agx-ribbon">
+          <div class="agx-ribbon-group">
+            <button type="button" id="agx-new-file-btn" class="ghost xs agx-nowrap" title="Create a new file in the current folder/project">＋ New File</button>
+            <button type="button" id="agx-new-folder-btn" class="ghost xs agx-nowrap" title="Create a new folder">📁 New Folder</button>
+          </div>
+
+          <div class="agx-ribbon-group">
+            <button type="button" id="agx-select-all-btn" class="ghost xs agx-nowrap" title="Select all visible files">☑ Select All</button>
+            <button type="button" id="agx-clear-sel-btn" class="ghost xs agx-nowrap" title="Clear checked files">☐ Clear (<span id="agx-sel-count">0</span>)</button>
+            <button type="button" id="agx-add-checked-proj-btn" class="primary xs agx-nowrap" title="Stage checked files (or current folder) into Merged Project">📦 Add to Project</button>
+            <button type="button" id="agx-compare-checked-btn" class="ghost xs agx-nowrap" title="Compare checked/conflicting files in Judge &amp; Compare">⚖️ Compare</button>
+            <button type="button" id="agx-merge-checked-btn" class="ghost xs agx-nowrap" title="Send checked files (or folder) to Coding Merge Agent">🔀 Merge</button>
+          </div>
+
+          <div class="agx-ribbon-group agx-ribbon-right">
+            <button type="button" id="agx-run-project-btn" class="primary xs agx-nowrap" title="Execute the current project or checked files using Python/Node/Go/PowerShell">▶ Run Project</button>
+            <button type="button" id="agx-build-exe-btn" class="ghost xs agx-nowrap" title="Compile project/checked files into a real Windows x64 .EXE">🪟 Build .EXE</button>
+            <button type="button" id="agx-clear-project-btn" class="ghost xs danger agx-nowrap hidden" title="Clear all files from Merged Project">🗑 Clear Project</button>
+          </div>
+        </div>
+
+        <!-- Inline New File / Folder Prompt Bar -->
+        <div id="agx-inline-create-bar" class="agx-inline-create hidden">
+          <span id="agx-inline-create-lbl" class="agx-inline-lbl">New File:</span>
+          <input type="text" id="agx-inline-create-input" class="input slim agx-mono" placeholder="src/app.py">
+          <button type="button" id="agx-inline-create-confirm" class="primary xs">Create</button>
+          <button type="button" id="agx-inline-create-cancel" class="ghost xs">Cancel</button>
+        </div>
+
+        <!-- 2-Column Body: Left Quick Access + Right File Grid & Viewer -->
+        <div class="agx-body">
+          <aside id="agx-sidebar" class="agx-sidebar" aria-label="Explorer Sidebar">
+            <div class="agx-side-group">
+              <div class="agx-side-heading">QUICK ACCESS</div>
+              <button type="button" id="agx-qa-models" class="agx-side-item is-active">🤖 All Models</button>
+              <button type="button" id="agx-qa-merged" class="agx-side-item">📦 Merged Project <span id="agx-qa-merged-cnt" class="agx-side-badge">0</span></button>
+              <button type="button" id="agx-qa-combined" class="agx-side-item">🧩 Combined Tree</button>
+              <button type="button" id="agx-qa-disk" class="agx-side-item">🖴 Workspace Disk <span id="agx-qa-disk-cnt" class="agx-side-badge">0</span></button>
             </div>
-            <button type="button" id="ag-close-agent-pane-btn" class="ag-icon-btn" title="Collapse Agent Panel">⇥</button>
-          </div>
 
-          <div class="ag-agent-picker-row">
-            <label for="explorer-specialist-pick" class="ag-sr-only">Active Specialist Agent</label>
-            <select id="explorer-specialist-pick" class="select slim ag-agent-select"></select>
-          </div>
-
-          <!-- Context Chips (@ActiveFile + @Mentions + Checked) -->
-          <div class="ag-context-bar">
-            <div id="ag-context-chips" class="ag-context-chips"></div>
-            <button type="button" id="ag-attach-checked-btn" class="ag-link-btn ag-nowrap" title="Attach all checked Explorer files to Agent Context">＋ Checked</button>
-          </div>
-
-          <!-- Live Agent Execution & Patch Thread -->
-          <div id="ag-agent-thread" class="ag-agent-thread">
-            <div class="ag-agent-empty">
-              <strong>Context-Aware Agent Ready</strong>
-              <p>Type <code>@</code> to reference any file in Active Build, Saved Runs, or Project Disk, or type <code>/</code> for quick actions (<code>/diff</code>, <code>/merge</code>, <code>/refactor</code>, <code>/tests</code>, <code>/plan</code>). Generated files land directly in Explorer with 1-click inline diff review.</p>
+            <div class="agx-side-group">
+              <div class="agx-side-heading">MODELS IN ACTIVE VIEW</div>
+              <div id="agx-sidebar-models" class="agx-side-list"></div>
             </div>
-          </div>
 
-          <!-- Composer with @ File Autocomplete & / Slash Command Popups -->
-          <div class="ag-composer-wrap">
-            <div id="ag-at-mention-menu" class="ag-popup-menu hidden" role="listbox" aria-label="File Context Mentions"></div>
-            <div id="ag-slash-cmd-menu" class="ag-popup-menu hidden" role="listbox" aria-label="Quick Agent Commands"></div>
+            <div class="agx-side-group agx-side-grow">
+              <div class="agx-side-heading">PROMPT RUNS <span id="agx-runs-count" class="agx-side-badge">0</span></div>
+              <div id="agx-sidebar-runs" class="agx-side-list"></div>
+            </div>
+          </aside>
 
-            <textarea id="explorer-swarm-goal-input" class="ag-composer-input" rows="3" placeholder="Ask agent to edit, merge, or audit… Type @ to mention files, / for commands"></textarea>
-            <div class="ag-composer-foot">
-              <div class="ag-composer-triggers">
-                <button type="button" id="ag-trigger-at-btn" class="ag-trigger-btn" title="Mention a file (@)">＠ File</button>
-                <button type="button" id="ag-trigger-slash-btn" class="ag-trigger-btn" title="Slash quick commands (/)">／ Cmd</button>
-                <button type="button" id="ag-composer-add-checked-btn" class="ag-trigger-btn" title="Attach checked tree files">＋ Context</button>
+          <div id="agx-main-split" class="agx-main-split">
+            <!-- Folder & File Listing Canvas -->
+            <div id="agx-browser-canvas" class="agx-browser-canvas" tabindex="0"></div>
+
+            <!-- File Viewer & Editor Panel (auto-opens when a file is opened) -->
+            <div id="agx-editor-panel" class="agx-editor-panel hidden">
+              <div class="agx-editor-top">
+                <div id="agx-open-tabs" class="agx-open-tabs"></div>
+                <div class="agx-editor-mode-group">
+                  <button type="button" id="agx-ed-mode-code" class="agx-seg-btn is-active">Code</button>
+                  <button type="button" id="agx-ed-mode-preview" class="agx-seg-btn">Preview</button>
+                </div>
               </div>
-              <button type="button" id="explorer-run-specialist-btn" class="primary xs ag-run-agent-btn ag-nowrap">Run Agent ⏎</button>
+
+              <div class="agx-editor-bar">
+                <div class="agx-editor-path-wrap">
+                  <strong id="agx-editor-path" class="agx-editor-path">No file open</strong>
+                  <span id="agx-editor-meta" class="agx-editor-meta"></span>
+                </div>
+                <div class="agx-editor-actions">
+                  <button type="button" id="agx-ed-save-btn" class="primary xs" title="Save edits (Ctrl/Cmd+S)">💾 Save</button>
+                  <button type="button" id="agx-ed-add-proj-btn" class="ghost xs" title="Add/update this file in Merged Project">📦 Add to Project</button>
+                  <button type="button" id="agx-ed-rename-btn" class="ghost xs" title="Rename this file">✎ Rename</button>
+                  <button type="button" id="agx-ed-revert-btn" class="ghost xs" title="Revert to previous version in Merged Project history">↺ Revert</button>
+                  <button type="button" id="agx-ed-compare-btn" class="ghost xs" title="Compare this file against another version in Judge &amp; Compare">⚖️ Compare</button>
+                  <button type="button" id="agx-ed-run-btn" class="ghost xs" title="Run this file now">▶ Run</button>
+                  <button type="button" id="agx-ed-copy-btn" class="ghost xs" title="Copy file contents">📋 Copy</button>
+                  <button type="button" id="agx-ed-download-btn" class="ghost xs" title="Download file">⬇ Download</button>
+                  <button type="button" id="agx-ed-delete-btn" class="ghost xs danger" title="Delete file">🗑 Delete</button>
+                  <button type="button" id="agx-ed-expand-btn" class="ghost xs" title="Toggle full-height editor">⤢</button>
+                  <button type="button" id="agx-ed-close-btn" class="ghost xs" title="Close file viewer">✕</button>
+                </div>
+              </div>
+
+              <div class="agx-editor-body">
+                <div id="agx-ed-code-wrap" class="agx-ed-code-wrap">
+                  <div id="agx-editor-gutter" class="agx-editor-gutter tabular-nums" aria-hidden="true">1</div>
+                  <textarea id="agx-editor-textarea" class="agx-editor-textarea" spellcheck="false" placeholder="Select any file to view or edit…"></textarea>
+                </div>
+                <div id="agx-ed-preview-wrap" class="agx-ed-preview-wrap hidden">
+                  <div id="agx-editor-md-preview" class="agx-md-preview"></div>
+                  <iframe id="agx-editor-html-preview" class="agx-html-preview hidden" title="Live HTML Preview" sandbox="allow-scripts allow-forms allow-modals"></iframe>
+                </div>
+              </div>
+            </div>
+
+            <!-- Collapsible Execution Output Tray -->
+            <div id="agx-output-drawer" class="agx-output-drawer hidden">
+              <div class="agx-output-head">
+                <span class="agx-output-title">EXECUTION &amp; BUILD OUTPUT</span>
+                <button type="button" id="agx-output-close-btn" class="ghost xs">✕ Hide</button>
+              </div>
+              <pre id="agx-output-pre" class="agx-output-pre"></pre>
             </div>
           </div>
-        </aside>
+        </div>
+      </div>
+
+      <!-- PANE 2: JUDGE & COMPARE -->
+      <div id="agx-pane-judge" class="agx-pane hidden">
+        <div class="agx-subbar">
+          <div class="agx-subbar-left">
+            <label class="agx-field-lbl">Scope
+              <select id="agx-judge-scope" class="select slim">
+                <option value="active_run">Active Run (All Models)</option>
+                <option value="checked">Checked Files Only</option>
+                <option value="project">Merged Project</option>
+              </select>
+            </label>
+            <label class="agx-field-lbl">Judge Model
+              <select id="agx-judge-model-select" class="select slim"></select>
+            </label>
+            <label class="agx-check-label" title="Run AI Judge reasoning on top of deterministic static syntax &amp; import checks">
+              <input type="checkbox" id="agx-judge-use-ai" checked>
+              <span>Use AI Judge</span>
+            </label>
+          </div>
+          <div class="agx-subbar-right">
+            <button type="button" id="agx-run-judge-btn" class="primary sm agx-nowrap">⚖️ Run Compatibility Judge</button>
+            <button type="button" id="agx-judge-apply-clean-btn" class="ghost sm agx-nowrap">✓ Apply Clean Winners</button>
+            <button type="button" id="agx-judge-send-merge-btn" class="ghost sm agx-nowrap">🔀 Send Conflicts to Merge Agent</button>
+          </div>
+        </div>
+
+        <div class="agx-judge-grid">
+          <!-- Left: Compatibility Score, Conflicts & Matrix -->
+          <div class="agx-judge-left">
+            <div id="agx-judge-summary-box" class="agx-card">
+              <div class="agx-card-title">Compatibility Audit</div>
+              <div id="agx-judge-summary" class="muted" style="font-size:12.5px">Click <strong>⚖️ Run Compatibility Judge</strong> to scan syntax, imports/exports, file collisions, and recommend how files merge cleanly.</div>
+            </div>
+            <div class="agx-card">
+              <div class="agx-card-title">File Compatibility Matrix</div>
+              <div id="agx-judge-matrix" class="agx-matrix-wrap"></div>
+            </div>
+            <div class="agx-card">
+              <div class="agx-card-title">Detected Conflicts &amp; Broken Links</div>
+              <div id="agx-judge-conflicts" class="agx-conflicts-wrap"></div>
+            </div>
+          </div>
+
+          <!-- Right: Interactive File Diff Comparator -->
+          <div class="agx-judge-right agx-card">
+            <div class="agx-diff-controls">
+              <select id="agx-diff-left-sel" class="select slim" title="Left file version"></select>
+              <span class="agx-vs-badge">vs</span>
+              <select id="agx-diff-right-sel" class="select slim" title="Right file version"></select>
+              <div class="agx-seg">
+                <button type="button" id="agx-diff-split-btn" class="agx-seg-btn is-active">Split</button>
+                <button type="button" id="agx-diff-unified-btn" class="agx-seg-btn">Unified</button>
+              </div>
+            </div>
+            <div class="agx-diff-pick-bar">
+              <span id="agx-diff-stats" class="agx-diff-stats tabular-nums">Select two files above to compare line-by-line</span>
+              <div class="agx-diff-pick-btns">
+                <button type="button" id="agx-diff-pick-left-btn" class="ghost xs">✓ Pick Left</button>
+                <button type="button" id="agx-diff-pick-right-btn" class="ghost xs">✓ Pick Right</button>
+                <button type="button" id="agx-diff-merge-pair-btn" class="primary xs">🔀 Merge These 2</button>
+              </div>
+            </div>
+            <div id="agx-diff-viewer" class="agx-diff-viewer"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE 3: CODING MERGE AGENT & HF/OLLAMA CODING MODELS -->
+      <div id="agx-pane-merge" class="agx-pane hidden">
+        <div class="agx-merge-layout">
+          <!-- Left Controls Column -->
+          <div class="agx-merge-left">
+            <div class="agx-card">
+              <div class="agx-card-head">
+                <span class="agx-card-title">Coding Merge Agent</span>
+                <button type="button" id="agx-refresh-models-btn" class="ghost xs" title="Refresh available cloud &amp; local Ollama/LM Studio models">↻ Refresh Models</button>
+              </div>
+
+              <label class="agx-stack-lbl">Coding Model
+                <select id="agx-merge-model-select" class="select slim"></select>
+              </label>
+
+              <div id="agx-coder-advisory" class="agx-advisory hidden"></div>
+
+              <label class="agx-stack-lbl">Merge Strategy
+                <select id="agx-merge-strategy" class="select slim">
+                  <option value="smart_merge">Smart Multi-File Merge (Combine Best Parts + Reconcile Imports)</option>
+                  <option value="patch_winner">Patch Strongest Implementation &amp; Fix Errors</option>
+                  <option value="unify_project">Full Project Unification (Deduplicate &amp; Wire All Files)</option>
+                </select>
+              </label>
+
+              <label class="agx-stack-lbl">Merge Instructions
+                <textarea id="agx-merge-instructions" class="agx-textarea" rows="3" placeholder="e.g., Combine Model A's UI with Model B's backend routes, keep consistent export names, and make sure app.js boots cleanly…"></textarea>
+              </label>
+
+              <div class="agx-queue-head">
+                <span>Queued Source Files (<span id="agx-merge-queue-cnt">0</span>)</span>
+                <div class="agx-queue-btns">
+                  <button type="button" id="agx-merge-add-run-btn" class="ghost xs">+ Active Run</button>
+                  <button type="button" id="agx-merge-add-checked-btn" class="ghost xs">+ Checked</button>
+                  <button type="button" id="agx-merge-add-project-btn" class="ghost xs">+ Project</button>
+                  <button type="button" id="agx-merge-clear-queue-btn" class="ghost xs danger">Clear</button>
+                </div>
+              </div>
+              <div id="agx-merge-queue-list" class="agx-queue-list"></div>
+
+              <button type="button" id="agx-run-merge-agent-btn" class="primary agx-merge-go-btn">🔀 Run Coding Merge Agent</button>
+            </div>
+
+            <!-- Better Coding Models Drawer (Hugging Face + Ollama) -->
+            <div class="agx-card">
+              <div class="agx-card-head">
+                <span class="agx-card-title">🤗 Get Better Coding Models (HF / Ollama)</span>
+                <button type="button" id="agx-hf-drawer-toggle-btn" class="ghost xs">Show / Hide</button>
+              </div>
+              <div id="agx-hf-drawer" class="agx-hf-drawer">
+                <div class="agx-hf-search-row">
+                  <input type="text" id="agx-hf-search-input" class="input slim" value="qwen2.5-coder gguf" placeholder="Search Hugging Face GGUF coding models…">
+                  <button type="button" id="agx-hf-search-btn" class="primary xs">Search HF</button>
+                </div>
+                <div class="agx-hf-sub">Recommended Coding &amp; Judge Models (Ollama Pull · Add to Vault · Download GGUF):</div>
+                <div id="agx-hf-curated-list" class="agx-hf-list"></div>
+                <div id="agx-hf-search-results" class="agx-hf-list"></div>
+                <div class="agx-card-head" style="margin-top:8px">
+                  <span class="agx-hf-sub" style="margin:0">Active Downloads</span>
+                  <button type="button" id="agx-hf-refresh-dl-btn" class="ghost xs">↻ Status</button>
+                </div>
+                <div id="agx-hf-downloads-list" class="agx-hf-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Merged Output Preview Column -->
+          <div class="agx-merge-right agx-card">
+            <div class="agx-merge-out-head">
+              <div>
+                <div class="agx-card-title">Merged Output Workbench</div>
+                <div id="agx-merge-status" class="muted" style="font-size:12px">Queue files on the left and run the Coding Merge Agent to inspect unified, syntax-checked files before applying.</div>
+              </div>
+              <div class="agx-merge-out-actions">
+                <button type="button" id="agx-merge-apply-all-btn" class="primary sm agx-nowrap">✅ Apply All to Project</button>
+                <button type="button" id="agx-merge-apply-run-btn" class="ghost sm agx-nowrap">▶ Apply &amp; Run</button>
+              </div>
+            </div>
+
+            <div class="agx-merge-tabs-bar">
+              <div id="agx-merge-result-tabs" class="agx-open-tabs"></div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div class="agx-seg">
+                  <button type="button" id="agx-merge-view-code-btn" class="agx-seg-btn is-active">Merged Code</button>
+                  <button type="button" id="agx-merge-view-diff-btn" class="agx-seg-btn">Diff vs Project</button>
+                </div>
+                <button type="button" id="agx-merge-apply-one-btn" class="ghost xs agx-nowrap">📦 Apply This File</button>
+              </div>
+            </div>
+
+            <div id="agx-merge-result-body" class="agx-merge-result-body">
+              <div class="agx-empty">No merged output generated yet.</div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- ══ GLOBAL PERSISTENT STICKY FOOTER: PURE REAL-TIME BACKEND ACTIVITY, INPUTS & ERROR MONITOR (NO CLI PROMPT) ══ -->
-    <footer id="global-footer-terminal" class="global-footer-terminal gft-minimized" role="region" aria-label="Persistent Bottom Backend Activity &amp; Error Stream">
-      <div id="gft-resize-grip" class="gft-resize-grip" title="Drag up or down to resize Backend Stream Monitor"></div>
+    <!-- ══════════════════════════════════════════════════════════════════════════════ -->
+    <!-- MASTER EDITION ONLY: PAID USERS, ED25519 CD-KEYS & BOUND COMPUTERS ADMIN TAB    -->
+    <!-- ══════════════════════════════════════════════════════════════════════════════ -->
+    <section id="view-master-licenses" class="view" aria-label="Master Edition — Paid Users &amp; Hardware-Bound CD-Key Authority">
+      <div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,27,75,.65));border:1px solid rgba(251,191,36,.38)">
+        <div class="row" style="justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+              <span class="right-badge" style="background:rgba(251,191,36,.18);color:#fbbf24;border-color:rgba(251,191,36,.5);font-weight:800">👑 MASTER ADMIN EDITION</span>
+              <h2 style="margin:0;font-size:18px;color:#f8fafc">Paid Users, Cryptographic Ed25519 CD-Keys &amp; Hardware-Locked Computers</h2>
+            </div>
+            <div class="muted" style="font-size:12px;margin-top:4px;line-height:1.5">
+              Issue asymmetric Ed25519-signed CD Keys (<code style="color:#38bdf8">SMN1-...</code>) that lock exclusively to each buyer's computer (<code style="color:#2ee6a6">SMN-PC-XXXX-XXXX-XXXX</code>). Add/set time limits, unlink or re-bind computers, revoke access, and publish signed revocation ledgers.
+            </div>
+          </div>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <button type="button" id="mlic-refresh-btn" class="ghost sm">🔄 Refresh Registry</button>
+            <button type="button" id="mlic-sync-gist-btn" class="primary sm" title="Sign &amp; publish revocation/HWID ledger to secret GitHub Gist and local council_outputs">☁️ Sync Signed Ledger (Gist)</button>
+            <button type="button" id="mlic-open-obfuscator-btn" class="ghost sm">🔒 Release Obfuscator</button>
+          </div>
+        </div>
+
+        <!-- Authority Fingerprint & KPI Strip -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px">
+          <div style="padding:10px 12px;border-radius:8px;background:rgba(2,6,23,.72);border:1px solid rgba(56,189,248,.25)">
+            <div class="muted" style="font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">Registered Paid Users</div>
+            <div id="mlic-stat-total" class="tabular-nums" style="font-size:20px;font-weight:800;color:#f8fafc;margin-top:2px">0</div>
+          </div>
+          <div style="padding:10px 12px;border-radius:8px;background:rgba(2,6,23,.72);border:1px solid rgba(46,230,166,.3)">
+            <div class="muted" style="font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">Active Valid CD-Keys</div>
+            <div id="mlic-stat-active" class="tabular-nums" style="font-size:20px;font-weight:800;color:#2ee6a6;margin-top:2px">0</div>
+          </div>
+          <div style="padding:10px 12px;border-radius:8px;background:rgba(2,6,23,.72);border:1px solid rgba(56,189,248,.3)">
+            <div class="muted" style="font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">Hardware-Bound PCs</div>
+            <div id="mlic-stat-bound" class="tabular-nums" style="font-size:20px;font-weight:800;color:#38bdf8;margin-top:2px">0</div>
+          </div>
+          <div style="padding:10px 12px;border-radius:8px;background:rgba(2,6,23,.72);border:1px solid rgba(251,191,36,.3)">
+            <div class="muted" style="font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">Time-Limited / Expired</div>
+            <div id="mlic-stat-timed" class="tabular-nums" style="font-size:20px;font-weight:800;color:#fbbf24;margin-top:2px">0 / 0</div>
+          </div>
+          <div style="padding:10px 12px;border-radius:8px;background:rgba(2,6,23,.72);border:1px solid rgba(244,63,94,.3)">
+            <div class="muted" style="font-size:10.5px;text-transform:uppercase;letter-spacing:.05em">Revoked Keys</div>
+            <div id="mlic-stat-revoked" class="tabular-nums" style="font-size:20px;font-weight:800;color:#ff6b8b;margin-top:2px">0</div>
+          </div>
+        </div>
+
+        <div class="a2a-endpoint-strip" style="margin-top:10px">
+          <div class="a2a-ep-pill"><span class="muted">Ed25519 Authority Key:</span> <code id="mlic-pubkey-fp" class="tabular-nums" style="color:#fbbf24">Loading…</code></div>
+          <div class="a2a-ep-pill"><span class="muted">Master Workstation HWID:</span> <code id="mlic-master-hwid" class="tabular-nums" style="color:#2ee6a6">Detecting…</code></div>
+          <div class="a2a-ep-pill"><span class="muted">Remote Ledger Sync:</span> <code id="mlic-ledger-status">Local Vault Ready</code></div>
+        </div>
+      </div>
+
+      <!-- Register New Paid User & Generate Signed CD Key -->
+      <div class="card" style="margin-bottom:14px">
+        <h3 style="margin:0 0 8px;font-size:15px;color:#38bdf8">➕ Register Paid User &amp; Generate Cryptographic Ed25519 CD Key</h3>
+        <div class="tune-grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px">
+          <label>Customer / User Name
+            <input id="mlic-user-name" class="input slim" placeholder="e.g. Alex Mercer / Acme Sec">
+          </label>
+          <label>Customer Email
+            <input id="mlic-user-email" class="input slim" placeholder="buyer@domain.com">
+          </label>
+          <label>Plan / License Tier
+            <select id="mlic-plan-tier" class="select slim">
+              <option value="Monthly Pro">Monthly Pro (1-PC)</option>
+              <option value="Annual Studio">Annual Studio (1-PC)</option>
+              <option value="Lifetime Studio">Lifetime Studio (1-PC)</option>
+              <option value="24-Hour Trial">24-Hour Trial (1-PC)</option>
+              <option value="Enterprise Seat">Enterprise Seat</option>
+            </select>
+          </label>
+          <label>Amount Paid &amp; Status
+            <div class="row" style="gap:6px">
+              <input id="mlic-amount-paid" class="input slim" style="flex:1;margin:0" value="$49.00" placeholder="$49.00">
+              <select id="mlic-paid-status" class="select slim" style="width:105px;margin:0">
+                <option value="paid">Paid</option>
+                <option value="trial">Trial</option>
+                <option value="comped">Comped</option>
+              </select>
+            </div>
+          </label>
+          <label>Time Limit / Expiration
+            <select id="mlic-duration-preset" class="select slim">
+              <option value="720">30 Days (720 Hours)</option>
+              <option value="168">7 Days (168 Hours)</option>
+              <option value="24">24 Hours (1 Day)</option>
+              <option value="2160">90 Days (Quarter)</option>
+              <option value="8760">365 Days (1 Year)</option>
+              <option value="0">Lifetime (Never Expires)</option>
+              <option value="custom">Custom Hours…</option>
+            </select>
+          </label>
+          <label id="mlic-custom-hours-wrap" class="hidden">Custom Duration (Hours)
+            <input id="mlic-custom-hours" type="number" min="1" max="87600" value="48" class="input slim tabular-nums">
+          </label>
+          <label>Optional Pre-Bind Computer HWID
+            <input id="mlic-prebind-hwid" class="input slim" style="font-family:'JetBrains Mono',monospace" placeholder="Leave blank to auto-bind on 1st PC (or SMN-PC-…)">
+          </label>
+          <label>Admin Notes
+            <input id="mlic-notes" class="input slim" value="1-Key / 1-Computer Hardware-Locked License" placeholder="Order # or notes…">
+          </label>
+        </div>
+
+        <div class="row" style="margin-top:10px;gap:10px;align-items:center;flex-wrap:wrap">
+          <button type="button" id="mlic-generate-btn" class="primary">🔑 Register User &amp; Generate Signed CD Key</button>
+          <span id="mlic-generate-feedback" class="muted" style="font-size:12px"></span>
+        </div>
+
+        <!-- Newly Generated CD Key Banner -->
+        <div id="mlic-issued-banner" class="hidden" style="margin-top:12px;padding:12px;border-radius:8px;background:rgba(16,185,129,.12);border:1px solid rgba(46,230,166,.45)">
+          <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <div>
+              <strong style="color:#2ee6a6;font-size:13px">✅ Issued Cryptographic Ed25519 CD Key: <code id="mlic-issued-kid" style="color:#fbbf24"></code></strong>
+              <div id="mlic-issued-meta" class="muted" style="font-size:11.5px;margin-top:2px"></div>
+            </div>
+            <button type="button" id="mlic-issued-copy-btn" class="primary sm">📋 Copy Full Signed CD Key</button>
+          </div>
+          <input id="mlic-issued-token" class="input slim" readonly style="width:100%;margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#7dd3fc;background:#020617">
+        </div>
+      </div>
+
+      <!-- Registered Paid Users & Bound Computers Table -->
+      <div class="card">
+        <div class="row" style="justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <h3 style="margin:0;font-size:15px;color:#f8fafc">📋 Registered Paid Users, CD Keys &amp; Bound Computers</h3>
+          <div class="row" style="gap:8px;flex-wrap:wrap">
+            <input id="mlic-search-input" class="input slim" style="width:240px;margin:0" placeholder="Search name, email, key ID, or HWID…">
+            <select id="mlic-filter-status" class="select slim" style="width:150px;margin:0">
+              <option value="all">All Statuses</option>
+              <option value="active">Active Only</option>
+              <option value="bound">Bound to PC</option>
+              <option value="unbound">Unbound (1st PC Ready)</option>
+              <option value="expired">Expired</option>
+              <option value="revoked">Revoked</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="mlic-users-table-wrap" style="overflow-x:auto">
+          <div class="muted" style="padding:18px;text-align:center">Loading Master License Registry…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ LIVE TERMINAL & ACTIVITY STREAM FOOTER (50/50 SPLIT LIVE DEFAULT) ══ -->
+    <footer id="global-footer-terminal" class="global-footer-terminal gft-expanded gft-split-mode" role="region" aria-label="Live Terminal &amp; Activity Stream Footer">
+      <div id="gft-resize-grip" class="gft-resize-grip" title="Drag up or down to resize Live Footer"></div>
 
       <div class="gft-bar">
         <div class="gft-bar-left">
           <span class="gft-live-dot" id="gft-live-dot"></span>
-          <strong class="gft-title" id="gft-toggle-title" title="Click to Expand or Minimize Live Backend Activity &amp; Error Monitor">📡 LIVE BACKEND STREAM</strong>
-          <div class="gft-filter-pills" id="gft-filter-bar">
-            <button type="button" class="gft-filter-btn on" data-gft-filter="ALL">All</button>
-            <button type="button" class="gft-filter-btn" data-gft-filter="INPUT">Inputs</button>
-            <button type="button" class="gft-filter-btn" data-gft-filter="INFERENCE">Models</button>
-            <button type="button" class="gft-filter-btn" data-gft-filter="COMPILER">Builds</button>
-            <button type="button" class="gft-filter-btn" data-gft-filter="ERROR">⚠️ Errors <span id="gft-err-count" class="tabular-nums">0</span></button>
+          <strong class="gft-title" id="gft-toggle-title" title="Expand / Collapse Live Footer">❯_ LIVE TERMINAL</strong>
+          <div class="gft-deck-tabs" id="gft-deck-tabs" role="tablist">
+            <button type="button" class="gft-deck-tab on" data-gft-tab="split" role="tab" aria-selected="true">⚡ Split Live</button>
+            <button type="button" class="gft-deck-tab" data-gft-tab="shell" role="tab" aria-selected="false">❯_ Shell</button>
+            <button type="button" class="gft-deck-tab" data-gft-tab="stream" role="tab" aria-selected="false">📡 Stream <span id="gft-err-count" class="gft-err-pill tabular-nums">0</span></button>
+            <button type="button" class="gft-deck-tab" data-gft-tab="copilot" role="tab" aria-selected="false">🧠 Copilot</button>
           </div>
         </div>
 
-        <span id="gft-latest-event-ticker" style="flex:1;min-width:160px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">● Listening to real-time backend events, inputs, model streams &amp; errors…</span>
-
+        <button type="button" id="gft-context-pill" class="gft-context-pill" title="Active runtime profile &amp; ready AI providers (Click to open Keys &amp; Settings)">CWD: . · Checking providers…</button>
+        <span id="gft-latest-event-ticker" style="flex:1;min-width:120px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Live terminal &amp; backend stream active — type /help, /keys, /host, /theme, /view, /ask…</span>
         <span id="statusbar" class="muted gft-statusbar-msg">ready</span>
 
         <div class="gft-bar-actions">
-          <button type="button" id="gft-pause-btn" class="ghost xs" title="Pause / Resume live stream">⏸</button>
-          <button type="button" id="gft-clear-btn" class="ghost xs" title="Clear monitor log">🧹</button>
-          <button type="button" id="gft-min-exp-btn" class="ghost xs" title="Expand / Minimize Backend Monitor">▲ Expand</button>
-          <button type="button" id="gft-hide-btn" class="ghost xs" style="color:#ff6b8b" title="Hide Backend Monitor (restore from corner pill)">✕ Hide</button>
+          <button type="button" id="gft-cli-doctor-btn" class="ghost xs" title="Run compact /doctor health check">🩺 Doctor</button>
+          <button type="button" id="gft-clear-btn" class="ghost xs" title="Clear active terminal/stream view">🧹</button>
+          <button type="button" id="gft-full-btn" class="ghost xs" title="Toggle Full-Height Terminal Mode">⛶</button>
+          <button type="button" id="gft-min-exp-btn" class="ghost xs" title="Expand / Collapse Live Footer">▼ Collapse</button>
+          <button type="button" id="gft-hide-btn" class="ghost xs" style="color:var(--bad)" title="Minimize to corner pill">✕</button>
         </div>
       </div>
 
       <div id="gft-expanded-body" class="gft-expanded-body">
-        <div id="gft-term-out" class="gft-term-out" tabindex="0"></div>
+        <!-- LEFT 50% (in Split Live) / TAB 1: SHELL & COMMAND TERMINAL -->
+        <div id="gft-pane-shell" class="gft-pane" data-gft-pane="shell">
+          <div id="gft-term-out" class="gft-term-out" tabindex="0"></div>
+          <div id="gft-slash-menu" class="gft-slash-menu hidden" role="listbox" aria-label="Slash Command Suggestions"></div>
+          <div id="gft-cli-bar" class="gft-cli-bar">
+            <select id="gft-cli-shell-select" class="gft-cli-shell-select" title="Choose shell execution engine">
+              <option value="auto">⚡ Auto</option>
+              <option value="pwsh">🟦 PowerShell</option>
+              <option value="cmd">⬛ CMD</option>
+              <option value="python">🐍 Python 3</option>
+              <option value="node">🟩 Node.js</option>
+            </select>
+            <button type="button" id="gft-exec-mode-btn" class="ghost xs" title="Toggle Real Workspace Shell vs Isolated Sandbox">⚡ Live</button>
+            <span id="gft-cli-ps1" class="gft-cli-ps1">council❯</span>
+            <input type="text" id="gft-cli-input" class="gft-cmd-input" placeholder="Run PowerShell/CMD/Python or app command (/ask, /keys, /host, /theme, /view, /doctor, /help)…" autocomplete="off" spellcheck="false">
+            <button type="button" id="gft-cli-run-btn" class="primary xs">Run ↵</button>
+          </div>
+        </div>
+
+        <!-- RIGHT 50% (in Split Live) / TAB 2: LIVE BACKEND ACTIVITY STREAM -->
+        <div id="gft-pane-stream" class="gft-pane" data-gft-pane="stream">
+          <div class="gft-stream-toolbar">
+            <div class="gft-filter-pills" id="gft-filter-bar">
+              <button type="button" class="gft-filter-btn on" data-gft-filter="ALL">All</button>
+              <button type="button" class="gft-filter-btn" data-gft-filter="INFERENCE">Models</button>
+              <button type="button" class="gft-filter-btn" data-gft-filter="COMPILER">Builds</button>
+              <button type="button" class="gft-filter-btn" data-gft-filter="INPUT">Inputs</button>
+              <button type="button" class="gft-filter-btn" data-gft-filter="ERROR">⚠️ Errors</button>
+            </div>
+            <span class="muted" style="font-size:10px">Hover row to inspect</span>
+            <span class="spacer"></span>
+            <button type="button" id="gft-pause-btn" class="ghost xs" title="Pause / Resume live stream">⏸ Pause</button>
+          </div>
+          <div id="gft-stream-out" class="gft-term-out" tabindex="0"></div>
+        </div>
+
+        <!-- TAB 3: PAIRED AI COPILOT -->
+        <div id="gft-pane-copilot" class="gft-pane hidden" data-gft-pane="copilot">
+          <div id="gft-copilot-out" class="gft-term-out" tabindex="0"></div>
+          <div class="gft-cli-bar">
+            <button type="button" id="gft-copilot-attach-err-btn" class="ghost xs" title="Attach latest error/terminal output to your question">🩹 + Last Error</button>
+            <button type="button" id="gft-copilot-attach-ans-btn" class="ghost xs" title="Attach active Council output">📋 + Latest Answer</button>
+            <input type="text" id="gft-copilot-input" class="gft-cmd-input" placeholder="Ask Copilot about your code, errors, or click Run / Send to Prompt on any reply…" autocomplete="off" spellcheck="false">
+            <button type="button" id="gft-copilot-send-btn" class="primary xs">Ask ↵</button>
+          </div>
+        </div>
+
+        <!-- Hidden legacy buttons preserved safely -->
+        <button type="button" id="gft-terminal-btn" class="hidden" hidden aria-hidden="true"></button>
+        <button type="button" id="gft-cli-detach-btn" class="hidden" hidden aria-hidden="true"></button>
       </div>
     </footer>
 
-    <!-- Floating Corner Restore Pill when Backend Monitor is Hidden -->
-    <button type="button" id="gft-restore-pill" class="gft-restore-pill hidden" title="Show Sticky Footer Backend Stream Monitor">
-      <span class="gft-live-dot"></span> 📡 Backend Stream ▲
+    <!-- Floating Corner Restore Pill when Live Footer is Hidden -->
+    <button type="button" id="gft-restore-pill" class="gft-restore-pill hidden" title="Show Live Terminal, Stream &amp; Copilot">
+      <span class="gft-live-dot"></span> ❯_ Terminal ▲
     </button>
   </div>
 
@@ -2606,7 +3081,7 @@
           Suomynona Council uses cryptographic Single-PC Hardware Fingerprinting (HWID). Each Registration Token locks to your machine's hardware ID.
         </p>
         <div class="a2a-endpoint-strip" style="margin:10px 0">
-          <div class="a2a-ep-pill"><span class="muted">Hardware ID (HWID):</span> <code id="setup-hwid-display" class="tabular-nums">Detecting…</code></div>
+          <div class="a2a-ep-pill"><span class="muted">Hardware ID (HWID):</span> <code id="setup-hwid-display" class="tabular-nums">Detecting…</code> <button type="button" id="setup-copy-hwid-btn" class="ghost xs" style="margin-left:4px;padding:1px 6px;font-size:10.5px" title="Copy your computer's Hardware ID to send to the Master Administrator">📋 Copy My Computer ID</button></div>
           <div class="a2a-ep-pill"><span class="muted">License Status:</span> <code id="setup-license-status-badge">Awaiting Activation</code></div>
         </div>
         <div class="tune-grid" style="margin-top:10px">
@@ -2709,7 +3184,7 @@
 import os, subprocess, json, time, urllib.request
 
 os.environ["GH_TOKEN"]  = os.environ.get("GH_TOKEN", "")
-os.environ["GIST_ID"]   = os.environ.get("GIST_ID", "05a1f96580fa13b373b42d919873dc57")
+os.environ["GIST_ID"]   = os.environ.get("GIST_ID", "")
 os.environ["HF_TOKEN"]  = os.environ.get("HF_TOKEN", "")
 HOST_ID = os.environ.get("COUNCIL_HOST_ID", "a").lower()
 PORT_MAP = {"a": 8080, "b": 8081, "c": 8082, "d": 8083}
@@ -2727,12 +3202,15 @@ print(f"✅ [SUOMYNONA BOOT] Host {HOST_ID.upper()} OpenAI-Compatible /v1 Runtim
       </div>
 
       <div class="cng-step-pane hidden" data-wpane="5">
-        <h3>Step 5 of 6 · Optional External Cloud Provider API Keys</h3>
+        <h3>Step 5 of 6 · Optional AI Provider Keys (Use Any One, Several, or Zero for Local Mode)</h3>
+        <p class="muted" style="font-size:12px;margin:0 0 8px">You do <strong>not</strong> need every key below. Enter only the provider(s) you use — or leave all blank to run 100% free locally with Ollama / LM Studio. Additional providers and Custom Slots can be added anytime in <strong>🔑 Keys &amp; Vault</strong>.</p>
         <div class="tune-grid">
-          <label>OpenAI API Key <input id="setup-openai-key" type="password" class="input" placeholder="sk-... (optional)"></label>
-          <label>xAI Grok API Key <input id="setup-xai-key" type="password" class="input" placeholder="xai-... (optional)"></label>
+          <label>🦈 OrcaRouter API Key <input id="setup-orcarouter-key" type="password" class="input" placeholder="sk-orca-... / orca_... (optional)"></label>
           <label>OpenRouter API Key <input id="setup-openrouter-key" type="password" class="input" placeholder="sk-or-v1-... (optional)"></label>
           <label>Google Gemini API Key <input id="setup-gemini-key" type="password" class="input" placeholder="AIza... (optional)"></label>
+          <label>OpenAI API Key <input id="setup-openai-key" type="password" class="input" placeholder="sk-... (optional)"></label>
+          <label>Anthropic Claude Key <input id="setup-anthropic-key" type="password" class="input" placeholder="sk-ant-... (optional)"></label>
+          <label>xAI Grok API Key <input id="setup-xai-key" type="password" class="input" placeholder="xai-... (optional)"></label>
         </div>
       </div>
 
@@ -3006,14 +3484,16 @@ print(f"✅ [SUOMYNONA BOOT] Host {HOST_ID.upper()} OpenAI-Compatible /v1 Runtim
   </div>
 </div>
 
-<script src="/js/01-core-and-composer.js?v=86"></script>
-<script src="/js/02-swarm-judge-tuning.js?v=86"></script>
-<script src="/js/03-lineup-agents-voice-boot.js?v=86"></script>
-<script src="/js/04-cluster-setup-drm-ram.js?v=86"></script>
-<script src="/js/05-console-tree-presets.js?v=86"></script>
-<script src="/js/06-cli-shells-crucible.js?v=86"></script>
-<script src="/js/07-lighthouse-explorer-cron.js?v=86"></script>
-<script src="/app.js?v=86"></script>
+<script src="/js/01-core-and-composer.js?v=89"></script>
+<script src="/js/02-swarm-judge-tuning.js?v=89"></script>
+<script src="/js/03-lineup-agents-voice-boot.js?v=89"></script>
+<script src="/js/04-cluster-setup-drm-ram.js?v=89"></script>
+<script src="/js/05-console-tree-presets.js?v=89"></script>
+<script src="/js/06-cli-shells-crucible.js?v=89"></script>
+<script src="/js/07-lighthouse-explorer-cron.js?v=89"></script>
+<script src="/js/08-ux-themes-views-vault.js?v=89"></script>
+<script src="/js/09-antigravity-explorer.js?v=89"></script>
+<script src="/app.js?v=89"></script>
 <script type="module" src="/src/vramHeartbeatChart.ts"></script>
 </body>
 </html>

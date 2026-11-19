@@ -11,6 +11,7 @@ import { executeRealShellCommand } from "../guardian_claude_code.ts";
 import { SERVER_SEEDS, WORKSPACE_OUTPUT_ROOT, readJson, writeJson, pushLiveConsole, log, gpuVramGb, publicColabHost, loadColabHosts, enabledColabHosts, isUncensoredId, loadCustomCatalog, loadTools, loadMcp, BACKENDS, refreshBackends, recordLeaderboardFromJudge, addVaultMemory, loadTurnsMemory, rememberTurn, HOST_VERIFIED_STATE, safeWorkspacePath, sanitizeParsedRelativeFilePath, parseResponseFiles } from "./state-and-hosts.ts";
 import { getHostCircuitBreaker, computeClusterVramSnapshot, sanitizeSystemPromptForUpstream, callOrcaRouterModel, callGeminiServerEngine, requestCoalescedCouncilStream, callSingleBackendEngine, completeBackend, runDesktopTool } from "./vram-and-inference.ts";
 import { synthesizeMissingReferencedFiles, scrubSecretsFromArtifactMap, loadClusterConfig, saveClusterConfig, UNRESTRICTED_QUEEN_BOSS_CHAIN, runQueenBossWithAutoRotation, appendBackendRunToExplorer } from "./shared-services.ts";
+import { runComprehensiveDoctor, formatDoctorTerminalReport } from "./doctor.ts";
 const __dirname = PROJECT_ROOT;
 export function registerA2aClusterEvolutionRoutes(app: Express): void {
   // ══════════════════════════════════════════════════════════════════════════
@@ -3350,62 +3351,30 @@ button{background:linear-gradient(135deg,#7c5cff,#2ee6a6);border:0;color:#050811
     }
   });
 
-  // Cat IV #4: Autonomous Dependency & Environment Doctor
+  // Cat IV #4: Comprehensive Full-App Diagnostic & Auto-Repair Doctor
   app.post("/api/forge/env-doctor", async (req: Request, res: Response) => {
-    const tracebackOrCmd = String(req.body?.traceback || req.body?.cmd || "").trim();
-    const checks: { name: string; status: "OK" | "REPAIRED" | "WARN"; detail: string }[] = [];
-
-    const runProbe = (label: string, cmd: string) => {
-      try {
-        const out = execSync(cmd, { encoding: "utf-8", timeout: 5000, stdio: ["ignore", "pipe", "pipe"] }).trim();
-        checks.push({ name: label, status: "OK", detail: out.split(/\r?\n/)[0] || "Verified" });
-      } catch (e: any) {
-        checks.push({ name: label, status: "WARN", detail: (e?.stderr || e?.message || "Unavailable").toString().slice(0, 120) });
-      }
-    };
-
-    runProbe("Node.js Runtime", "node --version");
-    runProbe("NPM Package Manager", "npm --version");
-    runProbe("Python 3 Runtime", process.platform === "win32" ? "python --version" : "python3 --version");
-    runProbe("Git VCS", "git --version");
-    runProbe("Frontend Syntax (public/app.js)", "node --check public/app.js");
-    checks.push({
-      name: "Workspace Output Directory",
-      status: fs.existsSync(WORKSPACE_OUTPUT_ROOT) ? "OK" : "WARN",
-      detail: WORKSPACE_OUTPUT_ROOT,
-    });
-
-    let repairAction = "";
-    if (tracebackOrCmd) {
-      const pyMissing = tracebackOrCmd.match(/No module named ['"]?([a-zA-Z0-9_-]+)['"]?/i);
-      const nodeMissing = tracebackOrCmd.match(/Cannot find (?:module|package) ['"]([^'"]+)['"]/i);
-      if (pyMissing && pyMissing[1]) {
-        const pkg = pyMissing[1].replace(/[^a-zA-Z0-9._-]/g, "");
-        repairAction = `Detected missing Python module '${pkg}'. Attempted auto-remediation / stdlib compatibility check.`;
-        checks.push({ name: `Auto-Heal Python Module (${pkg})`, status: "REPAIRED", detail: repairAction });
-      } else if (nodeMissing && nodeMissing[1]) {
-        const pkg = nodeMissing[1].replace(/[^a-zA-Z0-9._@/-]/g, "");
-        repairAction = `Detected missing Node package '${pkg}'. Verified package resolution in node_modules.`;
-        checks.push({ name: `Auto-Heal Node Package (${pkg})`, status: "REPAIRED", detail: repairAction });
-      } else {
-        const aiFix = await completeBackend(0, [
-          {
-            role: "user",
-            content: `You are the Suomynona Council Autonomous Environment Doctor. Diagnose this traceback/command and provide the exact 1-line fix command and root cause:\n\n${tracebackOrCmd}`,
-          },
-        ]);
-        repairAction = aiFix;
-        checks.push({ name: "AI Traceback Diagnosis & Remediation", status: "REPAIRED", detail: aiFix.slice(0, 400) });
-      }
+    try {
+      const tracebackOrCmd = String(req.body?.traceback || req.body?.cmd || req.body?.error || "").trim();
+      const autoFix = req.body?.auto_fix !== false && !/--no-fix/i.test(tracebackOrCmd);
+      const generateScript = Boolean(req.body?.generate_script) || /--script/i.test(tracebackOrCmd);
+      const runScript = Boolean(req.body?.run_script) || /--run-script/i.test(tracebackOrCmd);
+      const focus = String(req.body?.focus || "").trim();
+      const cleanedTb = tracebackOrCmd.replace(/--(no-fix|run-script|script)/gi, "").trim();
+      const report = await runComprehensiveDoctor({ autoFix, focus, traceback: cleanedTb, generateScript, runScript });
+      const formatted = formatDoctorTerminalReport(report);
+      res.json({
+        ok: true,
+        ts: report.ts,
+        checks: report.checks,
+        report,
+        repair_script: report.repair_script,
+        diagnosis: formatted,
+        output: formatted,
+        repair_summary: report.repair_summary,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
-
-    log(`🩺 [Environment Doctor] Completed ${checks.length} environment & dependency diagnostics`);
-    res.json({
-      ok: true,
-      ts: new Date().toISOString().replace("T", " ").slice(0, 19),
-      checks,
-      repair_summary: repairAction || "All core compilers, runtimes, syntax checks, and workspace permissions verified healthy (Exit Code 0).",
-    });
   });
 
 }

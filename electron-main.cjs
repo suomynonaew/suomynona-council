@@ -1,29 +1,193 @@
 // ============================================================================
 //   ◈ SUOMYNONA COUNCIL — ELECTRON NATIVE DESKTOP MAIN PROCESS
+//   - Self-Contained Standalone Desktop App (Embedded Node Server, Zero Browser)
 //   - Multi-Window Desktop Engine: Freely detach any CLI anywhere across monitors
 //   - Local GPU & Model Detection: Ollama, llama.cpp, LM Studio, vLLM & NVIDIA GPU
-//   - Remote GPU Orchestration: Colab, Kaggle, RunPod, Vast.ai, Modal tunnels
 // ============================================================================
 
-const { app, BrowserWindow, ipcMain, screen, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, Menu, nativeTheme, screen, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const http = require("http");
+const net = require("net");
 const { spawn, exec } = require("child_process");
 
-const SERVER_PORT = process.env.PORT || 3000;
-const SERVER_URL = `http://127.0.0.1:${SERVER_PORT}`;
-const WINDOWS_DATA_FILE = path.join(process.cwd(), ".council_data", "desktop_windows.json");
+nativeTheme.themeSource = "dark";
 
+app.setName("Suomynona Council");
+app.setPath("userData", path.join(app.getPath("appData"), "Suomynona Council"));
+
+const BUNDLED_APP_ROOT = __dirname;
+const APP_ROOT = BUNDLED_APP_ROOT;
+const DATA_ROOT = app.isPackaged ? app.getPath("userData") : APP_ROOT;
+const LIVE_RUNTIME_DIR = path.join(DATA_ROOT, "live-app-runtime");
+const WINDOWS_DATA_FILE = path.join(DATA_ROOT, ".council_data", "desktop_windows.json");
+const DESKTOP_RUNTIME_STATUS_FILE = path.join(DATA_ROOT, ".council_data", "desktop_runtime_status.json");
+
+function loadDesktopEditionConfig() {
+  const candidates = [
+    path.join(BUNDLED_APP_ROOT, "desktop-edition.json"),
+    path.join(BUNDLED_APP_ROOT, "dist-server", "desktop-edition.json"),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        return JSON.parse(fs.readFileSync(p, "utf-8"));
+      }
+    } catch (_) {}
+  }
+  return { edition: "master", ed25519PublicKeyPem: "", serverBundleSha256: "" };
+}
+
+const EDITION_CONFIG = loadDesktopEditionConfig();
+const IS_CLIENT_EDITION =
+  String(process.env.COUNCIL_EDITION || EDITION_CONFIG.edition || "master").toLowerCase() === "client";
+
+// ── Anti-Reverse-Engineering & Anti-Debugger Guard (Client Edition) ──
+if (IS_CLIENT_EDITION) {
+  delete process.env.NODE_OPTIONS;
+  delete process.env.ELECTRON_ENABLE_INSPECT;
+  const suspiciousFlags = [
+    "--inspect",
+    "--inspect-brk",
+    "--inspect-port",
+    "--debug",
+    "--debug-brk",
+    "--remote-debugging-port",
+    "--js-flags",
+  ];
+  const allArgs = [...process.argv, ...(process.execArgv || [])].join(" ").toLowerCase();
+  if (suspiciousFlags.some((flag) => allArgs.includes(flag))) {
+    process.exit(1);
+  }
+}
+
+let serverPort = Number(process.env.PORT) || 3077;
+let serverUrl = `http://127.0.0.1:${serverPort}`;
 let mainWindow = null;
 let serverProcess = null;
+let hotReloadInProgress = false;
 const detachedWindows = new Map(); // key -> BrowserWindow
 
-// Ensure .council_data directory exists
-try {
-  const dataDir = path.join(process.cwd(), ".council_data");
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-} catch (_) {}
+function readRepoBuiltTimestamp(dir) {
+  try {
+    const p1 = path.join(dir, "desktop-repo-config.json");
+    const p2 = path.join(dir, "dist-server", "desktop-repo-config.json");
+    for (const p of [p1, p2]) {
+      if (fs.existsSync(p)) {
+        const parsed = JSON.parse(fs.readFileSync(p, "utf-8"));
+        return Number(parsed?.builtTimestamp || 0);
+      }
+    }
+  } catch (_) { }
+  return 0;
+}
+
+function resolveActiveAppRoot() {
+  // Disallow unverified external runtime directory overrides in protected Client Edition
+  if (IS_CLIENT_EDITION) {
+    return BUNDLED_APP_ROOT;
+  }
+  try {
+    const liveServer = path.join(LIVE_RUNTIME_DIR, "dist-server", "server.cjs");
+    const liveDist = path.join(LIVE_RUNTIME_DIR, "dist", "index.html");
+    if (fs.existsSync(liveServer) && fs.existsSync(liveDist)) {
+      const bundledTs = readRepoBuiltTimestamp(BUNDLED_APP_ROOT);
+      const liveTs = readRepoBuiltTimestamp(LIVE_RUNTIME_DIR);
+      if (liveTs > bundledTs || !fs.existsSync(path.join(BUNDLED_APP_ROOT, "dist-server", "server.cjs"))) {
+        return LIVE_RUNTIME_DIR;
+      }
+    }
+  } catch (_) { }
+  return BUNDLED_APP_ROOT;
+}
+
+function discoverSourceGitRepoDir() {
+  const candidates = [];
+  try {
+    for (const base of [LIVE_RUNTIME_DIR, BUNDLED_APP_ROOT]) {
+      const cfgPath = path.join(base, "desktop-repo-config.json");
+      if (fs.existsSync(cfgPath)) {
+        const cfg = JSON.parse(fs.readFileSync(cfgPath, "utf-8"));
+        if (cfg?.sourceRepoDir) candidates.push(cfg.sourceRepoDir);
+      }
+    }
+  } catch (_) { }
+
+  for (const startDir of [process.env.PORTABLE_EXECUTABLE_DIR, path.dirname(process.execPath), BUNDLED_APP_ROOT]) {
+    if (!startDir) continue;
+    let cur = path.resolve(startDir);
+    for (let i = 0; i < 6; i++) {
+      candidates.push(cur);
+      const parent = path.dirname(cur);
+      if (!parent || parent === cur) break;
+      cur = parent;
+    }
+  }
+
+  for (const dir of candidates) {
+    try {
+      if (dir && fs.existsSync(path.join(dir, ".git"))) {
+        return path.resolve(dir);
+      }
+    } catch (_) { }
+  }
+  return "";
+}
+
+function ensureDesktopDataDir() {
+  try {
+    const dataDir = path.join(DATA_ROOT, ".council_data");
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.mkdirSync(path.join(DATA_ROOT, "council_outputs"), { recursive: true });
+    fs.mkdirSync(path.join(DATA_ROOT, "council_builds"), { recursive: true });
+
+    if (app.isPackaged) {
+      const seedDir = path.join(APP_ROOT, "seed_data");
+      if (fs.existsSync(seedDir)) {
+        for (const entry of fs.readdirSync(seedDir)) {
+          const src = path.join(seedDir, entry);
+          const dst = path.join(dataDir, entry);
+          if (!fs.existsSync(dst) && fs.statSync(src).isFile()) {
+            fs.copyFileSync(src, dst);
+          }
+        }
+      }
+      const targetEnv = path.join(DATA_ROOT, ".env");
+      if (!fs.existsSync(targetEnv)) {
+        const portableDir = process.env.PORTABLE_EXECUTABLE_DIR || path.dirname(process.execPath);
+        const sidecarEnv = path.join(portableDir, ".env");
+        const fallbackEnv = path.join(APP_ROOT, ".env.example");
+        if (fs.existsSync(sidecarEnv)) {
+          fs.copyFileSync(sidecarEnv, targetEnv);
+        } else if (fs.existsSync(fallbackEnv)) {
+          fs.copyFileSync(fallbackEnv, targetEnv);
+        }
+      }
+    }
+  } catch (_) { }
+}
+
+function writeDesktopRuntimeStatus(extra = {}) {
+  try {
+    fs.mkdirSync(path.dirname(DESKTOP_RUNTIME_STATUS_FILE), { recursive: true });
+    const hasWindow = Boolean(mainWindow && !mainWindow.isDestroyed());
+    const payload = {
+      pid: process.pid,
+      serverPort,
+      serverUrl,
+      dataRoot: DATA_ROOT,
+      isVisible: hasWindow ? mainWindow.isVisible() : false,
+      isDestroyed: !hasWindow,
+      title: hasWindow ? mainWindow.getTitle() : "",
+      bounds: hasWindow ? mainWindow.getBounds() : null,
+      updatedAt: new Date().toISOString(),
+      ...extra,
+    };
+    fs.writeFileSync(DESKTOP_RUNTIME_STATUS_FILE, JSON.stringify(payload, null, 2), "utf-8");
+  } catch (_) { }
+}
 
 function loadWindowBounds(key) {
   try {
@@ -31,19 +195,22 @@ function loadWindowBounds(key) {
       const data = JSON.parse(fs.readFileSync(WINDOWS_DATA_FILE, "utf-8"));
       return data[key] || null;
     }
-  } catch (_) {}
+  } catch (_) { }
   return null;
 }
 
 function saveWindowBounds(key, bounds) {
   try {
+    fs.mkdirSync(path.dirname(WINDOWS_DATA_FILE), { recursive: true });
     let data = {};
     if (fs.existsSync(WINDOWS_DATA_FILE)) {
-      try { data = JSON.parse(fs.readFileSync(WINDOWS_DATA_FILE, "utf-8")); } catch (_) {}
+      try {
+        data = JSON.parse(fs.readFileSync(WINDOWS_DATA_FILE, "utf-8"));
+      } catch (_) { }
     }
     data[key] = bounds;
     fs.writeFileSync(WINDOWS_DATA_FILE, JSON.stringify(data, null, 2), "utf-8");
-  } catch (_) {}
+  } catch (_) { }
 }
 
 const SPLASH_HTML = `<!DOCTYPE html>
@@ -152,19 +319,41 @@ const SPLASH_HTML = `<!DOCTYPE html>
   <div class="splash-card">
     <div class="emblem">◈</div>
     <h1>Suomynona Council</h1>
-    <div class="sub">Unrestricted Multi-Agent Engineering Studio</div>
+    <div class="sub">Standalone Native Desktop Engineering Studio</div>
     <div class="progress-wrap"><div class="progress-bar"></div></div>
-    <div class="status-text"><span class="dot"></span> Initializing Studio Engine &amp; GPU Slots...</div>
+    <div class="status-text"><span class="dot"></span> Starting Embedded Engine &amp; Local GPU Slots...</div>
   </div>
 </body>
 </html>`;
 
-// ── Check if internal backend server is responding ──
+// ── Probe preferred loopback port (3077 keeps Chromium localStorage origin stable) ──
+function probePort(port) {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.unref();
+    srv.once("error", () => resolve(null));
+    srv.listen(port, "127.0.0.1", () => {
+      const addr = srv.address();
+      const chosen = addr && typeof addr === "object" ? addr.port : port;
+      srv.close(() => resolve(chosen));
+    });
+  });
+}
+
+async function resolveDesktopPort(preferred = 3077) {
+  const first = await probePort(preferred);
+  if (first) return first;
+  const fallback = await probePort(0);
+  return fallback || preferred;
+}
+
+// ── Check if embedded backend is responding ──
 function checkServerReady(timeoutMs = 15000) {
   return new Promise((resolve) => {
     const start = Date.now();
     function ping() {
-      const req = http.get(SERVER_URL, (res) => {
+      const req = http.get(`${serverUrl}/api/state`, (res) => {
+        res.resume();
         if (res.statusCode >= 200 && res.statusCode < 500) {
           resolve(true);
         } else {
@@ -181,69 +370,337 @@ function checkServerReady(timeoutMs = 15000) {
       if (Date.now() - start > timeoutMs) {
         resolve(false);
       } else {
-        setTimeout(ping, 200);
+        setTimeout(ping, 150);
       }
     }
     ping();
   });
 }
 
-// ── Start Node/Express backend if not already listening ──
-function ensureServerRunning() {
-  const isWin = process.platform === "win32";
-  const cmd = isWin ? "npx.cmd" : "npx";
-  const args = ["tsx", "server.ts"];
+// ── Start Embedded Backend via Electron's Node Runtime (ELECTRON_RUN_AS_NODE=1) ──
+function startEmbeddedBackend(port) {
+  const activeAppRoot = resolveActiveAppRoot();
+  const gitRepoDir = discoverSourceGitRepoDir();
+  const bundledServer = path.join(activeAppRoot, "dist-server", "server.cjs");
+  const useBundled = fs.existsSync(bundledServer);
 
   try {
-    serverProcess = spawn(cmd, args, {
-      cwd: process.cwd(),
-      env: { ...process.env, PORT: String(SERVER_PORT) },
-      shell: true,
-      stdio: "pipe",
-    });
+    if (useBundled) {
+      if (IS_CLIENT_EDITION && app.isPackaged && EDITION_CONFIG.serverBundleSha256) {
+        const actualHash = crypto.createHash("sha256").update(fs.readFileSync(bundledServer)).digest("hex");
+        if (actualHash !== EDITION_CONFIG.serverBundleSha256) {
+          console.error("[SUOMYNONA NATIVE] Protected server bundle integrity check failed.");
+          app.quit();
+          return;
+        }
+      }
+      serverProcess = spawn(process.execPath, [bundledServer], {
+        cwd: DATA_ROOT,
+        env: {
+          ...process.env,
+          ELECTRON_RUN_AS_NODE: "1",
+          NODE_ENV: "production",
+          COUNCIL_DESKTOP_MODE: "1",
+          COUNCIL_EDITION: IS_CLIENT_EDITION ? "client" : "master",
+          ...(EDITION_CONFIG.ed25519PublicKeyPem ? { COUNCIL_PUBLIC_KEY_PEM: EDITION_CONFIG.ed25519PublicKeyPem } : {}),
+          COUNCIL_APP_ROOT: activeAppRoot,
+          COUNCIL_DATA_ROOT: DATA_ROOT,
+          ...(gitRepoDir ? { COUNCIL_GIT_REPO_DIR: gitRepoDir } : {}),
+          PORT: String(port),
+        },
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } else if (!app.isPackaged) {
+      const isWin = process.platform === "win32";
+      serverProcess = spawn(isWin ? "npx.cmd" : "npx", ["tsx", "server.ts"], {
+        cwd: activeAppRoot,
+        env: {
+          ...process.env,
+          COUNCIL_DESKTOP_MODE: "1",
+          COUNCIL_APP_ROOT: activeAppRoot,
+          COUNCIL_DATA_ROOT: DATA_ROOT,
+          ...(gitRepoDir ? { COUNCIL_GIT_REPO_DIR: gitRepoDir } : {}),
+          PORT: String(port),
+        },
+        shell: isWin,
+        windowsHide: true,
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+    } else {
+      console.error("[SUOMYNONA NATIVE] Missing dist-server/server.cjs in packaged build.");
+      return;
+    }
 
-    serverProcess.stdout.on("data", (d) => {
-      process.stdout.write(`[SERVER] ${d}`);
-    });
-    serverProcess.stderr.on("data", (d) => {
-      process.stderr.write(`[SERVER ERR] ${d}`);
-    });
-
+    let stdoutBuf = "";
+    if (serverProcess.stdout) {
+      serverProcess.stdout.on("data", (d) => {
+        const chunk = d.toString();
+        process.stdout.write(`[SERVER] ${chunk}`);
+        stdoutBuf += chunk;
+        let nlIdx = stdoutBuf.indexOf("\n");
+        while (nlIdx !== -1) {
+          const line = stdoutBuf.slice(0, nlIdx).trim();
+          stdoutBuf = stdoutBuf.slice(nlIdx + 1);
+          if (line.startsWith("__SUOMYNONA_HOT_RELOAD_RUNTIME__:")) {
+            try {
+              const info = JSON.parse(line.slice("__SUOMYNONA_HOT_RELOAD_RUNTIME__:".length));
+              handleRuntimeHotReload(info);
+            } catch (_) { }
+          }
+          nlIdx = stdoutBuf.indexOf("\n");
+        }
+      });
+    }
+    if (serverProcess.stderr) {
+      serverProcess.stderr.on("data", (d) => {
+        process.stderr.write(`[SERVER ERR] ${d}`);
+      });
+    }
     serverProcess.on("exit", (code) => {
-      console.log(`[SUOMYNONA NATIVE] Server process exited with code ${code}`);
+      console.log(`[SUOMYNONA NATIVE] Embedded backend exited with code ${code}`);
     });
   } catch (err) {
-    console.error("[SUOMYNONA NATIVE] Failed to spawn server:", err);
+    console.error("[SUOMYNONA NATIVE] Failed to start embedded backend:", err);
   }
 }
 
-// ── Poll for server ready and transition main window ──
-function pollAndNavigateMain() {
-  let isNavigated = false;
-  const pollInterval = setInterval(async () => {
-    if (isNavigated) {
-      clearInterval(pollInterval);
-      return;
-    }
-    const ready = await checkServerReady(400);
-    if (ready && mainWindow && !mainWindow.isDestroyed()) {
-      isNavigated = true;
-      clearInterval(pollInterval);
-      console.log("[SUOMYNONA NATIVE] Backend server ready, transitioning to UI...");
-      mainWindow.loadURL(SERVER_URL).catch(() => {
-        isNavigated = false;
+function stopEmbeddedBackend() {
+  if (!serverProcess) return;
+  const proc = serverProcess;
+  serverProcess = null;
+  try {
+    if (process.platform === "win32" && proc.pid) {
+      spawn("taskkill", ["/PID", String(proc.pid), "/T", "/F"], {
+        windowsHide: true,
+        stdio: "ignore",
       });
     }
-  }, 200);
+    proc.kill();
+  } catch (_) { }
+}
 
-  // Safety fallback after 12s
+async function stopEmbeddedBackendAndWait(port) {
+  stopEmbeddedBackend();
+  const deadline = Date.now() + 3500;
+  while (Date.now() < deadline) {
+    const free = await probePort(port);
+    if (free === port) return true;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  return false;
+}
+
+async function handleRuntimeHotReload(info) {
+  if (hotReloadInProgress) return;
+  hotReloadInProgress = true;
+  try {
+    console.log(`[SUOMYNONA NATIVE] Hot-reloading runtime from updated commit ${info?.commitShort || ""}...`);
+    await stopEmbeddedBackendAndWait(serverPort);
+    startEmbeddedBackend(serverPort);
+    const ready = await checkServerReady(12000);
+    if (ready) {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.reloadIgnoringCache();
+      }
+      for (const [, win] of detachedWindows.entries()) {
+        if (win && !win.isDestroyed()) {
+          win.webContents.reloadIgnoringCache();
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[SUOMYNONA NATIVE] Runtime hot-reload failed:", err);
+  } finally {
+    hotReloadInProgress = false;
+  }
+}
+
+// ── Poll for backend ready and transition main window ──
+function pollAndNavigateMain() {
+  let isNavigated = false;
+  let checking = false;
+  const pollInterval = setInterval(async () => {
+    if (isNavigated || checking) {
+      if (isNavigated) clearInterval(pollInterval);
+      return;
+    }
+    checking = true;
+    try {
+      const ready = await checkServerReady(400);
+      if (ready && !isNavigated && mainWindow && !mainWindow.isDestroyed()) {
+        isNavigated = true;
+        clearInterval(pollInterval);
+        console.log(`[SUOMYNONA NATIVE] Embedded backend ready on ${serverUrl}, loading Studio UI...`);
+        mainWindow.loadURL(serverUrl).catch(() => {
+          isNavigated = false;
+        });
+      }
+    } finally {
+      checking = false;
+    }
+  }, 150);
+
   setTimeout(() => {
     if (!isNavigated && mainWindow && !mainWindow.isDestroyed()) {
       isNavigated = true;
       clearInterval(pollInterval);
-      mainWindow.loadURL(SERVER_URL).catch(() => {});
+      mainWindow.loadURL(serverUrl).catch(() => { });
     }
-  }, 12000);
+  }, 15000);
+}
+
+function requestLocalApi(method, apiPath, bodyObj) {
+  return new Promise((resolve) => {
+    try {
+      const payload = bodyObj ? JSON.stringify(bodyObj) : "";
+      const req = http.request(
+        `${serverUrl}${apiPath}`,
+        {
+          method,
+          headers: payload
+            ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }
+            : {},
+          timeout: 25000,
+        },
+        (res) => {
+          let raw = "";
+          res.on("data", (c) => (raw += c));
+          res.on("end", () => {
+            try {
+              resolve(JSON.parse(raw));
+            } catch (_) {
+              resolve({ ok: res.statusCode >= 200 && res.statusCode < 300, raw });
+            }
+          });
+        }
+      );
+      req.on("error", (err) => resolve({ ok: false, error: err?.message || String(err) }));
+      if (payload) req.write(payload);
+      req.end();
+    } catch (err) {
+      resolve({ ok: false, error: err?.message || String(err) });
+    }
+  });
+}
+
+// ── Build Native Application Menu & Keyboard Shortcuts ──
+function buildApplicationMenu() {
+  const getFocused = () => BrowserWindow.getFocusedWindow() || mainWindow;
+  const template = [
+    {
+      label: "Studio",
+      submenu: [
+        {
+          label: "Open Detached Master CLI",
+          accelerator: "CmdOrCtrl+Shift+T",
+          click: () => openDetachedCliWindow("master"),
+        },
+        {
+          label: "Open Local Data Folder",
+          accelerator: "CmdOrCtrl+Shift+D",
+          click: () => shell.openPath(DATA_ROOT),
+        },
+        { type: "separator" },
+        {
+          label: "Check & Pull Git Updates Now",
+          accelerator: "CmdOrCtrl+Shift+U",
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.show();
+              mainWindow.focus();
+              mainWindow.webContents.executeJavaScript("window.runInteractiveUpdaterInWorkspace?.('check')").catch(() => { });
+            } else {
+              requestLocalApi("POST", "/api/updater/check", { auto_apply: true });
+            }
+          },
+        },
+        {
+          label: "Run Full System /doctor",
+          accelerator: "CmdOrCtrl+Shift+H",
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.show();
+              mainWindow.focus();
+              mainWindow.webContents.executeJavaScript("window.runInteractiveDoctorInWorkspace?.()").catch(() => { });
+            } else {
+              requestLocalApi("POST", "/api/doctor", { auto_fix: true });
+            }
+          },
+        },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        {
+          label: "Reload Studio",
+          accelerator: "CmdOrCtrl+R",
+          click: () => getFocused()?.reload(),
+        },
+        {
+          label: "Reload Studio (F5)",
+          accelerator: "F5",
+          visible: false,
+          click: () => getFocused()?.reload(),
+        },
+        { role: "togglefullscreen" },
+        ...(!IS_CLIENT_EDITION
+          ? [
+              {
+                label: "Toggle Developer Tools",
+                accelerator: "F12",
+                click: () => getFocused()?.webContents.toggleDevTools(),
+              },
+              {
+                label: "Toggle Developer Tools (Ctrl+Shift+I)",
+                accelerator: "CmdOrCtrl+Shift+I",
+                visible: false,
+                click: () => getFocused()?.webContents.toggleDevTools(),
+              },
+            ]
+          : []),
+        { type: "separator" },
+        { role: "zoomIn", accelerator: "CmdOrCtrl+=" },
+        { role: "zoomOut", accelerator: "CmdOrCtrl+-" },
+        { role: "resetZoom", accelerator: "CmdOrCtrl+0" },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
+function hardenBrowserWindowForClientEdition(win) {
+  if (!IS_CLIENT_EDITION || !win) return;
+  win.webContents.on("devtools-opened", () => {
+    try {
+      win.webContents.closeDevTools();
+    } catch (_) {}
+  });
+  win.webContents.on("before-input-event", (event, input) => {
+    const key = String(input.key || "").toUpperCase();
+    const isDevShortcut =
+      key === "F12" ||
+      (input.control && input.shift && (key === "I" || key === "J" || key === "C")) ||
+      (input.control && key === "U");
+    if (isDevShortcut) {
+      event.preventDefault();
+    }
+  });
 }
 
 // ── Create Primary Main Dashboard Window ──
@@ -262,29 +719,41 @@ function createMainWindow() {
     minWidth: 960,
     minHeight: 640,
     backgroundColor: "#020409",
-    title: "Suomynona Council — Unrestricted Multi-Agent Engineering Studio",
+    title: IS_CLIENT_EDITION
+      ? "Suomynona Council — Native Desktop Studio"
+      : "Suomynona Council — Master Edition Studio",
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
       webviewTag: false,
+      devTools: !IS_CLIENT_EDITION,
     },
     autoHideMenuBar: true,
     show: true,
   });
 
-  // Display the instant splash screen immediately — zero black screen delay
+  hardenBrowserWindowForClientEdition(mainWindow);
+
   mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(SPLASH_HTML)}`);
 
-  // Retry on connection refused until backend is listening
+  mainWindow.webContents.on("did-finish-load", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      writeDesktopRuntimeStatus({
+        didFinishLoad: true,
+        loadedUrl: mainWindow.webContents.getURL(),
+      });
+    }
+  });
+
   mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
-    if (validatedURL && validatedURL.startsWith(SERVER_URL)) {
-      console.log(`[SUOMYNONA NATIVE] Retrying navigation to ${SERVER_URL} (${errorCode} ${errorDescription})...`);
+    if (validatedURL && validatedURL.startsWith(serverUrl)) {
+      console.log(`[SUOMYNONA NATIVE] Retrying navigation to ${serverUrl} (${errorCode} ${errorDescription})...`);
       setTimeout(() => {
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.loadURL(SERVER_URL).catch(() => {});
+          mainWindow.loadURL(serverUrl).catch(() => { });
         }
-      }, 400);
+      }, 300);
     }
   });
 
@@ -293,16 +762,14 @@ function createMainWindow() {
 
   mainWindow.on("closed", () => {
     mainWindow = null;
-    // Close any remaining detached windows when main studio closes
-    for (const [key, win] of detachedWindows.entries()) {
+    for (const [, win] of detachedWindows.entries()) {
       if (!win.isDestroyed()) win.close();
     }
     detachedWindows.clear();
   });
 
-  // Open external links in user default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("http://127.0.0.1") || url.startsWith(SERVER_URL)) {
+    if (url.startsWith("http://127.0.0.1") || url.startsWith(serverUrl)) {
       return { action: "allow" };
     }
     shell.openExternal(url);
@@ -333,26 +800,29 @@ function openDetachedCliWindow(cliKey = "master") {
     minWidth: 640,
     minHeight: 460,
     backgroundColor: "#020409",
-    frame: true, // Native OS window frame with minimize, maximize, close, and monitor dragging
+    frame: true,
     title: `Suomynona Council — [${cliKey.toUpperCase()}] CLI Native Window`,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
+      devTools: !IS_CLIENT_EDITION,
     },
     autoHideMenuBar: true,
   });
 
+  hardenBrowserWindowForClientEdition(win);
+
   detachedWindows.set(cliKey, win);
 
-  const targetUrl = `${SERVER_URL}/cli-standalone.html?key=${encodeURIComponent(cliKey)}`;
+  const targetUrl = `${serverUrl}/cli-standalone.html?key=${encodeURIComponent(cliKey)}`;
   win.loadURL(targetUrl);
 
   win.webContents.on("did-fail-load", (_event, _errorCode, _errorDescription, validatedURL) => {
-    if (validatedURL && validatedURL.startsWith(SERVER_URL)) {
+    if (validatedURL && validatedURL.startsWith(serverUrl)) {
       setTimeout(() => {
-        if (!win.isDestroyed()) win.loadURL(targetUrl).catch(() => {});
-      }, 500);
+        if (!win.isDestroyed()) win.loadURL(targetUrl).catch(() => { });
+      }, 400);
     }
   });
 
@@ -375,7 +845,6 @@ function detectLocalEngines() {
       vllm: { online: false, url: "http://127.0.0.1:8000", models: [] },
     };
 
-    // 1. Probe nvidia-smi for local GPU hardware
     exec("nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv,noheader,nounits", (err, stdout) => {
       if (!err && stdout.trim()) {
         const parts = stdout.trim().split("\n")[0].split(",").map((s) => s.trim());
@@ -387,7 +856,6 @@ function detectLocalEngines() {
         };
       }
 
-      // 2. Probe Ollama on 11434
       const reqOllama = http.get("http://127.0.0.1:11434/api/tags", (res) => {
         let body = "";
         res.on("data", (c) => (body += c));
@@ -396,7 +864,7 @@ function detectLocalEngines() {
             const data = JSON.parse(body);
             results.ollama.online = true;
             results.ollama.models = (data.models || []).map((m) => m.name || m.model);
-          } catch (_) {}
+          } catch (_) { }
           checkLlamaCpp();
         });
       });
@@ -406,7 +874,6 @@ function detectLocalEngines() {
         checkLlamaCpp();
       });
 
-      // 3. Probe llama.cpp on 8080
       function checkLlamaCpp() {
         const reqLlama = http.get("http://127.0.0.1:8080/v1/models", (res) => {
           let body = "";
@@ -416,7 +883,7 @@ function detectLocalEngines() {
               const data = JSON.parse(body);
               results.llamaCpp.online = true;
               results.llamaCpp.models = (data.data || []).map((m) => m.id);
-            } catch (_) {}
+            } catch (_) { }
             checkLmStudio();
           });
         });
@@ -427,7 +894,6 @@ function detectLocalEngines() {
         });
       }
 
-      // 4. Probe LM Studio on 1234
       function checkLmStudio() {
         const reqLm = http.get("http://127.0.0.1:1234/v1/models", (res) => {
           let body = "";
@@ -437,7 +903,7 @@ function detectLocalEngines() {
               const data = JSON.parse(body);
               results.lmStudio.online = true;
               results.lmStudio.models = (data.data || []).map((m) => m.id);
-            } catch (_) {}
+            } catch (_) { }
             finish();
           });
         });
@@ -484,23 +950,50 @@ ipcMain.handle("detect-local-engines", async () => {
   return await detectLocalEngines();
 });
 
-// ── App Lifecycle ──
-app.whenReady().then(() => {
-  createMainWindow();
-  ensureServerRunning();
-  pollAndNavigateMain();
+ipcMain.handle("open-data-folder", () => {
+  return shell.openPath(DATA_ROOT);
+});
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+ipcMain.handle("updater-status", () => requestLocalApi("GET", "/api/updater/status"));
+ipcMain.handle("updater-check", (_event, opts) => requestLocalApi("POST", "/api/updater/check", opts || { auto_apply: true }));
+ipcMain.handle("updater-pull", (_event, opts) => requestLocalApi("POST", "/api/updater/pull", opts || {}));
+ipcMain.handle("run-doctor", (_event, opts) => requestLocalApi("POST", "/api/doctor", opts || { auto_fix: true }));
+
+// ── App Lifecycle with Single-Instance Lock ──
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
   });
+
+  app.whenReady().then(async () => {
+    ensureDesktopDataDir();
+    buildApplicationMenu();
+    serverPort = await resolveDesktopPort(Number(process.env.PORT) || 3077);
+    serverUrl = `http://127.0.0.1:${serverPort}`;
+
+    createMainWindow();
+    startEmbeddedBackend(serverPort);
+    pollAndNavigateMain();
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    });
+  });
+}
+
+app.on("before-quit", () => {
+  stopEmbeddedBackend();
 });
 
 app.on("window-all-closed", () => {
-  if (serverProcess) {
-    try {
-      serverProcess.kill("SIGTERM");
-    } catch (_) {}
-  }
+  stopEmbeddedBackend();
   if (process.platform !== "darwin") {
     app.quit();
   }

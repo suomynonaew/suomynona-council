@@ -1,18 +1,26 @@
 {
-  "name": "react-example",
+  "name": "suomynona-council",
+  "productName": "Suomynona Council",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "electron-main.cjs",
   "scripts": {
+    "build:master": "node scripts/build-desktop-server.mjs --edition=master",
+    "build:client": "node scripts/build-desktop-server.mjs --edition=client",
+    "dist:master": "node scripts/build-editions.mjs master",
+    "dist:client": "node scripts/build-editions.mjs client",
+    "dist:both": "node scripts/build-editions.mjs both",
     "dev": "tsx server.ts",
     "start": "tsx server.ts",
     "build": "vite build",
+    "build:server": "node scripts/build-desktop-server.mjs",
+    "build:desktop": "vite build && node scripts/build-desktop-server.mjs",
     "preview": "vite preview",
-    "desktop": "electron .",
-    "pack:win": "electron-builder --dir",
-    "dist:win": "electron-builder --win portable",
-    "clean": "node -e \"['dist','server.js','dist-native'].forEach(p=>require('fs').rmSync(p,{recursive:true,force:true}))\"",
+    "desktop": "npm run build:desktop && electron .",
+    "pack:win": "npm run build:desktop && electron-builder --win dir",
+    "dist:win": "npm run build:desktop && electron-builder --win portable dir",
+    "clean": "node -e \"['dist','dist-server','server.js','dist-native'].forEach(p=>require('fs').rmSync(p,{recursive:true,force:true}))\"",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
@@ -30,46 +38,50 @@
     "vite": "^8.3.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.21",
+    "electron": "^45.3.4",
+    "electron-builder": "^26.18.0",
     "esbuild": "^0.28.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2",
-    "@types/express": "^4.17.21"
+    "typescript": "^7.0.2"
   },
   "build": {
     "appId": "com.suomynona.council",
     "productName": "Suomynona Council",
+    "asar": false,
     "directories": {
       "output": "dist-native"
     },
     "win": {
       "target": [
-        "portable"
+        "portable",
+        "dir"
       ],
+      "signAndEditExecutable": false,
       "requestedExecutionLevel": "asInvoker"
     },
     "portable": {
       "artifactName": "Suomynona-Council-Portable.exe"
     },
     "files": [
-      "dist/**/*",
-      "public/**/*",
-      "server.ts",
-      "server/**/*",
-      "guardian_claude_code.ts",
-      "src/**/*",
-      "index.js",
       "electron-main.cjs",
       "preload.cjs",
-      ".council_data/**/*",
-      "package.json"
-    ],
-    "extraMetadata": {
-      "main": "index.js"
-    }
+      "index.js",
+      "index.html",
+      "desktop-repo-config.json",
+      "dist/**/*",
+      "dist-server/**/*",
+      "public/**/*",
+      "src/council_catalog.json",
+      "src/data/**/*",
+      ".env.example",
+      "package.json",
+      "!node_modules/**/*"
+    ]
   }
 }

@@ -1653,12 +1653,13 @@ async function runColabTroubleshooting(button) {
     const cliOut = $("#guardian-out") || $("#cli-out");
     if (cliOut) {
       const troubleText =
-        "Runtime troubleshooting:\n" +
-        (report.checks || []).map(c => `${c.severity.toUpperCase()}: ${c.message}`).join("\n");
+        report.formatted ||
+        ("Runtime troubleshooting:\n" +
+        (report.checks || []).map(c => `${c.severity.toUpperCase()}: ${c.message}`).join("\n"));
       appendTypedTerminalBlock(cliOut, troubleText, { color: errors.length ? "#ffcc66" : "#2ee6a6" });
     }
-    status(errors.length ? `Troubleshooting found ${errors.length} item(s); see Unified CLI for fixes.`
-                         : "Runtime checks passed; see Unified CLI for host details.");
+    status(errors.length ? `Troubleshooting found ${errors.length} item(s); see Unified CLI or run /doctor for step-by-step fixes.`
+                         : "Full-app /doctor diagnostics passed across all domains.");
   } catch (error) {
     status("Troubleshooting failed: " + error);
   } finally {
@@ -1768,9 +1769,14 @@ async function renderColabHosts() {
       card.querySelector(`[data-host-auth="${host.id}"]`).onclick = async () => {
         try {
           const out = await postJSON(`/api/runtime-auth/${encodeURIComponent(host.id)}`, {});
-          if (out.ok) {
+          if (out.ok && !out.endpoint_warning) {
             markHostStatusGreen(host.id, out);
             status(`${host.name} (${hProv.toUpperCase()}) verified — status GREEN`);
+          } else if (out.endpoint_warning) {
+            const cliOut = $("#guardian-out") || $("#cli-out");
+            if (cliOut && out.message) appendTypedTerminalBlock(cliOut, out.message, { color: "#ffcc66" });
+            status(`⚠️ ${out.endpoint_warning} — run '/doctor hosts' for step-by-step repair`);
+            handleHostConnectionFailure(host.id, out.endpoint_warning);
           } else {
             status(out.error || "verification failed");
             handleHostConnectionFailure(host.id, out.error || "auth verification failed");
@@ -3567,17 +3573,38 @@ $("#mc-add").onclick = async () => {
 };
 
 // ── system ──
-const KEY_FIELDS = [["HF_TOKEN", "Hugging Face token (optional on PC — Colab uses its vault)"],
-  ["GH_TOKEN", "GitHub token (classic, gist scope)"], ["GIST_ID", "Gist ID (auto-managed)"],
-  ["GH_USERNAME", "GitHub username"], ["OPENAI_API_KEY", "OpenAI key (optional)"],
-  ["XAI_API_KEY", "xAI Grok key (optional)"], ["GEMINI_API_KEY", "Gemini key (optional)"],
-  ["OPENROUTER_API_KEY", "OpenRouter key (optional)"]];
+const KEY_FIELDS = [
+  ["ORCAROUTER_API_KEY", "OrcaRouter API key (optional)"],
+  ["OPENROUTER_API_KEY", "OpenRouter API key (optional)"],
+  ["GEMINI_API_KEY", "Gemini API key (optional)"],
+  ["OPENAI_API_KEY", "OpenAI API key (optional)"],
+  ["ANTHROPIC_API_KEY", "Anthropic Claude key (optional)"],
+  ["GROQ_API_KEY", "Groq API key (optional)"],
+  ["DEEPSEEK_API_KEY", "DeepSeek API key (optional)"],
+  ["XAI_API_KEY", "xAI Grok key (optional)"],
+  ["HF_TOKEN", "Hugging Face token (optional)"],
+  ["GH_TOKEN", "GitHub token (optional)"],
+  ["GIST_ID", "Gist ID (optional)"],
+  ["GH_USERNAME", "GitHub username (optional)"],
+];
 function renderKeys() {
   const g = $("#keys-grid"); if (!g) return; g.innerHTML = "";
+  const openBtnWrap = document.createElement("div");
+  openBtnWrap.style.cssText = "grid-column:1/-1;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap";
+  openBtnWrap.innerHTML = `<span class="muted" style="font-size:11px">Enter any 1 key OR run free locally (Ollama / LM Studio). Add custom providers anytime.</span><button type="button" class="primary xs" id="open-unified-vault-from-keys">🔑 Open Unified Keys &amp; Custom Slots Hub →</button>`;
+  g.appendChild(openBtnWrap);
+  openBtnWrap.querySelector("#open-unified-vault-from-keys")?.addEventListener("click", () => {
+    $("#slash-config-popup-close-btn")?.click();
+    if (typeof window.openSettingsSection === "function") {
+      window.openSettingsSection("keys");
+    } else {
+      document.querySelector('.rail-btn[data-view="system"]')?.click();
+    }
+  });
   KEY_FIELDS.forEach(([k, label]) => {
     const w = document.createElement("div");
     const isSet = STATE.keys_ok && STATE.keys_ok[k];
-    w.innerHTML = `<label>${label}</label><div class="muted" style="padding:6px 0">${isSet ? "🟢 Configured via Server Environment" : "⚪ Managed via Environment Secrets"}</div>`;
+    w.innerHTML = `<label>${label}</label><div class="muted" style="padding:4px 0;font-size:11px">${isSet ? "🟢 Configured" : "⚪ Not set (Optional)"}</div>`;
     g.appendChild(w);
   });
 }
@@ -4289,16 +4316,21 @@ async function loadGuardianTerminal() {
   }
 }
 
-async function runGuardianCommand(promptText) {
+async function runGuardianCommand(promptText, customAppendFn = null) {
   const inputEl = $("#guardian-input");
   const sendBtn = $("#guardian-send-btn");
   const out = $("#guardian-out");
+  const emitOut = customAppendFn
+    ? (txt, col = "#e2e8f0", inst = true) => customAppendFn(txt, col, inst)
+    : (txt, col = "#e2e8f0", inst = true) => {
+        if (out) appendTypedTerminalBlock(out, txt, { color: col, marginBottom: "8px", instant: inst });
+      };
   const rawText = String(promptText ?? inputEl?.value ?? "").trim();
   if (!rawText) return;
   if (inputEl && promptText === undefined) inputEl.value = "";
-  if (sendBtn) sendBtn.disabled = true;
+  if (sendBtn && !customAppendFn) sendBtn.disabled = true;
 
-  if (inputEl) {
+  if (inputEl && !customAppendFn) {
     attachUniversalCliHistory(inputEl, "master");
     if (inputEl._pushCliHistory) inputEl._pushCliHistory(rawText);
   }
@@ -4306,29 +4338,25 @@ async function runGuardianCommand(promptText) {
   const lower = rawText.toLowerCase();
 
   if (rawText.endsWith(" -h") || rawText.endsWith(" --help") || rawText === "-h" || rawText === "--help" || rawText === "/?") {
-    if (out) appendTypedTerminalBlock(out, `❯ ${rawText}`, { color: "#00d4ff", marginBottom: "4px", instant: true });
-    renderCliCommandHelp(rawText, "master", (t, c, inst) => {
-      if (out) appendTypedTerminalBlock(out, t, { color: c || "#2ee6a6", marginBottom: "4px", instant: inst });
-    });
-    if (sendBtn) sendBtn.disabled = false;
+    emitOut(`❯ ${rawText}`, "#00d4ff", true);
+    renderCliCommandHelp(rawText, "master", (t, c, inst) => emitOut(t, c || "#2ee6a6", inst));
+    if (sendBtn && !customAppendFn) sendBtn.disabled = false;
     return;
   }
 
   if (lower === "/command" || lower === "/commands" || lower === "commands" || lower === "/help" || lower === "help") {
-    if (out) appendTypedTerminalBlock(out, `❯ ${rawText}`, { color: "#00d4ff", marginBottom: "4px", instant: true });
-    renderCliCommandsList("master", null, (t, c, inst) => {
-      if (out) appendTypedTerminalBlock(out, t, { color: c || "#2ee6a6", marginBottom: "4px", instant: inst });
-    });
-    if (sendBtn) sendBtn.disabled = false;
+    emitOut(`❯ ${rawText}`, "#00d4ff", true);
+    renderCliCommandsList("master", null, (t, c, inst) => emitOut(t, c || "#2ee6a6", inst), customAppendFn ? null : out);
+    if (sendBtn && !customAppendFn) sendBtn.disabled = false;
     return;
   }
   if (lower === "council open" || lower === "council run" || lower === "open-app" || lower === "showcase") {
-    if (sendBtn) sendBtn.disabled = false;
+    if (sendBtn && !customAppendFn) sendBtn.disabled = false;
     await openAppInCouncilCli({});
     return;
   }
   if (lower.startsWith("council package") || lower.startsWith("package ")) {
-    if (sendBtn) sendBtn.disabled = false;
+    if (sendBtn && !customAppendFn) sendBtn.disabled = false;
     const parts = lower.split(/\s+/);
     const fmt = parts[parts.length - 1] || "exe";
     await packageFinishedProduct(fmt, {});
@@ -4347,15 +4375,9 @@ async function runGuardianCommand(promptText) {
     });
     if (res.cwd) updateTerminalPrompts(res.cwd);
     if (res.history) renderGuardianHistory(res.history, { silentSyncOnly: true });
-    if (out) {
-      const outText = res.output || res.error || "(Command completed)";
-      const outColor = res.ok !== false ? "#e2e8f0" : "#ff6b8b";
-      appendTypedTerminalBlock(out, outText, {
-        color: outColor,
-        marginBottom: "8px",
-        instant: true,
-      });
-    }
+    const outText = res.output || res.error || "(Command completed)";
+    const outColor = res.ok !== false ? "#e2e8f0" : "#ff6b8b";
+    emitOut(outText, outColor, true);
     const pathEl = $("#guardian-workspace-path");
     if (pathEl && res.cwd) {
       pathEl.innerHTML = `CWD: ${esc(res.cwd)} · Type <code>/</code> + <code>Tab</code> to predict &amp; autocomplete`;
@@ -4367,17 +4389,11 @@ async function runGuardianCommand(promptText) {
       status(res.ok ? "🛡️ Council CLI command complete" : `🛡️ Notice: ${res.error || "check terminal output"}`);
     }
   } catch (e) {
-    if (out) {
-      appendTypedTerminalBlock(out, `❌ Error: ${e.message || e}`, {
-        color: "#ff6b8b",
-        marginBottom: "8px",
-        instant: true,
-      });
-    }
+    emitOut(`❌ Error: ${e.message || e}`, "#ff6b8b", true);
     status(`Council CLI error: ${e.message || e}`);
   } finally {
-    if (sendBtn) sendBtn.disabled = false;
-    inputEl?.focus();
+    if (sendBtn && !customAppendFn) sendBtn.disabled = false;
+    if (!customAppendFn) inputEl?.focus();
   }
 }
 
