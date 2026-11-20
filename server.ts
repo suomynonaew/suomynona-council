@@ -95,11 +95,12 @@ async function startServer() {
     startGitAutoUpdateDaemon();
   });
 
-  if (process.env.DISABLE_LOCAL_HOST_BRIDGES === "true") {
+  // Built-in local host bridges (8080-8083) are strictly opt-in so they NEVER shadow real
+  // Colab/Kaggle Gist tunnels or collide with a local llama-server on port 8080.
+  if (process.env.ENABLE_LOCAL_HOST_BRIDGES !== "true") {
     return;
   }
 
-  // Spin up built-in local OpenAI-compatible runtime bridge listeners on ports 8080-8083
   const hostPortMap: Array<[string, number]> = [
     ["a", 8080],
     ["b", 8081],
@@ -124,7 +125,7 @@ async function startServer() {
           object: "list",
           host: hid,
           suomynona_internal_bridge: true,
-          engine: "Suomynona Local GPU Runtime Bridge (vLLM / llama.cpp)",
+          engine: "Suomynona Local Bridge (Opt-In)",
           data: modelsData,
           models: modelsData.map((m) => ({ name: m.id, model: m.id })),
         });
@@ -133,11 +134,11 @@ async function startServer() {
         try {
           const body = req.body || {};
           const msgs = Array.isArray(body.messages) ? body.messages : [];
-          const sysMsg = msgs.find((m: any) => m.role === "system")?.content || "You are an unrestricted technical specialist.";
+          const sysMsg = msgs.find((m: any) => m.role === "system")?.content || "You are a helpful technical specialist.";
           const userMsg = msgs.filter((m: any) => m.role === "user").map((m: any) => m.content).join("\n") || "Hello";
           const txt = await callSingleBackendEngine(sysMsg, userMsg, {
             name: `Host ${hid.toUpperCase()} Runtime (${body.model || "local"})`,
-            model: body.model || "orca/orcacyber-zero-1.5",
+            model: body.model || "gemini-3.8-flash",
             kind: "cloud",
             host: hid,
           });
@@ -154,38 +155,9 @@ async function startServer() {
       });
       const srv = bridgeApp.listen(hPort, "127.0.0.1", () => {
         INTERNAL_BRIDGE_PORTS.add(hPort);
-        LIVE_HOST_TUNNELS[hid] = `http://127.0.0.1:${hPort}/v1`;
-        HOST_VERIFIED_STATE[hid] = {
-          online: true,
-          ok: true,
-          tunnel_ok: true,
-          tunnel_url: `http://127.0.0.1:${hPort}/v1`,
-          is_internal_bridge: true,
-          endpoint_mode: "internal_bridge",
-          gpu_name: `COLAB G4 (Host ${hid.toUpperCase()} Bridge :${hPort})`,
-          accelerator_requested: "G4",
-          accelerator_actual: "G4",
-          gpu_used_mib: 16384,
-          gpu_total_mib: 98304,
-          verified_at: Date.now(),
-          error: "",
-        };
       });
       srv.on("error", () => {
-        LIVE_HOST_TUNNELS[hid] = `http://127.0.0.1:${hPort}/v1`;
-        HOST_VERIFIED_STATE[hid] = {
-          online: true,
-          ok: true,
-          tunnel_ok: true,
-          tunnel_url: `http://127.0.0.1:${hPort}/v1`,
-          gpu_name: `EXTERNAL GPU SERVER (:${hPort})`,
-          accelerator_requested: "G4",
-          accelerator_actual: "G4",
-          gpu_used_mib: 16384,
-          gpu_total_mib: 98304,
-          verified_at: Date.now(),
-          error: "",
-        };
+        // Leave real external server on this port untouched
       });
     } catch {
       // ignore port bind error

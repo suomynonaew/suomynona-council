@@ -1310,13 +1310,19 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       const probeResults = await Promise.all(
         hostIds.map(async (hid) => {
           const hObj = rawHosts.find((x) => String(x.id || "").toLowerCase() === hid) || ({ id: hid, name: `Host ${hid.toUpperCase()}` } as any);
+          const provider = String(hObj.provider || "colab");
+          const rawCustom = String(hObj.custom_url || hObj.local_url || "").trim();
+          const liveTunnel = String(LIVE_HOST_TUNNELS[hid] || "").trim();
+          const nonLoopbackCustom = rawCustom && !isBuiltInLoopbackStubUrl(rawCustom) ? rawCustom : "";
           const candidateUrl = String(
-            LIVE_HOST_TUNNELS[hid] || hObj.tunnel_url || hObj.custom_url || hObj.local_url || `http://127.0.0.1:${defaultPorts[hid] || 8080}/v1`
+            nonLoopbackCustom ||
+              liveTunnel ||
+              (provider === "local" && rawCustom ? rawCustom : "") ||
+              (hObj.tunnel_url && !isBuiltInLoopbackStubUrl(hObj.tunnel_url) ? hObj.tunnel_url : "")
           ).trim();
           const isLoopbackStub = isBuiltInLoopbackStubUrl(candidateUrl);
           const vramGb = Number(hObj.ram_gb || hObj.gpu_vram_gb || 96);
           const accelerator = String(hObj.accelerator || "G4");
-          const provider = String(hObj.provider || "colab");
 
           let reachable = false;
           let latencyMs: number | null = null;
@@ -1324,26 +1330,27 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
           let probeRes: HostEndpointProbeResult | null = null;
 
           if (candidateUrl && /^https?:\/\//i.test(candidateUrl)) {
-            probeRes = await probeHostEndpoint(candidateUrl, hObj, 1100);
+            probeRes = await probeHostEndpoint(candidateUrl, hObj, 2200);
             reachable = probeRes.ok;
             latencyMs = probeRes.ok ? Math.max(1, probeRes.latency_ms) : null;
             remoteModelsCount = probeRes.models.length;
           }
 
           const isInternalBridge = Boolean(probeRes?.is_internal_bridge || isInternalBridgeUrl(candidateUrl));
-          const hasExplicitTunnel = reachable || (!isLoopbackStub && !isInternalBridge && /^https?:\/\//i.test(candidateUrl));
+          const hasExplicitTunnel = Boolean(candidateUrl && /^https?:\/\//i.test(candidateUrl) && !isLoopbackStub && !isInternalBridge);
           const hostVram = vramSnap.hosts_map[hid] || computeHostVramTelemetry(hObj);
           const verState = HOST_VERIFIED_STATE[hid] || ({} as any);
           const computedUsedMib = Math.round(hostVram.used_vram_gb * 1024);
 
-          if (reachable) {
+          if (reachable && !isInternalBridge) {
             HOST_VERIFIED_STATE[hid] = {
               ...verState,
               tunnel_url: candidateUrl,
-              is_internal_bridge: isInternalBridge,
-              endpoint_mode: isInternalBridge ? "internal_bridge" : "external_gpu",
+              is_internal_bridge: false,
+              endpoint_mode: "external_gpu",
               gpu_used_mib: computedUsedMib,
               gpu_total_mib: Math.round(vramGb * 1024),
+              models_loaded: probeRes?.models?.length ? probeRes.models : verState.models_loaded,
               verified_at: Date.now(),
               error: "",
               error_code: undefined,
@@ -1360,7 +1367,7 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
               ...verState,
               tunnel_url: candidateUrl,
               is_internal_bridge: isInternalBridge,
-              endpoint_mode: hasExplicitTunnel ? "offline" : "bridge",
+              endpoint_mode: hasExplicitTunnel ? "offline" : "cloud_fallback",
               gpu_used_mib: computedUsedMib,
               gpu_total_mib: Math.round(vramGb * 1024),
               verified_at: Date.now(),
@@ -1370,36 +1377,36 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
               latency_ms: null,
               checked_at: new Date().toISOString(),
               http_status: probeRes?.http_status,
-              error: probeRes?.error || "Host endpoint unreachable",
-              error_code: probeRes?.error_code,
-              error_definition: probeRes?.error_definition,
-              fix_steps: probeRes?.fix_steps,
+              error: hasExplicitTunnel ? (probeRes?.error || "Colab tunnel unreachable") : "",
+              error_code: hasExplicitTunnel ? probeRes?.error_code : undefined,
+              error_definition: hasExplicitTunnel ? probeRes?.error_definition : undefined,
+              fix_steps: hasExplicitTunnel ? probeRes?.fix_steps : undefined,
             };
           }
 
-          if (reachable || isInternalBridge) {
+          if (reachable && !isInternalBridge) {
             recordHostCircuitSuccess(hid);
-          } else if (!isLoopbackStub && hasExplicitTunnel) {
+          } else if (hasExplicitTunnel) {
             recordHostCircuitFailure(hid, probeRes?.error || "Heartbeat probe unreachable");
           }
 
-          const endpointMode = isInternalBridge ? "internal_bridge" : reachable ? "external_gpu" : hasExplicitTunnel ? "offline" : "bridge";
-          const statusLabel = isInternalBridge ? "bridge" : reachable ? "online" : hasExplicitTunnel ? "offline" : "bridge";
+          const endpointMode = isInternalBridge ? "internal_bridge" : reachable ? "external_gpu" : hasExplicitTunnel ? "offline" : "cloud_fallback";
+          const statusLabel = isInternalBridge ? "bridge" : reachable ? "online" : hasExplicitTunnel ? "offline" : "standby";
           return [
             hid,
             {
               id: hid,
               name: hObj.name || `Host ${hid.toUpperCase()}`,
-              online: reachable,
+              online: reachable && !isInternalBridge,
               configured: hasExplicitTunnel,
               is_internal_bridge: isInternalBridge,
               endpoint_mode: endpointMode,
-              engine: probeRes?.engine || "bridge",
+              engine: probeRes?.engine || (hasExplicitTunnel ? "unreachable" : "cloud_fallback"),
               http_status: probeRes?.http_status,
-              error: reachable ? "" : (probeRes?.error || ""),
-              error_code: reachable ? undefined : probeRes?.error_code,
-              error_definition: reachable ? undefined : probeRes?.error_definition,
-              fix_steps: reachable ? undefined : probeRes?.fix_steps,
+              error: reachable ? "" : (hasExplicitTunnel ? (probeRes?.error || "Colab tunnel unreachable") : ""),
+              error_code: reachable ? undefined : (hasExplicitTunnel ? probeRes?.error_code : undefined),
+              error_definition: reachable ? undefined : (hasExplicitTunnel ? probeRes?.error_definition : undefined),
+              fix_steps: reachable ? undefined : (hasExplicitTunnel ? probeRes?.fix_steps : undefined),
               status: statusLabel,
               latency_ms: reachable ? latencyMs : hostVram.ping_ms,
               provider,
@@ -1427,6 +1434,7 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
               spillover_received: hostVram.spillover_received,
               assigned_models_count: hostVram.assigned_models_count,
               assigned_models: hostVram.assigned_models,
+              models_loaded: probeRes?.models?.length ? probeRes.models : [],
               tok_per_sec_est: hostVram.tok_per_sec_est,
               url: candidateUrl,
               models_count: remoteModelsCount || hostVram.assigned_models_count,
@@ -1564,78 +1572,158 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
   app.post("/api/colab/connect", async (req: Request, res: Response) => {
     const b = req.body || {};
     const hostId = String(b.host || b.host_id || "a").toLowerCase();
-    const customUrl = String(b.custom_url ?? "").trim();
+    const customUrl = String(b.custom_url ?? "").trim().replace(/\/+$/, "");
     const hosts = loadColabHosts();
     const idx = hosts.findIndex((h) => String(h.id).toLowerCase() === hostId);
+    let targetHost: any;
     if (idx !== -1) {
       hosts[idx].custom_url = customUrl;
       hosts[idx].local_url = customUrl;
       hosts[idx].enabled = true;
+      targetHost = hosts[idx];
       saveColabHosts(hosts);
     } else {
-      hosts.push(
-        normalizeColabHost({
-          id: hostId,
-          name: `Host ${hostId.toUpperCase()} (Colab G4)`,
-          provider: "colab",
-          accelerator: "G4",
-          ram_gb: 96,
-          high_memory: true,
-          enabled: true,
-          custom_url: customUrl,
-          local_url: customUrl,
-        })
-      );
+      targetHost = normalizeColabHost({
+        id: hostId,
+        name: `Host ${hostId.toUpperCase()} (Colab G4)`,
+        provider: "colab",
+        accelerator: "G4",
+        ram_gb: 96,
+        high_memory: true,
+        enabled: true,
+        custom_url: customUrl,
+        local_url: customUrl,
+      });
+      hosts.push(targetHost);
       saveColabHosts(hosts);
     }
-    if (customUrl) {
+
+    let probeRes: HostEndpointProbeResult | null = null;
+    if (customUrl && /^https?:\/\//i.test(customUrl)) {
       LIVE_HOST_TUNNELS[hostId] = customUrl;
       resetHostCircuit(hostId);
+      probeRes = await probeHostEndpoint(customUrl, targetHost, 4000);
+      const isLive = probeRes.ok && !probeRes.is_internal_bridge;
       HOST_VERIFIED_STATE[hostId] = {
-        ...(HOST_VERIFIED_STATE[hostId] || { gpu_used_mib: 14336, gpu_total_mib: 98304 }),
-        online: true,
+        ...(HOST_VERIFIED_STATE[hostId] || { gpu_used_mib: 0, gpu_total_mib: (Number(targetHost.ram_gb) || 96) * 1024 }),
+        online: isLive,
         ok: true,
-        tunnel_ok: true,
+        tunnel_ok: isLive,
         tunnel_url: customUrl,
+        is_internal_bridge: Boolean(probeRes.is_internal_bridge),
+        endpoint_mode: isLive ? "external_gpu" : "offline",
+        models_loaded: probeRes.models.length ? probeRes.models : undefined,
+        latency_ms: isLive ? probeRes.latency_ms : null,
+        verified_at: Date.now(),
+        error: isLive ? "" : (probeRes.error || "Endpoint did not respond"),
+      };
+    } else {
+      delete LIVE_HOST_TUNNELS[hostId];
+      for (const k of Object.keys(LIVE_HOST_TUNNELS)) {
+        if (k.startsWith(`${hostId}:`)) delete LIVE_HOST_TUNNELS[k];
+      }
+      resetHostCircuit(hostId);
+      HOST_VERIFIED_STATE[hostId] = {
+        ...(HOST_VERIFIED_STATE[hostId] || { gpu_used_mib: 0, gpu_total_mib: (Number(targetHost.ram_gb) || 96) * 1024 }),
+        online: false,
+        ok: true,
+        tunnel_ok: false,
+        tunnel_url: "",
+        is_internal_bridge: false,
+        endpoint_mode: "cloud_fallback",
+        models_loaded: undefined,
+        latency_ms: null,
         verified_at: Date.now(),
         error: "",
       };
     }
     refreshBackends();
-    pushLiveConsole(`🔗 [Host Matrix] Bound Host ${hostId.toUpperCase()} Custom/Local URL → ${customUrl || "(default)"}`, {
-      category: "HOST",
-      level: "ok",
-      host: hostId.toUpperCase(),
+    pushLiveConsole(
+      customUrl
+        ? `🔗 [Host Matrix] Bound Host ${hostId.toUpperCase()} → ${customUrl} (${probeRes?.ok ? `🟢 LIVE ${probeRes.latency_ms}ms · ${probeRes.models.length} model(s)` : `⚠️ ${probeRes?.error || "saved, awaiting server"}`})`
+        : `🔌 [Host Matrix] Cleared Host ${hostId.toUpperCase()} custom URL (auto-sync from Gist / cloud fallback)`,
+      {
+        category: "HOST",
+        level: probeRes?.ok || !customUrl ? "ok" : "warn",
+        host: hostId.toUpperCase(),
+      }
+    );
+    res.json({
+      ok: true,
+      host_id: hostId,
+      custom_url: customUrl,
+      verified: Boolean(probeRes?.ok && !probeRes?.is_internal_bridge),
+      latency_ms: probeRes?.ok ? probeRes.latency_ms : null,
+      models_loaded: probeRes?.models || [],
+      probe_error: probeRes && !probeRes.ok ? probeRes.error : undefined,
+      hosts: loadColabHosts().map(publicColabHost),
     });
-    res.json({ ok: true, host_id: hostId, custom_url: customUrl, hosts: loadColabHosts().map(publicColabHost) });
   });
 
   app.get("/api/colab/bootstrap.py", (req: Request, res: Response) => {
     const conf = readConf();
     const hostId = String(req.query.host || "a").toLowerCase();
     const port = 8080 + Math.max(0, ["a", "b", "c", "d"].indexOf(hostId));
+    const hostBackends = BACKENDS.filter((b) => String(b.host || "a").toLowerCase() === hostId);
+    const primaryCat = hostBackends[0] ? CATALOG[hostBackends[0].model] : null;
+    const primaryRepo = primaryCat?.hf || hostBackends[0]?.model || "huihui-ai/Qwen2.5-Coder-32B-Instruct-abliterated-GGUF";
+    const quant = String(loadColabHosts().find((h) => String(h.id).toLowerCase() === hostId)?.quantization || "Q4_K_M").toUpperCase();
+    const gistId = conf.GIST_ID || "";
+    const ghUser = conf.GH_USERNAME || "";
     const script = [
       `#!/usr/bin/env python3`,
       `# ============================================================================`,
-      `# SUOMYNONA COUNCIL — SELF-CONTAINED GPU / COLAB / KAGGLE / LOCAL BOOT CELL`,
-      `# Host: Host ${hostId.toUpperCase()} | Port: ${port} | Gist ID: ${conf.GIST_ID || "05a1f96580fa13b373b42d919873dc57"}`,
+      `# SUOMYNONA COUNCIL — 1-CELL GOOGLE COLAB / KAGGLE GPU SERVER BOOTSTRAP`,
+      `# Host: Host ${hostId.toUpperCase()} | Port: ${port} | Model: ${primaryRepo} (${quant})`,
+      `# Paste into Cell 1 of Google Colab (G4/A100/L4/T4) and run (Shift+Enter).`,
       `# ============================================================================`,
-      `import os, sys, json, time, subprocess, socket, platform`,
-      `os.environ.setdefault("COUNCIL_HOST_ID", "${hostId}")`,
-      `os.environ.setdefault("GIST_ID", "${conf.GIST_ID || "05a1f96580fa13b373b42d919873dc57"}")`,
-      `os.environ.setdefault("GH_USERNAME", "${conf.GH_USERNAME || "savingannabel"}")`,
-      `print("=" * 74)`,
-      `print(f"⚡ SUOMYNONA COUNCIL GPU BOOTSTRAP — HOST {os.environ['COUNCIL_HOST_ID'].upper()} READY")`,
-      `print(f"• Python     : {sys.version.split()[0]} ({platform.system()} {platform.machine()})")`,
+      `import os, sys, json, re, time, subprocess, urllib.request`,
+      `HOST_ID = "${hostId}"`,
+      `PORT = ${port}`,
+      `GIST_ID = "${gistId}"`,
+      `GH_USERNAME = "${ghUser}"`,
+      `MODEL_REPO = "${primaryRepo}"`,
+      `QUANT = "${quant}"`,
+      `def _secret(k):`,
+      `    v = os.environ.get(k, "").strip()`,
+      `    if not v:`,
+      `        try:`,
+      `            from google.colab import userdata`,
+      `            v = (userdata.get(k) or "").strip()`,
+      `        except Exception: pass`,
+      `    return v`,
+      `GH_TOKEN = _secret("GH_TOKEN")`,
+      `HF_TOKEN = _secret("HF_TOKEN")`,
+      `if HF_TOKEN: os.environ["HF_TOKEN"] = HF_TOKEN`,
+      `gpu_name = "Colab GPU"`,
       `try:`,
-      `    smi = subprocess.check_output(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"], text=True).strip()`,
-      `    print(f"• GPU Found  : {smi}")`,
-      `except Exception:`,
-      `    print("• GPU Mode   : CPU / Local Unified Memory Bridge Active (96GB Virtual Pool)")`,
-      `print(f"• Local API  : http://127.0.0.1:${port}/v1 (OpenAI & Ollama Compatible)")`,
-      `print(f"• Gist Vault : {os.environ['GIST_ID']} (Auto-Sync Verified)")`,
-      `print("=" * 74)`,
-      `print("✅ BOOT CELL VERIFIED — ALL 4 HOSTS (A:8080, B:8081, C:8082, D:8083) ONLINE!")`,
+      `    gpu_name = subprocess.check_output(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"], text=True).strip().splitlines()[0]`,
+      `except Exception: pass`,
+      `print(f"⚡ SUOMYNONA COUNCIL COLAB GPU BOOT — HOST {HOST_ID.upper()} | {gpu_name}")`,
+      `subprocess.run("pip install -q huggingface_hub llama-cpp-python[server] && wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared", shell=True, check=False)`,
+      `srv = subprocess.Popen(f"python3 -m llama_cpp.server --hf_model_repo_id {MODEL_REPO} --model *{QUANT}*.gguf --n_gpu_layers 99 --n_ctx 32768 --host 0.0.0.0 --port {PORT}", shell=True)`,
+      `for _ in range(90):`,
+      `    try:`,
+      `        with urllib.request.urlopen(f"http://127.0.0.1:{PORT}/v1/models", timeout=2) as r:`,
+      `            if r.status == 200: break`,
+      `    except Exception: time.sleep(2)`,
+      `tun = subprocess.Popen(f"/usr/local/bin/cloudflared tunnel --url http://127.0.0.1:{PORT} --no-autoupdate", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)`,
+      `tunnel_url = ""`,
+      `for line in iter(tun.stdout.readline, ""):`,
+      `    m = re.search(r"https://[-a-z0-9]+\\.trycloudflare\\.com", line)`,
+      `    if m:`,
+      `        tunnel_url = m.group(0) + "/v1"`,
+      `        print(f"\\n✅ HOST {HOST_ID.upper()} LIVE TUNNEL URL: {tunnel_url}")`,
+      `        break`,
+      `if tunnel_url and GH_TOKEN and GIST_ID:`,
+      `    tunnel_doc = {"host": HOST_ID, "tunnel_url": tunnel_url, "quant": QUANT, "gpu_name": gpu_name, "model": MODEL_REPO, "updated_at": int(time.time())}`,
+      `    opencode_doc = {"gpu_name": gpu_name, "provider": {f"host-{HOST_ID}": {"options": {"baseURL": tunnel_url}, "models": {MODEL_REPO: {"name": MODEL_REPO}}}}}`,
+      `    payload = json.dumps({"files": {f"host_{HOST_ID}_tunnel.json": {"content": json.dumps(tunnel_doc, indent=2)}, f"opencode-providers-{HOST_ID}.json": {"content": json.dumps(opencode_doc, indent=2)}}}).encode()`,
+      `    req = urllib.request.Request(f"https://api.github.com/gists/{GIST_ID}", data=payload, method="PATCH", headers={"Authorization": f"token {GH_TOKEN}", "Content-Type": "application/json", "User-Agent": "suomynona-colab"})`,
+      `    urllib.request.urlopen(req)`,
+      `    print(f"📡 Published Host {HOST_ID.upper()} tunnel to GitHub Gist ({GIST_ID}) — Suomynona Council is now connected!")`,
+      `elif tunnel_url:`,
+      `    print(f"📋 Paste this URL into Suomynona Council -> Configure Hosts -> Host {HOST_ID.upper()}: {tunnel_url}")`,
     ].join("\n");
     res.setHeader("Content-Type", "text/x-python; charset=utf-8");
     res.send(script);
@@ -1644,82 +1732,93 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
   app.post("/api/colab/run-boot-cell", async (req: Request, res: Response) => {
     const b = req.body || {};
     const hostId = String(b.host || "all").toLowerCase();
-    const conf = readConf();
     const updates: Record<string, string> = {};
     if (b.GH_TOKEN && String(b.GH_TOKEN).trim()) updates.GH_TOKEN = String(b.GH_TOKEN).trim();
     if (b.GIST_ID && String(b.GIST_ID).trim()) updates.GIST_ID = String(b.GIST_ID).trim();
     if (b.HF_TOKEN && String(b.HF_TOKEN).trim()) updates.HF_TOKEN = String(b.HF_TOKEN).trim();
     if (Object.keys(updates).length) saveConf(updates);
 
-    // Execute real Python verification snippet + mark all 4 hosts ONLINE & GREEN
-    const pyCheck = executeRealShellCommand(
-      `python3 -c "import sys,platform; print(f'Python {sys.version.split()[0]} on {platform.system()} {platform.machine()} — Suomynona Bootstrap Verified')"`
-    );
+    const conf = readConf();
+    // Perform REAL GitHub Gist tunnel sync & live HTTP probe across all enabled hosts
+    await syncGistTunnels(true);
     const hosts = loadColabHosts();
-    const defaultPorts: Record<string, number> = { a: 8080, b: 8081, c: 8082, d: 8083 };
-    for (const h of hosts) {
-      const hid = String(h.id).toLowerCase();
-      if (!h.custom_url) h.custom_url = `http://127.0.0.1:${defaultPorts[hid] || 8080}/v1`;
-      if (!h.local_url) h.local_url = h.custom_url;
-      h.enabled = true;
-      LIVE_HOST_TUNNELS[hid] = h.custom_url;
-      HOST_VERIFIED_STATE[hid] = {
-        online: true,
-        ok: true,
-        tunnel_ok: true,
-        tunnel_url: h.custom_url,
-        gpu_name: `${String(h.provider || "colab").toUpperCase()} ${h.accelerator || "G4"}`,
-        accelerator_requested: h.accelerator || "G4",
-        accelerator_actual: h.accelerator || "G4",
-        gpu_used_mib: 18432,
-        gpu_total_mib: (Number(h.ram_gb) || 96) * 1024,
-        models_loaded: BACKENDS.filter((bk) => bk.host === hid).map((bk) => bk.model),
-        verified_at: Date.now(),
-        error: "",
-      };
-    }
-    saveColabHosts(hosts);
+    const targetHosts = hostId === "all" ? hosts : hosts.filter((h) => String(h.id).toLowerCase() === hostId);
+
+    const results = await Promise.all(
+      targetHosts.map(async (h) => {
+        const hid = String(h.id).toLowerCase();
+        const url = String(
+          (h.custom_url && !isBuiltInLoopbackStubUrl(h.custom_url) ? h.custom_url : "") ||
+            LIVE_HOST_TUNNELS[hid] ||
+            HOST_VERIFIED_STATE[hid]?.tunnel_url ||
+            ""
+        ).trim();
+        if (!url || !/^https?:\/\//i.test(url)) {
+          return {
+            host: hid,
+            url: "",
+            ok: false,
+            status: "awaiting_colab_tunnel",
+            latency_ms: null as number | null,
+            models_ready: 0,
+            error: "No live Colab tunnel published to Gist or bound in Custom URL yet (Gemini/BYOK fallback active)",
+          };
+        }
+        const probe = await probeHostEndpoint(url, h, 3500);
+        const live = probe.ok && !probe.is_internal_bridge;
+        return {
+          host: hid,
+          url,
+          ok: live,
+          status: live ? "online" : "offline",
+          latency_ms: live ? probe.latency_ms : null,
+          models_ready: live ? probe.models.length : 0,
+          models_loaded: live ? probe.models : [],
+          error: live ? "" : (probe.error || "Colab tunnel unreachable"),
+        };
+      })
+    );
+
     refreshBackends();
+    const liveCount = results.filter((r) => r.ok).length;
+    const statusLines = results.map((r) => {
+      const tag = r.ok
+        ? `🟢 COLAB LIVE (${r.latency_ms}ms · ${r.models_ready} model(s)) -> ${r.url}`
+        : r.url
+          ? `🔴 UNREACHABLE (${r.error}) -> ${r.url}`
+          : `🟡 STANDBY — Paste 1-Cell Boot Script into Google Colab & run to connect`;
+      return `║  Host ${r.host.toUpperCase()} : ${tag}`;
+    });
 
     const logOutput = [
       `╔══════════════════════════════════════════════════════════════════════════╗`,
-      `║  ⚡ SUOMYNONA COUNCIL — LIVE BOOT CELL EXECUTION & 4-HOST HANDSHAKE       ║`,
+      `║  ⚡ SUOMYNONA COUNCIL — REAL COLAB GIST TUNNEL SYNC & LIVE PROBE        ║`,
       `╠══════════════════════════════════════════════════════════════════════════╣`,
-      `║  Runtime  : ${(pyCheck.output || "Python 3 Runtime Verified").trim().slice(0, 58).padEnd(58)} ║`,
-      `║  Gist ID  : ${(conf.GIST_ID || "05a1f96580fa13b373b42d919873dc57").slice(0, 58).padEnd(58)} ║`,
-      `║  Host A   : http://127.0.0.1:8080/v1 (G4 96GB VRAM · Q4_K_M) [🟢 ONLINE] ║`,
-      `║  Host B   : http://127.0.0.1:8081/v1 (G4 96GB VRAM · Q4_K_M) [🟢 ONLINE] ║`,
-      `║  Host C   : http://127.0.0.1:8082/v1 (G4 96GB VRAM · Q4_K_M) [🟢 ONLINE] ║`,
-      `║  Host D   : http://127.0.0.1:8083/v1 (G4 96GB VRAM · Q4_K_M) [🟢 ONLINE] ║`,
+      `║  Gist ID  : ${conf.GIST_ID || "(not configured)"}`,
+      ...statusLines,
       `╚══════════════════════════════════════════════════════════════════════════╝`,
-      `✅ Boot cell executed & all ${hosts.length} GPU Host endpoints verified LIVE (${BACKENDS.length} active models mounted).`,
+      liveCount > 0
+        ? `✅ ${liveCount}/${results.length} Colab GPU Host(s) verified LIVE and ready for direct GPU inference!`
+        : `ℹ️ 0/${results.length} Colab notebooks currently publishing live tunnels. Copy the 1-Cell Boot Script into Google Colab (with GH_TOKEN in Colab Secrets) or paste a live https://*.trycloudflare.com/v1 URL. Gemini/BYOK fallback remains active in the meantime.`,
     ].join("\n");
 
-    pushLiveConsole(`🚀 [Boot Cell Verified] All 4 GPU Hosts (A:8080, B:8081, C:8082, D:8083) online & synchronized (${ hostId.toUpperCase() })`, {
-      category: "BOOT",
-      level: "ok",
-      host: "ALL",
-    });
-
-    const results = hosts.map((h) => {
-      const hid = String(h.id).toLowerCase();
-      const port = defaultPorts[hid] || 8080;
-      const url = h.custom_url || `http://127.0.0.1:${port}/v1`;
-      const modelsLoaded = BACKENDS.filter((bk) => bk.host === hid).map((bk) => bk.model);
-      return {
-        host: hid,
-        url,
-        ok: true,
-        latency_ms: 1,
-        models_ready: Math.max(2, modelsLoaded.length),
-      };
-    });
+    pushLiveConsole(
+      liveCount > 0
+        ? `🚀 [Colab Sync] ${liveCount}/${results.length} Colab GPU Host(s) verified LIVE`
+        : `📡 [Colab Sync] 0/${results.length} live Colab tunnels found in Gist (Gemini/BYOK fallback active)`,
+      {
+        category: "BOOT",
+        level: liveCount > 0 ? "ok" : "info",
+        host: hostId.toUpperCase(),
+      }
+    );
 
     res.json({
       ok: true,
+      live_hosts_count: liveCount,
       output: logOutput,
       results,
-      hosts: hosts.map(publicColabHost),
+      hosts: loadColabHosts().map(publicColabHost),
       backends_count: BACKENDS.length,
     });
   });

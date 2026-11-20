@@ -114,5 +114,14 @@
     "gb": 22,
     "unc": true,
     "saved_at": "2026-11-11T03:23:55.095Z"
+  },
+  {
+    "id": "qwen25-72b-abliterated",
+    "name": "Qwen2.5 72B Instruct Abliterated [HEAVY]",
+    "repo": "huihui-ai/Qwen2.5-72B-Instruct-abliterated",
+    "slot": "unc",
+    "gb": 42,
+    "unc": true,
+    "saved_at": "2026-11-18T17:48:12.700Z"
   }
 ]

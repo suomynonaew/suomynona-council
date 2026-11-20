@@ -7,7 +7,7 @@
     "slot": "auto",
     "private_bucket": true,
     "linked_at": "2026-11-06T15:07:01.513Z",
-    "last_synced_at": "2026-11-16T11:00:50.047Z",
+    "last_synced_at": "2026-11-18T23:47:35.147Z",
     "scan_source": "hf_api",
     "models": []
   },
@@ -19,7 +19,7 @@
     "slot": "auto",
     "private_bucket": true,
     "linked_at": "2026-11-07T18:38:53.713Z",
-    "last_synced_at": "2026-11-16T11:00:51.464Z",
+    "last_synced_at": "2026-11-18T23:47:35.338Z",
     "scan_source": "hf_api",
     "models": []
   }

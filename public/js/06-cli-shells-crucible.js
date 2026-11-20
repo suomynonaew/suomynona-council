@@ -30,12 +30,11 @@ function renderHfVaultInteractiveInsideCli(appendInteractiveDom, streamText, sta
         1. Linked Hugging Face Buckets (${buckets.length}) — Click a bucket to inspect its models:
       </div>
       <div class="in-cli-scroll-list" style="max-height:140px;margin-bottom:10px">
-        ${
-          buckets.length === 0
-            ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">No personal buckets linked yet. Type <code>link hf://buckets/owner/bucket</code> below or click <strong>＋ Link HF Bucket</strong> above.</div>`
-            : buckets
-                .map(
-                  (b) => `
+        ${buckets.length === 0
+        ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">No personal buckets linked yet. Type <code>link hf://buckets/owner/bucket</code> below or click <strong>＋ Link HF Bucket</strong> above.</div>`
+        : buckets
+          .map(
+            (b) => `
             <div class="in-cli-row ${b.id === (selectedBucket?.id || "") ? "is-active" : ""}" data-incli-bucket="${esc(b.id)}">
               <div style="min-width:0;flex:1">
                 <strong style="color:#f8fafc">🤗 ${esc(b.name || b.bucket_uri)}</strong>
@@ -46,9 +45,9 @@ function renderHfVaultInteractiveInsideCli(appendInteractiveDom, streamText, sta
                 <button type="button" class="ghost xs" style="color:#ff6b8b" data-incli-unlink-b="${esc(b.id)}">✕ Unlink</button>
               </div>
             </div>`
-                )
-                .join("")
-        }
+          )
+          .join("")
+      }
       </div>
 
       <!-- 2. MODELS IN SELECTED BUCKET -->
@@ -56,24 +55,22 @@ function renderHfVaultInteractiveInsideCli(appendInteractiveDom, streamText, sta
         <span style="font-size:11.5px;font-weight:700;color:#93c5fd">
           2. Models in Bucket ${selectedBucket ? `"${esc(selectedBucket.name)}" (${bucketModels.length})` : "(Select a bucket above)"} — Check models &amp; load into Vault:
         </span>
-        ${
-          bucketModels.length > 0
-            ? `<div style="display:flex;gap:5px">
+        ${bucketModels.length > 0
+        ? `<div style="display:flex;gap:5px">
                 <button type="button" class="primary xs incli-load-checked-models-btn">＋ Load Selected into Vault</button>
                 <button type="button" class="ghost xs incli-load-all-models-btn">Load All (${bucketModels.length})</button>
               </div>`
-            : ""
-        }
+        : ""
+      }
       </div>
       <div class="in-cli-scroll-list" style="max-height:165px;margin-bottom:10px">
-        ${
-          !selectedBucket
-            ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">Link or select a bucket above to scroll through its models inside this CLI.</div>`
-            : bucketModels.length === 0
-            ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">0 models currently inside "${esc(selectedBucket.name)}". Upload GGUF weights to your bucket and click ↻ Rescan.</div>`
-            : bucketModels
-                .map(
-                  (m, idx) => `
+        ${!selectedBucket
+        ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">Link or select a bucket above to scroll through its models inside this CLI.</div>`
+        : bucketModels.length === 0
+          ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">0 models currently inside "${esc(selectedBucket.name)}". Upload GGUF weights to your bucket and click ↻ Rescan.</div>`
+          : bucketModels
+            .map(
+              (m, idx) => `
             <label class="in-cli-row" style="cursor:pointer">
               <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
                 <input type="checkbox" class="incli-bm-check" value="${esc(m.repo || m.name)}" data-bm-name="${esc(m.name || m.repo)}" data-bm-gb="${m.gb || 6}" ${idx === 0 ? "checked" : ""}>
@@ -82,9 +79,9 @@ function renderHfVaultInteractiveInsideCli(appendInteractiveDom, streamText, sta
               </div>
               <span class="right-badge" style="font-size:10px">~${m.gb || 6} GB</span>
             </label>`
-                )
-                .join("")
-        }
+            )
+            .join("")
+      }
       </div>
 
       <!-- 3. SAVED IN 4-LAYER VAULT -->
@@ -92,12 +89,11 @@ function renderHfVaultInteractiveInsideCli(appendInteractiveDom, streamText, sta
         3. Saved in 4-Layer Persistent Vault (${totalVault} locked models):
       </div>
       <div class="in-cli-scroll-list" style="max-height:165px">
-        ${
-          totalVault === 0
-            ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">No custom models saved in Vault yet. Load from a bucket above or type <code>add-gguf</code>.</div>`
-            : [
-                ...ggufList.map(
-                  (g) => `
+        ${totalVault === 0
+        ? `<div class="muted" style="padding:6px 8px;font-size:11.5px">No custom models saved in Vault yet. Load from a bucket above or type <code>add-gguf</code>.</div>`
+        : [
+          ...ggufList.map(
+            (g) => `
             <div class="in-cli-row is-active">
               <div style="min-width:0;flex:1">
                 <strong style="color:#2ee6a6">🔒 [GGUF] ${esc(g.name)}</strong>
@@ -105,9 +101,9 @@ function renderHfVaultInteractiveInsideCli(appendInteractiveDom, streamText, sta
               </div>
               <button type="button" class="ghost xs" style="color:#ff6b8b" data-incli-del-vault="gguf:${esc(g.id || g.repo)}">✕ Remove</button>
             </div>`
-                ),
-                ...apiList.map(
-                  (m) => `
+          ),
+          ...apiList.map(
+            (m) => `
             <div class="in-cli-row is-active">
               <div style="min-width:0;flex:1">
                 <strong style="color:#38bdf8">🌐 [API] ${esc(m.name)}</strong>
@@ -115,9 +111,9 @@ function renderHfVaultInteractiveInsideCli(appendInteractiveDom, streamText, sta
               </div>
               <button type="button" class="ghost xs" style="color:#ff6b8b" data-incli-del-vault="api:${esc(m.id || m.name)}">✕ Remove</button>
             </div>`
-                ),
-              ].join("")
-        }
+          ),
+        ].join("")
+      }
       </div>
     `;
 
@@ -243,9 +239,9 @@ function renderBoostersInteractiveInsideCli(appendInteractiveDom, streamText) {
 
       <div class="in-cli-scroll-list" style="max-height:240px">
         ${items
-          .map((b, idx) => {
-            const isOn = isClusterBoosterEnabled(cluster, b.id);
-            return `
+        .map((b, idx) => {
+          const isOn = isClusterBoosterEnabled(cluster, b.id);
+          return `
             <div class="in-cli-row ${isOn ? "is-active" : ""}" data-incli-booster-toggle="${esc(b.id)}" data-incli-booster-on="${isOn ? "1" : "0"}">
               <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
                 <span style="font-weight:800;color:${isOn ? "#2ee6a6" : "#64748b"}">${isOn ? "[● ON]" : "[○ OFF]"}</span>
@@ -254,8 +250,8 @@ function renderBoostersInteractiveInsideCli(appendInteractiveDom, streamText) {
               </div>
               <span class="right-badge" style="font-size:10px;color:${isOn ? "#2ee6a6" : "#94a3b8"}">${isOn ? "ACTIVE" : "IDLE"}</span>
             </div>`;
-          })
-          .join("")}
+        })
+        .join("")}
       </div>
     `;
 
@@ -336,8 +332,8 @@ function renderGpuHostsInteractiveInsideCli(appendInteractiveDom, streamText, st
       <div style="font-size:11.5px;font-weight:700;color:#93c5fd;margin-bottom:4px">1. Attached GPU Runtime Hosts:</div>
       <div class="in-cli-scroll-list" style="max-height:175px;margin-bottom:10px">
         ${hosts
-          .map(
-            (h) => `
+        .map(
+          (h) => `
           <div class="in-cli-row is-active">
             <div style="min-width:0;flex:1">
               <strong style="color:#2ee6a6">🟢 [${esc(String(h.id).toUpperCase())}] ${esc(h.name)}</strong>
@@ -345,24 +341,23 @@ function renderGpuHostsInteractiveInsideCli(appendInteractiveDom, streamText, st
             </div>
             <div style="display:flex;gap:5px;align-items:center">
               <button type="button" class="ghost xs" data-incli-auth-host="${esc(h.id)}">🔑 Auth</button>
-              ${
-                !["a", "b", "c"].includes(String(h.id))
-                  ? `<button type="button" class="ghost xs" style="color:#ff6b8b" data-incli-del-host="${esc(h.id)}">✕ Remove</button>`
-                  : ""
-              }
+              ${!["a", "b", "c"].includes(String(h.id))
+              ? `<button type="button" class="ghost xs" style="color:#ff6b8b" data-incli-del-host="${esc(h.id)}">✕ Remove</button>`
+              : ""
+            }
             </div>
           </div>`
-          )
-          .join("")}
+        )
+        .join("")}
       </div>
 
       <div style="font-size:11.5px;font-weight:700;color:#93c5fd;margin-bottom:4px">2. Active GPU Slot Assignments (Click any slot to add/toggle models):</div>
       <div class="in-cli-scroll-list" style="max-height:175px">
         ${slots
-          .map((slot) => {
-            const assigned = Array.isArray(lineup[slot]) ? lineup[slot] : [];
-            const labels = assigned.map((id) => STATE.catalog?.[id]?.name || id);
-            return `
+        .map((slot) => {
+          const assigned = Array.isArray(lineup[slot]) ? lineup[slot] : [];
+          const labels = assigned.map((id) => STATE.catalog?.[id]?.name || id);
+          return `
             <div class="in-cli-row ${assigned.length ? "is-active" : ""}" data-incli-slot-pick="${esc(slot)}">
               <div style="min-width:0;flex:1">
                 <strong style="color:#f8fafc;text-transform:uppercase">[${esc(slot)}]</strong>
@@ -370,8 +365,8 @@ function renderGpuHostsInteractiveInsideCli(appendInteractiveDom, streamText, st
               </div>
               <span class="right-badge" style="font-size:10px">${assigned.length} active</span>
             </div>`;
-          })
-          .join("")}
+        })
+        .join("")}
       </div>
     `;
 
@@ -429,7 +424,7 @@ function renderGpuHostsInteractiveInsideCli(appendInteractiveDom, streamText, st
               key: "modelId",
               question: `Select a model to toggle in GPU Slot [${String(slot).toUpperCase()}]:`,
               choices: choices.map((id, i) => ({
-                label: `[${i + 1}] ${STATE.catalog?.[id]?.name || id} (${ (STATE.lineup?.[slot] || []).includes(id) ? "● ACTIVE" : "○ OFF" })`,
+                label: `[${i + 1}] ${STATE.catalog?.[id]?.name || id} (${(STATE.lineup?.[slot] || []).includes(id) ? "● ACTIVE" : "○ OFF"})`,
                 value: id,
               })),
               required: true,
@@ -603,11 +598,11 @@ function initSectionClis() {
             d.kind === "api"
               ? ["http://127.0.0.1:11434/v1", "http://127.0.0.1:8080/v1", "https://openrouter.ai/api/v1"]
               : [
-                  "huihui-ai/Qwen2.5-Coder-32B-Instruct-abliterated-GGUF",
-                  "dphn/Dolphin-2.9.4-Llama3.1-8B-gguf",
-                  "huihui-ai/DeepSeek-R1-Distill-Qwen-14B-abliterated-v2",
-                  "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B",
-                ],
+                "huihui-ai/Qwen2.5-Coder-32B-Instruct-abliterated-GGUF",
+                "dphn/Dolphin-2.9.4-Llama3.1-8B-gguf",
+                "huihui-ai/DeepSeek-R1-Distill-Qwen-14B-abliterated-v2",
+                "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B",
+              ],
           required: true,
         },
         {
@@ -1006,10 +1001,10 @@ function initSectionClis() {
             d.kind === "api"
               ? ["deepseek-r1:70b", "qwen2.5-coder:32b", "dolphin-mistral:latest"]
               : [
-                  "huihui-ai/Qwen2.5-Coder-32B-Instruct-abliterated-GGUF",
-                  "dphn/Dolphin-2.9.4-Llama3.1-8B-gguf",
-                  "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B",
-                ],
+                "huihui-ai/Qwen2.5-Coder-32B-Instruct-abliterated-GGUF",
+                "dphn/Dolphin-2.9.4-Llama3.1-8B-gguf",
+                "WhiteRabbitNeo/WhiteRabbitNeo-2.5-Qwen-2.5-Coder-7B",
+              ],
           required: true,
         },
         {
@@ -1075,16 +1070,16 @@ function initSectionClis() {
             d.action === "remove"
               ? (STATE.runtime_hosts || []).map((h) => ({ label: `[${h.id}] ${h.name} (${h.provider})`, value: h.id }))
               : [
-                  { label: "[1] RunPod Cloud GPU", value: "runpod" },
-                  { label: "[2] Vast.ai GPU Rig", value: "vastai" },
-                  { label: "[3] Lambda Labs H100/GH200", value: "lambda" },
-                  { label: "[4] Modal Serverless GPU", value: "modal" },
-                  { label: "[5] AWS / GCP / Azure VM", value: "cloud_vm" },
-                  { label: "[6] Localhost Bare-Metal / Ollama", value: "localhost" },
-                  { label: "[7] Custom OpenAI / SSH Endpoint", value: "custom" },
-                  { label: "[8] Google Colab", value: "colab" },
-                  { label: "[9] Kaggle", value: "kaggle" },
-                ],
+                { label: "[1] RunPod Cloud GPU", value: "runpod" },
+                { label: "[2] Vast.ai GPU Rig", value: "vastai" },
+                { label: "[3] Lambda Labs H100/GH200", value: "lambda" },
+                { label: "[4] Modal Serverless GPU", value: "modal" },
+                { label: "[5] AWS / GCP / Azure VM", value: "cloud_vm" },
+                { label: "[6] Localhost Bare-Metal / Ollama", value: "localhost" },
+                { label: "[7] Custom OpenAI / SSH Endpoint", value: "custom" },
+                { label: "[8] Google Colab", value: "colab" },
+                { label: "[9] Kaggle", value: "kaggle" },
+              ],
           defaultValue: "runpod",
         },
         {
@@ -1097,9 +1092,9 @@ function initSectionClis() {
             d.action === "remove"
               ? [{ label: "[yes] Confirm Remove", value: "yes" }]
               : getDefaultAcceleratorsForProvider(d.provider).map((acc) => ({
-                  label: `${acc} (${getClientGpuVramGb(d.provider, acc)}GB VRAM)`,
-                  value: acc,
-                })),
+                label: `${acc} (${getClientGpuVramGb(d.provider, acc)}GB VRAM)`,
+                value: acc,
+              })),
           defaultValue: "RTX4090-24GB",
         },
         {
@@ -1228,8 +1223,8 @@ function initSectionClis() {
             d.what === "gist"
               ? ["05a1f96580fa13b373b42d919873dc57"]
               : d.what === "oauth"
-              ? ["https://council-node.trycloudflare.com"]
-              : [],
+                ? ["https://council-node.trycloudflare.com"]
+                : [],
           defaultValue: "yes",
         },
       ],
@@ -2019,8 +2014,8 @@ function initSectionClis() {
     const modelLabel = resolveAgentModelLabel(agentObj);
     agentRunnerCli.streamText(
       `🤖 Selected Specialist Agent: ${agentObj.name} [Model: ${modelLabel} · Tools: ${(agentObj.tools || []).length}]\n` +
-        `   Role: ${(agentObj.system || "").slice(0, 140)}…\n` +
-        `   Type your task below and press Enter to execute!`,
+      `   Role: ${(agentObj.system || "").slice(0, 140)}…\n` +
+      `   Type your task below and press Enter to execute!`,
       "#2ee6a6",
       true
     );
@@ -2066,8 +2061,8 @@ function initSectionClis() {
           sub === "pull" || sub === "rebuild"
             ? await postJSON("/api/updater/pull", { force_rebuild: sub === "rebuild" })
             : sub === "status"
-            ? await getJSON("/api/updater/status")
-            : await postJSON("/api/updater/check", { auto_apply: true });
+              ? await getJSON("/api/updater/status")
+              : await postJSON("/api/updater/check", { auto_apply: true });
         streamText(r?.formatted || r?.message || "Update check complete.", r?.ok === false ? "#ff6b8b" : "#2ee6a6", true);
         return true;
       }
@@ -2088,7 +2083,7 @@ function initSectionClis() {
         const epLines = (STATE.backends || []).map((b, i) => `  ${i + 1}. ${b.name} → ${b.url || "(cloud/local)"}`);
         streamText(
           `🔗 Endpoints Synced (${r?.updated ? "Updated from Gist" : "Up-to-date"}):\n` +
-            (epLines.length ? epLines.join("\n") : "  0 endpoints."),
+          (epLines.length ? epLines.join("\n") : "  0 endpoints."),
           "#2ee6a6",
           true
         );
@@ -2213,7 +2208,7 @@ function initSectionClis() {
         const mcps = STATE.mcp || [];
         streamText(
           `🔌 Connected MCP Servers (${mcps.length} active):\n` +
-            mcps.slice(0, 20).map((m, i) => `  ${i + 1}. ${m.name} (${m.command})`).join("\n"),
+          mcps.slice(0, 20).map((m, i) => `  ${i + 1}. ${m.name} (${m.command})`).join("\n"),
           "#2ee6a6",
           true
         );
@@ -2304,7 +2299,7 @@ function setStudioWorkspaceLayout(layoutMode = "grid") {
     btn.classList.toggle("on", btn.dataset.wlayout === safeMode);
   });
   $("#council-terminal-drawer")?.classList.add("hidden");
-  try { localStorage.setItem("council-studio-wlayout", safeMode); } catch (_) {}
+  try { localStorage.setItem("council-studio-wlayout", safeMode); } catch (_) { }
 }
 
 function initStudioWorkspaceControls() {
@@ -2349,7 +2344,7 @@ function initStudioWorkspaceControls() {
   try {
     const savedLayout = localStorage.getItem("council-studio-wlayout");
     setStudioWorkspaceLayout(savedLayout === "focus" ? "focus" : "grid");
-  } catch (_) {}
+  } catch (_) { }
 
   // 4. Quick Build Blueprints (1-Click Unrestricted Build Starters)
   $$(".quick-blueprint-btn").forEach((btn) => {
@@ -2629,12 +2624,12 @@ function setAndSyncComposerShell(shellType = "prompt") {
       norm === "python"
         ? "🐍 /python >>>"
         : norm === "go"
-        ? "🐹 /go ❯"
-        : norm === "pwsh"
-        ? "⚡ /pwsh PS>"
-        : norm === "cmd"
-        ? "🪟 /cmd C:\\>"
-        : "🐚 /bash ❯";
+          ? "🐹 /go ❯"
+          : norm === "pwsh"
+            ? "⚡ /pwsh PS>"
+            : norm === "cmd"
+              ? "🪟 /cmd C:\\>"
+              : "🐚 /bash ❯";
   }
 
   setComposerSpotMode("terminal");
@@ -2866,10 +2861,10 @@ function renderOmegaMultiAgentFilesHub(answersMap = {}, promptText = "") {
           </summary>
           <div class="omega-agent-group-body">
             ${ag.fileEntries
-              .map(([fp, fc], fIdx) => {
-                const linesCount = fc.split("\n").length;
-                const fSpec = resolveFileSpecialistTag(fp, fc, ag.idx);
-                return `
+          .map(([fp, fc], fIdx) => {
+            const linesCount = fc.split("\n").length;
+            const fSpec = resolveFileSpecialistTag(fp, fc, ag.idx);
+            return `
                   <details class="omega-file-item-details">
                     <summary class="omega-file-item-summary">
                       <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -2885,8 +2880,8 @@ function renderOmegaMultiAgentFilesHub(answersMap = {}, promptText = "") {
                     <pre class="omega-file-code-pre">${esc(fc)}</pre>
                   </details>
                 `;
-              })
-              .join("")}
+          })
+          .join("")}
           </div>
         </details>
       `;
@@ -2905,10 +2900,10 @@ function renderOmegaMultiAgentFilesHub(answersMap = {}, promptText = "") {
         </summary>
         <div class="omega-agent-group-body" id="omega-unified-merged-body">
           ${mergedEntries
-            .map(([fp, fc], mIdx) => {
-              const linesCount = fc.split("\n").length;
-              const fSpec = resolveFileSpecialistTag(fp, fc, mIdx);
-              return `
+      .map(([fp, fc], mIdx) => {
+        const linesCount = fc.split("\n").length;
+        const fSpec = resolveFileSpecialistTag(fp, fc, mIdx);
+        return `
                 <details class="omega-file-item-details">
                   <summary class="omega-file-item-summary">
                     <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -2920,8 +2915,8 @@ function renderOmegaMultiAgentFilesHub(answersMap = {}, promptText = "") {
                   <pre class="omega-file-code-pre">${esc(fc)}</pre>
                 </details>
               `;
-            })
-            .join("")}
+      })
+      .join("")}
         </div>
       </details>
     `,
@@ -3285,10 +3280,10 @@ async function onOmegaMultiAgentPromptCompleted(answersMap = {}, promptText = ""
   }
   appendInplaceTerminalLog(
     `╔══ ⚡ OMEGA MULTI-AGENT EXECUTION COMPLETE ══════════════════════════════════╗\n` +
-      `║  Objective : ${String(promptText || "Multi-Agent Task").slice(0, 62).padEnd(62)}║\n` +
-      `║  Agents    : ${String(`${agentCount} Active Agent(s) · ${totalFiles} Generated File(s)`).padEnd(62)}║\n` +
-      `║  Explorer  : ${String(`${Object.keys(mergedFiles).length} files archived to 🗂️ File Explorer (separated per model)`).padEnd(62)}║\n` +
-      `╚═════════════════════════════════════════════════════════════════════════════╝`,
+    `║  Objective : ${String(promptText || "Multi-Agent Task").slice(0, 62).padEnd(62)}║\n` +
+    `║  Agents    : ${String(`${agentCount} Active Agent(s) · ${totalFiles} Generated File(s)`).padEnd(62)}║\n` +
+    `║  Explorer  : ${String(`${Object.keys(mergedFiles).length} files archived to 🗂️ File Explorer (separated per model)`).padEnd(62)}║\n` +
+    `╚═════════════════════════════════════════════════════════════════════════════╝`,
     "#2ee6a6"
   );
   appendInplaceTerminalLog(
@@ -3448,7 +3443,7 @@ function initOmegaMultiAgentWorkspace() {
     });
     try {
       localStorage.setItem("council-composer-stage-h-px", String(clamped));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   $$(".composer-h-preset").forEach((btn) => {
@@ -3465,7 +3460,7 @@ function initOmegaMultiAgentWorkspace() {
     if (savedH >= 68 && savedH <= 580) {
       applyComposerStageHeight(savedH);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   const dragHandle = $("#composer-drag-resize-handle");
   if (dragHandle && !dragHandle._boundDragResize) {
@@ -3512,14 +3507,14 @@ function initOmegaMultiAgentWorkspace() {
         rawSh === "prompt"
           ? "prompt"
           : rawSh === "pwsh" || rawSh === "powershell"
-          ? "pwsh"
-          : rawSh === "python" || rawSh === "py"
-          ? "python"
-          : rawSh === "go" || rawSh === "golang"
-          ? "go"
-          : rawSh === "cmd"
-          ? "cmd"
-          : "bash";
+            ? "pwsh"
+            : rawSh === "python" || rawSh === "py"
+              ? "python"
+              : rawSh === "go" || rawSh === "golang"
+                ? "go"
+                : rawSh === "cmd"
+                  ? "cmd"
+                  : "bash";
 
       setAndSyncComposerShell(mapped);
       if (mapped === "prompt" && rest) {
@@ -3683,8 +3678,7 @@ async function runAutonomousSwarmMission(profile = "full_autonomous") {
         const isDone = st.status === "DONE" || st.status === "VERIFIED" || String(st.status).startsWith("HEALED");
         const col = isDone ? "#2ee6a6" : isRunning ? "#fbbf24" : "#64748b";
         return (
-          `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 9px;border-radius:6px;background:rgba(15,23,42,0.86);border:1px solid ${
-            isDone ? "rgba(46,230,166,0.32)" : isRunning ? "rgba(251,191,36,0.45)" : "rgba(148,163,184,0.16)"
+          `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 9px;border-radius:6px;background:rgba(15,23,42,0.86);border:1px solid ${isDone ? "rgba(46,230,166,0.32)" : isRunning ? "rgba(251,191,36,0.45)" : "rgba(148,163,184,0.16)"
           };font-size:11.5px">` +
           `<span><strong>Step ${stepNum}:</strong> ${esc(st.agent)} <span class="muted">(${esc(st.model)})</span></span>` +
           `<span class="tabular-nums" style="color:${col};font-weight:800">${isDone ? "✓ " : isRunning ? "⏳ " : ""}${esc(st.status)}</span>` +
@@ -3794,8 +3788,7 @@ async function runAutonomousSwarmMission(profile = "full_autonomous") {
       `### ✅ Swarm Task Completed in ${finalRes.elapsed_ms}ms · ${fileNames.length} Verified File(s) · Exit Code \`${finalRes.exit_code}\`\n` +
       `- **Workspace Output:** \`${finalRes.workspace_dir}\`\n` +
       `- **Synthesized & De-Duplicated Files:** ${fileNames.map((f) => `\`${f}\``).join(", ")}\n` +
-      `- **Self-Heal Repair Passes:** \`${finalRes.self_heal_rounds || 0}/3\` · **OPSEC Secret Scrubber:** \`${
-        finalRes.opsec_redactions ? `${finalRes.opsec_redactions} redacted` : "Clean (0 leaks)"
+      `- **Self-Heal Repair Passes:** \`${finalRes.self_heal_rounds || 0}/3\` · **OPSEC Secret Scrubber:** \`${finalRes.opsec_redactions ? `${finalRes.opsec_redactions} redacted` : "Clean (0 leaks)"
       }\`\n` +
       `- **AST & Syntax Checks:** ${(finalRes.ast_checks || []).join(" · ") || "Passed"}\n\n` +
       `#### Live Execution Output\n\`\`\`text\n${finalRes.live_test_output || "(Executed cleanly with 0 errors)"}\n\`\`\`\n\n` +
@@ -3910,7 +3903,7 @@ window.markHostConfigSaved = function (hostId, meta = {}) {
   map[hk] = { ...(map[hk] || {}), ...meta, saved: true };
   try {
     localStorage.setItem(SAVED_HOSTS_LS_KEY, JSON.stringify(map));
-  } catch (_) {}
+  } catch (_) { }
 };
 
 function buildHostBootScriptForTab(hk = "a") {
@@ -3955,7 +3948,7 @@ function buildHostBootScriptForTab(hk = "a") {
 
   return [
     `# 🚀 SUOMYNONA COUNCIL — 1-CELL COLAB / KAGGLE GPU AUTO-BOOT (HOST ${upper})`,
-    `# Paste into Cell 1 of Google Colab or Kaggle Notebook and press Shift+Enter.`,
+    `# Paste into Cell 1 of Google Colab (G4/A100/L4/T4) or Kaggle Notebook and press Shift+Enter.`,
     `# Assigned Host ${upper} Weight(s): ${assignedSummary}`,
     `import os, subprocess, re, time, json, urllib.request`,
     `HOST_ID = "${hostKey}"`,
@@ -3965,11 +3958,29 @@ function buildHostBootScriptForTab(hk = "a") {
     `MODEL_REPO = "${primaryRepo}"`,
     `QUANT = "${quant}"`,
     `CTX_LEN = ${ctx}`,
-    `GH_TOKEN = os.environ.get("GH_TOKEN", "")  # Set in Colab Secrets (🔑) to auto-publish tunnel to Gist Wall`,
-    ``,
-    `print(f"⚡ Installing llama-cpp-python (CUDA) + cloudflared for Host {HOST_ID.upper()}...")`,
+    `def _secret(k):`,
+    `    v = os.environ.get(k, "").strip()`,
+    `    if not v:`,
+    `        try:`,
+    `            from google.colab import userdata`,
+    `            v = (userdata.get(k) or "").strip()`,
+    `        except Exception: pass`,
+    `    return v`,
+    `GH_TOKEN = _secret("GH_TOKEN")  # Add GH_TOKEN in Colab Secrets (🔑) to auto-sync tunnel to Suomynona Council`,
+    `HF_TOKEN = _secret("HF_TOKEN")`,
+    `if HF_TOKEN: os.environ["HF_TOKEN"] = HF_TOKEN`,
+    `gpu_name = "Colab GPU"`,
+    `try:`,
+    `    gpu_name = subprocess.check_output(["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"], text=True).strip().splitlines()[0]`,
+    `except Exception: pass`,
+    `print(f"⚡ Booting Host {HOST_ID.upper()} on {gpu_name} ({MODEL_REPO} · {QUANT})...")`,
     `subprocess.run("pip install -q huggingface_hub llama-cpp-python[server] && wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O /usr/local/bin/cloudflared && chmod +x /usr/local/bin/cloudflared", shell=True, check=False)`,
     `srv = subprocess.Popen(f"python3 -m llama_cpp.server --hf_model_repo_id {MODEL_REPO} --model *{QUANT}*.gguf --n_gpu_layers ${ngl} --n_ctx {CTX_LEN} --host 0.0.0.0 --port {PORT}", shell=True)`,
+    `for _ in range(90):`,
+    `    try:`,
+    `        with urllib.request.urlopen(f"http://127.0.0.1:{PORT}/v1/models", timeout=2) as r:`,
+    `            if r.status == 200: break`,
+    `    except Exception: time.sleep(2)`,
     `tun = subprocess.Popen(f"/usr/local/bin/cloudflared tunnel --url http://127.0.0.1:{PORT} --no-autoupdate", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)`,
     `tunnel_url = ""`,
     `for line in iter(tun.stdout.readline, ""):`,
@@ -3979,10 +3990,14 @@ function buildHostBootScriptForTab(hk = "a") {
     `        print(f"\\n✅ HOST {HOST_ID.upper()} LIVE TUNNEL URL: {tunnel_url}")`,
     `        break`,
     `if tunnel_url and GH_TOKEN and GIST_ID:`,
-    `    payload = json.dumps({"files": {f"host_{HOST_ID}_tunnel.json": {"content": json.dumps({"host": HOST_ID, "tunnel_url": tunnel_url, "quant": QUANT})}}}).encode()`,
-    `    req = urllib.request.Request(f"https://api.github.com/gists/{GIST_ID}", data=payload, method="PATCH", headers={"Authorization": f"token {GH_TOKEN}", "Content-Type": "application/json"})`,
+    `    tunnel_doc = {"host": HOST_ID, "tunnel_url": tunnel_url, "quant": QUANT, "gpu_name": gpu_name, "model": MODEL_REPO, "updated_at": int(time.time())}`,
+    `    opencode_doc = {"gpu_name": gpu_name, "provider": {f"host-{HOST_ID}": {"options": {"baseURL": tunnel_url}, "models": {MODEL_REPO: {"name": MODEL_REPO}}}}}`,
+    `    payload = json.dumps({"files": {f"host_{HOST_ID}_tunnel.json": {"content": json.dumps(tunnel_doc, indent=2)}, f"opencode-providers-{HOST_ID}.json": {"content": json.dumps(opencode_doc, indent=2)}}}).encode()`,
+    `    req = urllib.request.Request(f"https://api.github.com/gists/{GIST_ID}", data=payload, method="PATCH", headers={"Authorization": f"token {GH_TOKEN}", "Content-Type": "application/json", "User-Agent": "suomynona-colab"})`,
     `    urllib.request.urlopen(req)`,
-    `    print(f"📡 Published Host {HOST_ID.upper()} tunnel to Gist Wall ({GIST_ID}) for @${ghUser}!")`,
+    `    print(f"📡 Published Host {HOST_ID.upper()} tunnel to Gist ({GIST_ID}) for @${ghUser} — Suomynona Council will route to this Colab GPU automatically!")`,
+    `elif tunnel_url:`,
+    `    print(f"📋 Paste this URL into Host {HOST_ID.upper()} in Suomynona Council -> Configure Hosts: {tunnel_url}")`,
   ].join("\n");
 }
 
@@ -4063,7 +4078,12 @@ window.refreshTabbedHostSetupUI = async function (preferredTab) {
     const savedInfo = savedMap[hk] || {};
     const urlInput = $("#hs-tab-endpoint-url");
     if (urlInput) {
-      urlInput.value = ch.custom_url || ch.tunnel_url || savedInfo.url || `http://127.0.0.1:${defaultPorts[hk] || 8080}/v1`;
+      const rawUrl = ch.custom_url || ch.tunnel_url || savedInfo.url || "";
+      const isStubLoopback = /^https?:\/\/(127\.0\.0\.1|localhost):(808[0-3])\b/i.test(rawUrl);
+      urlInput.value = (ch.provider === "local" || !isStubLoopback) ? rawUrl : "";
+      urlInput.placeholder = ch.provider === "local"
+        ? `http://127.0.0.1:${defaultPorts[hk] || 11434}/v1`
+        : "Auto-synced via GitHub Gist — or paste live https://*.trycloudflare.com/v1";
     }
     const upper = hk.toUpperCase();
     if ($("#hs-active-tab-title")) {
@@ -4105,8 +4125,8 @@ window.refreshTabbedHostSetupUI = async function (preferredTab) {
         const hbBadge = hb.online
           ? `Online · ${hb.latency_ms}ms`
           : isSaved
-          ? "✓ SAVED"
-          : "STANDBY";
+            ? "✓ SAVED"
+            : "STANDBY";
         return `
           <div class="hs-saved-host-chip ${isSaved || hb.online ? "is-saved" : ""} ${isEditing ? "is-editing" : ""}" data-hs-board-pick="${esc(hk)}">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
@@ -4202,7 +4222,7 @@ function initTabbedHostSetupConfigurator() {
         }, 1800);
       }
       status(`📋 Copied Host ${hk.toUpperCase()} 1-Cell Boot Script to clipboard.`);
-    } catch (_) {}
+    } catch (_) { }
   });
 
   $("#hs-download-boot-script-btn")?.addEventListener("click", () => {
@@ -4237,7 +4257,7 @@ function initTabbedHostSetupConfigurator() {
       await postJSON("/api/colab/connect", { host: hk, custom_url: url }).catch(() => ({}));
       window.markHostConfigSaved(hk, { provider: "localhost", url, saved_at: new Date().toLocaleTimeString() });
     }
-    await reloadState().catch(() => {});
+    await reloadState().catch(() => { });
     await window.pollHostHeartbeatNow?.();
     await window.refreshTabbedHostSetupUI(window._activeHostSetupTab);
     if ($("#hs-verify-hosts-output")) {
@@ -4273,9 +4293,9 @@ function initTabbedHostSetupConfigurator() {
     const payload = { target_pct: 85 };
     if (hostId) payload.host_id = hostId;
     const res = await postJSON("/api/hosts/fill-vram", payload).catch((e) => ({ ok: false, error: e.message }));
-    await reloadState().catch(() => {});
+    await reloadState().catch(() => { });
     if (typeof syncHostTreeStateFromServer === "function") {
-      await syncHostTreeStateFromServer().catch(() => {});
+      await syncHostTreeStateFromServer().catch(() => { });
     }
     await window.pollHostHeartbeatNow?.();
     await window.refreshTabbedHostSetupUI?.(window._activeHostSetupTab || "a");
@@ -4309,7 +4329,7 @@ function initTabbedHostSetupConfigurator() {
       hsRebalanceBtn.textContent = "⏳ Rebalancing…";
       if (outEl) outEl.textContent = "⚖️ Running First-Fit Decreasing (FFD) VRAM pack & clone deduplication across Hosts A–D…";
       const res = await postJSON("/api/hosts/rebalance-vram", { dry_run: false }).catch((e) => ({ ok: false, error: e.message }));
-      await reloadState().catch(() => {});
+      await reloadState().catch(() => { });
       await window.pollHostHeartbeatNow?.();
       await window.refreshTabbedHostSetupUI?.(window._activeHostSetupTab || "a");
       hsRebalanceBtn.disabled = false;
@@ -4404,11 +4424,12 @@ function initLiveHostHeartbeatMonitor() {
           const pct = Number(h.pressure_pct ?? 0);
           const cbState = String(h.circuit_state || "CLOSED");
           const isBridge = Boolean(h.is_internal_bridge || h.endpoint_mode === "internal_bridge");
-          const hasHostErr = !h.online && !isBridge && Boolean(h.error);
-          const pLabel = cbState === "OPEN" ? "CB:OPEN" : hasHostErr ? (h.error_code || "OFFLINE") : h.pressure_label || (pct > 90 ? "Overcommitted" : pct >= 75 ? "High Load" : "Nominal");
-          const pCol = cbState === "OPEN" || pct > 90 || hasHostErr ? "#f43f5e" : pct >= 75 ? "#f59e0b" : "#2ee6a6";
+          const isCloudFallback = h.endpoint_mode === "cloud_fallback" || (!h.online && !h.configured && !isBridge);
+          const hasHostErr = !h.online && !isBridge && !isCloudFallback && Boolean(h.error);
+          const pLabel = cbState === "OPEN" ? "CB:OPEN" : hasHostErr ? (h.error_code || "OFFLINE") : isCloudFallback ? "Colab Standby" : h.pressure_label || (pct > 90 ? "Overcommitted" : pct >= 75 ? "High Load" : "Nominal");
+          const pCol = cbState === "OPEN" || pct > 90 || hasHostErr ? "#f43f5e" : isCloudFallback ? "#38bdf8" : pct >= 75 ? "#f59e0b" : "#2ee6a6";
           const barW = Math.max(2, Math.min(100, Math.round(pct)));
-          const connText = cbState === "OPEN" ? "Bypassed (<1ms)" : isBridge ? "Cloud Bridge" : h.online ? `${h.latency_ms}ms (GPU)` : h.configured ? "⚠️ Offline" : "Local/Cfg";
+          const connText = cbState === "OPEN" ? "Bypassed (<1ms)" : isBridge ? "Local Bridge" : h.online ? `🟢 ${h.latency_ms}ms (Colab GPU)` : isCloudFallback ? "Standby · Gemini/BYOK" : "⚠️ Offline";
           const modelsCnt = Number(h.assigned_models_count ?? 0);
           const kvGb = Number(h.kv_vram_gb ?? 0);
           const ctxK = Math.round(Number(h.elastic_ctx || h.context_size || 32768) / 1024);
@@ -4543,7 +4564,7 @@ function initLiveHostHeartbeatMonitor() {
     btn.disabled = true;
     btn.textContent = "⏳ Packing…";
     const res = await postJSON("/api/hosts/rebalance-vram", { dry_run: false }).catch((err) => ({ ok: false, error: err.message }));
-    await reloadState().catch(() => {});
+    await reloadState().catch(() => { });
     await pollNow();
     window.refreshTabbedHostSetupUI?.(window._activeHostSetupTab || "a");
     btn.disabled = false;
@@ -4588,14 +4609,14 @@ function renderSingleFooterEventDom(out, ev) {
     isErr
       ? "#ff6b8b"
       : bucket === "CLI"
-      ? (ev._cliColor || "#38bdf8")
-      : bucket === "INPUT"
-      ? "#38bdf8"
-      : bucket === "COMPILER"
-      ? "#2ee6a6"
-      : bucket === "INFERENCE"
-      ? "#c084fc"
-      : "#cbd5e1";
+        ? (ev._cliColor || "#38bdf8")
+        : bucket === "INPUT"
+          ? "#38bdf8"
+          : bucket === "COMPILER"
+            ? "#2ee6a6"
+            : bucket === "INFERENCE"
+              ? "#c084fc"
+              : "#cbd5e1";
 
   const row = document.createElement("div");
   row.style.cssText =
@@ -4603,8 +4624,8 @@ function renderSingleFooterEventDom(out, ev) {
     (isErr
       ? "background:rgba(244,63,94,0.14);border-left:2px solid #f43f5e;"
       : bucket === "CLI"
-      ? "background:rgba(15,23,42,0.55);border-left:2px solid rgba(56,189,248,0.55);"
-      : "");
+        ? "background:rgba(15,23,42,0.55);border-left:2px solid rgba(56,189,248,0.55);"
+        : "");
   const ts = ev.ts ? String(ev.ts).slice(-12) : new Date().toISOString().slice(11, 23);
   row.innerHTML = `<span style="color:#64748b">${esc(ts)}</span> <strong style="color:${color}">[${esc(ev.category || bucket)}]</strong> <span style="color:${isErr ? "#fecdd3" : ev._cliColor || "#e2e8f0"}">${esc(ev.message || "")}</span>`;
   out.appendChild(row);
@@ -4698,7 +4719,7 @@ function initGlobalStickyFooterTerminal() {
     }
     try {
       localStorage.setItem("council-global-footer-cli-state", mode);
-    } catch (_) {}
+    } catch (_) { }
   };
 
   try {
@@ -4706,7 +4727,7 @@ function initGlobalStickyFooterTerminal() {
     if (savedState === "expanded" || savedState === "hidden" || savedState === "minimized") {
       setFooterState(savedState);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   if (_gftEvents.length === 0) {
     window.mirrorEventToGlobalFooterStream({
@@ -4857,7 +4878,7 @@ function initGlobalStickyFooterTerminal() {
       if (_gftCmdHistory.length > 80) _gftCmdHistory.shift();
       try {
         localStorage.setItem("council-gft-cli-history", JSON.stringify(_gftCmdHistory));
-      } catch {}
+      } catch { }
     }
     _gftHistCursor = _gftCmdHistory.length;
 

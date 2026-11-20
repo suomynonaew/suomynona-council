@@ -130,7 +130,7 @@ function probeTcpFast(port: number, host = "127.0.0.1", timeoutMs = 400): Promis
     const done = (ok: boolean) => {
       try {
         sock.destroy();
-      } catch {}
+      } catch { }
       resolve(ok);
     };
     sock.setTimeout(timeoutMs, () => done(false));
@@ -491,13 +491,13 @@ export async function runComprehensiveDoctor(opts: {
       summary: `AppRoot=${PROJECT_ROOT} · DataRoot=${DATA_ROOT} · Mode=${process.env.COUNCIL_DESKTOP_MODE === "1" ? "Native Desktop (.exe)" : "Web/Node"}`,
       ...(!fs.existsSync(DATA_ROOT)
         ? {
-            error_code: "DATA_ROOT_MISSING",
-            error_definition: `Writable data root directory '${DATA_ROOT}' does not exist.`,
-            repair_steps: [
-              `1. Ensure '${DATA_ROOT}' is writable by your Windows account.`,
-              "2. Launch Suomynona Council via LAUNCH_SUOMYNONA_DESKTOP.bat or run-local-desktop.bat.",
-            ],
-          }
+          error_code: "DATA_ROOT_MISSING",
+          error_definition: `Writable data root directory '${DATA_ROOT}' does not exist.`,
+          repair_steps: [
+            `1. Ensure '${DATA_ROOT}' is writable by your Windows account.`,
+            "2. Launch Suomynona Council via LAUNCH_SUOMYNONA_DESKTOP.bat or run-local-desktop.bat.",
+          ],
+        }
         : {}),
     });
 
@@ -515,30 +515,30 @@ export async function runComprehensiveDoctor(opts: {
           upState.status === "applied"
             ? "repaired"
             : upState.status === "error"
-            ? "error"
-            : upState.commits_behind > 0
-            ? "warn"
-            : isUpToDate
-            ? "ok"
-            : "warn",
+              ? "error"
+              : upState.commits_behind > 0
+                ? "warn"
+                : isUpToDate
+                  ? "ok"
+                  : "warn",
         auto_repaired: upState.status === "applied",
         repair_action_taken:
           upState.status === "applied" ? `Auto-pulled & built Git update ${upState.installed_short}` : undefined,
         summary: `${upState.repo_url} (${upState.branch}) · Status=${upState.status.toUpperCase()} · Local=${upState.local_short || "?"} · Remote=${upState.remote_short || "?"} · Behind=${upState.commits_behind} · AutoPull=${upState.auto_pull ? "ON" : "OFF"}`,
         ...(upState.last_error
           ? {
-              error_code: "GIT_UPDATER_ERROR",
-              error_definition: upState.error_definition || upState.last_error,
-              repair_steps: upState.repair_steps?.length
-                ? upState.repair_steps
-                : [
-                    "1. Verify Git for Windows is installed ('git --version').",
-                    "2. Verify internet access to github.com/suomynonaew/suomynona-council.",
-                    "3. Run '/update pull' in CLI.",
-                  ],
-            }
+            error_code: "GIT_UPDATER_ERROR",
+            error_definition: upState.error_definition || upState.last_error,
+            repair_steps: upState.repair_steps?.length
+              ? upState.repair_steps
+              : [
+                "1. Verify Git for Windows is installed ('git --version').",
+                "2. Verify internet access to github.com/suomynonaew/suomynona-council.",
+                "3. Run '/update pull' in CLI.",
+              ],
+          }
           : upState.commits_behind > 0
-          ? {
+            ? {
               error_code: "GIT_UPDATE_PENDING",
               error_definition: `Repository is ${upState.commits_behind} commit(s) behind origin/${upState.branch} (${upState.remote_subject}).`,
               repair_steps: [
@@ -546,7 +546,7 @@ export async function runComprehensiveDoctor(opts: {
                 "2. The desktop app will automatically pull, rebuild dist/, and hot-reload.",
               ],
             }
-          : {}),
+            : {}),
       });
     } catch (err: any) {
       pushCheck({
@@ -587,13 +587,13 @@ export async function runComprehensiveDoctor(opts: {
         : `Write permission test failed on ${DATA_DIR}: ${writeErr}`,
       ...(!writeOk
         ? {
-            error_code: "STORAGE_NOT_WRITABLE",
-            error_definition: `Suomynona Council cannot write state files to '${DATA_DIR}' (${writeErr}). Antivirus Controlled Folder Access or read-only folder permissions can cause this.`,
-            repair_steps: [
-              `1. Grant write permissions for your Windows user to '${DATA_ROOT}'.`,
-              "2. If Windows Ransomware Protection is blocking the .exe, allow 'Suomynona Council.exe'.",
-            ],
-          }
+          error_code: "STORAGE_NOT_WRITABLE",
+          error_definition: `Suomynona Council cannot write state files to '${DATA_DIR}' (${writeErr}). Antivirus Controlled Folder Access or read-only folder permissions can cause this.`,
+          repair_steps: [
+            `1. Grant write permissions for your Windows user to '${DATA_ROOT}'.`,
+            "2. If Windows Ransomware Protection is blocking the .exe, allow 'Suomynona Council.exe'.",
+          ],
+        }
         : {}),
     });
 
@@ -631,10 +631,10 @@ export async function runComprehensiveDoctor(opts: {
           : "All .council_data/*.json files valid",
         ...(brokenJson.length
           ? {
-              error_code: "CORRUPT_STATE_JSON",
-              error_definition: `One or more JSON files in ${DATA_DIR} contain invalid JSON syntax: ${brokenJson.join(", ")}.`,
-              repair_steps: ["1. Run '/doctor' (with auto-repair enabled) to quarantine corrupt JSON and restore clean defaults."],
-            }
+            error_code: "CORRUPT_STATE_JSON",
+            error_definition: `One or more JSON files in ${DATA_DIR} contain invalid JSON syntax: ${brokenJson.join(", ")}.`,
+            repair_steps: ["1. Run '/doctor' (with auto-repair enabled) to quarantine corrupt JSON and restore clean defaults."],
+          }
           : {}),
       });
     }
@@ -685,7 +685,7 @@ export async function runComprehensiveDoctor(opts: {
     }
 
     const confNow = readConf();
-    const rawGem = process.env.GEMINI_API_KEY || confNow.GEMINI_API_KEY || "";
+    const rawGem = confNow.GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
     const gemHealth = inspectGeminiKeyHealth(rawGem);
     const hasOrca = Boolean(confNow.ORCAROUTER_API_KEY);
     const hasOpenRouter = Boolean(confNow.OPENROUTER_API_KEY);
@@ -696,7 +696,7 @@ export async function runComprehensiveDoctor(opts: {
       id: "env_and_conf_sanitization",
       domain: "CREDENTIALS_AND_ENV",
       title: "API Credentials, .env & Global Auth Vault",
-      status: envFixes.length ? "repaired" : !gemHealth.valid && !hasOrca && !hasOpenRouter ? "warn" : gemHealth.code === "EPHEMERAL_AISTUDIO_TOKEN" ? "warn" : "ok",
+      status: envFixes.length ? "repaired" : !gemHealth.valid && !hasOrca && !hasOpenRouter ? "warn" : "ok",
       auto_repaired: envFixes.length > 0,
       repair_action_taken: envFixes.length ? envFixes.join("; ") : undefined,
       summary:
@@ -704,18 +704,13 @@ export async function runComprehensiveDoctor(opts: {
         (envFixes.length ? ` · Repaired: ${envFixes.join("; ")}` : ""),
       ...(!gemHealth.valid
         ? {
-            error_code: `GEMINI_KEY_${gemHealth.code}`,
-            error_definition:
-              gemHealth.reason +
-              (gemHealth.code === "EPHEMERAL_AISTUDIO_TOKEN"
-                ? " Wait: OrcaRouter works independently if its key is valid, but Gemini fallback calls will fail until replaced."
-                : ""),
-            repair_steps: [
-              "1. Go to https://aistudio.google.com/apikey and create a standard Gemini API key starting with 'AIzaSy...'.",
-              "2. Open Configure -> /host Setup -> Global Auth (or edit %APPDATA%\\Suomynona Council\\.env) and save GEMINI_API_KEY.",
-              "3. Also verify ORCAROUTER_API_KEY or OPENROUTER_API_KEY is valid in Global Auth.",
-            ],
-          }
+          error_code: `GEMINI_KEY_${gemHealth.code}`,
+          error_definition: gemHealth.reason,
+          repair_steps: [
+            "1. Open 🔑 Keys & Vault -> paste your Gemini API key (AIzaSy... or AQ....) from https://aistudio.google.com/apikey.",
+            "2. Or add any other cloud provider key (OpenRouter, OpenAI, Anthropic, Groq, DeepSeek, OrcaRouter) or run Ollama locally.",
+          ],
+        }
         : {}),
     });
   }
@@ -823,14 +818,14 @@ export async function runComprehensiveDoctor(opts: {
       summary: resetCircuits.length
         ? `Reset ${resetCircuits.length} tripped circuit breaker(s): Host ${resetCircuits.join(", ")}`
         : openCircuits.length
-        ? `Tripped circuit breaker(s): ${openCircuits.join(", ")}`
-        : "All 4 host circuit breakers CLOSED (0 bypassed hosts)",
+          ? `Tripped circuit breaker(s): ${openCircuits.join(", ")}`
+          : "All 4 host circuit breakers CLOSED (0 bypassed hosts)",
       ...(openCircuits.length && !resetCircuits.length
         ? {
-            error_code: "CIRCUIT_BREAKER_OPEN",
-            error_definition: `Repeated endpoint failures tripped circuit breakers (${openCircuits.join(", ")}), causing fast-skip routing.`,
-            repair_steps: ["1. Fix the underlying host endpoint or run '/doctor' to auto-reset circuit breakers."],
-          }
+          error_code: "CIRCUIT_BREAKER_OPEN",
+          error_definition: `Repeated endpoint failures tripped circuit breakers (${openCircuits.join(", ")}), causing fast-skip routing.`,
+          repair_steps: ["1. Fix the underlying host endpoint or run '/doctor' to auto-reset circuit breakers."],
+        }
         : {}),
     });
 
@@ -856,10 +851,10 @@ export async function runComprehensiveDoctor(opts: {
         summary: `Cluster VRAM ${vramBefore.cluster_used_gb}/${vramBefore.cluster_total_gb}GB (${vramBefore.cluster_pressure_pct}% · Overcommitted: ${vramBefore.overcommitted_hosts.length})`,
         ...(vramBefore.overcommitted_hosts.length
           ? {
-              error_code: "VRAM_OVERCOMMITTED",
-              error_definition: `Host(s) ${vramBefore.overcommitted_hosts.join(", ")} exceed usable VRAM model budget.`,
-              repair_steps: ["1. Run '/rebalance' or '/doctor' to bin-pack models across Hosts A-D."],
-            }
+            error_code: "VRAM_OVERCOMMITTED",
+            error_definition: `Host(s) ${vramBefore.overcommitted_hosts.join(", ")} exceed usable VRAM model budget.`,
+            repair_steps: ["1. Run '/rebalance' or '/doctor' to bin-pack models across Hosts A-D."],
+          }
           : {}),
       });
     }
@@ -916,10 +911,10 @@ export async function runComprehensiveDoctor(opts: {
                 : `API reachable (HTTP ${r.status}), but no ORCAROUTER_API_KEY configured`,
               ...(!key
                 ? {
-                    error_code: "ORCAROUTER_KEY_MISSING",
-                    error_definition: "OrcaRouter API is online, but ORCAROUTER_API_KEY is empty.",
-                    repair_steps: ["1. Save ORCAROUTER_API_KEY in Configure -> /host Setup -> Global Auth."],
-                  }
+                  error_code: "ORCAROUTER_KEY_MISSING",
+                  error_definition: "OrcaRouter API is online, but ORCAROUTER_API_KEY is empty.",
+                  repair_steps: ["1. Save ORCAROUTER_API_KEY in Configure -> /host Setup -> Global Auth."],
+                }
                 : {}),
             };
           }
@@ -1031,13 +1026,13 @@ export async function runComprehensiveDoctor(opts: {
               : `GitHub API returned HTTP ${r.status}`,
             ...(!r.ok
               ? {
-                  error_code: `GITHUB_HTTP_${r.status}`,
-                  error_definition: `GitHub API returned HTTP ${r.status}. A stale GH_TOKEN returns 401; unauthenticated rate limits return 403.`,
-                  repair_steps: [
-                    "1. Update GH_TOKEN in Configure -> /host Setup -> Global Auth (https://github.com/settings/tokens).",
-                    "2. Run '/doctor' again to verify Gist and repo auto-update access.",
-                  ],
-                }
+                error_code: `GITHUB_HTTP_${r.status}`,
+                error_definition: `GitHub API returned HTTP ${r.status}. A stale GH_TOKEN returns 401; unauthenticated rate limits return 403.`,
+                repair_steps: [
+                  "1. Update GH_TOKEN in Configure -> /host Setup -> Global Auth (https://github.com/settings/tokens).",
+                  "2. Run '/doctor' again to verify Gist and repo auto-update access.",
+                ],
+              }
               : {}),
           };
         } catch (err: any) {
@@ -1080,15 +1075,15 @@ export async function runComprehensiveDoctor(opts: {
       summary: `Python=${pyVer.ok ? `${pyVer.out} (${pyBin})` : "MISSING"} · Git=${gitVer.ok ? gitVer.out : "MISSING"} · Go=${goVer.ok ? goVer.out : "UNAVAILABLE"} · Runtime=${nodeVer.out || process.version}`,
       ...(winAppsWarning || !pyVer.ok || !gitVer.ok
         ? {
-            error_code: "TOOLCHAIN_MISSING_OR_STUB",
-            error_definition: winAppsWarning || "One or more core development toolchains (Python 3 or Git) failed verification.",
-            repair_steps: [
-              ...(winAppsWarning || !pyVer.ok
-                ? ["1. Disable Windows App Execution Aliases for python.exe/python3.exe or install Python 3.12 from https://www.python.org/downloads/."]
-                : []),
-              ...(!gitVer.ok ? ["2. Install Git for Windows (winget install Git.Git) for Git Auto-Updater & Guardian tools."] : []),
-            ],
-          }
+          error_code: "TOOLCHAIN_MISSING_OR_STUB",
+          error_definition: winAppsWarning || "One or more core development toolchains (Python 3 or Git) failed verification.",
+          repair_steps: [
+            ...(winAppsWarning || !pyVer.ok
+              ? ["1. Disable Windows App Execution Aliases for python.exe/python3.exe or install Python 3.12 from https://www.python.org/downloads/."]
+              : []),
+            ...(!gitVer.ok ? ["2. Install Git for Windows (winget install Git.Git) for Git Auto-Updater & Guardian tools."] : []),
+          ],
+        }
         : {}),
     });
 
@@ -1105,13 +1100,13 @@ export async function runComprehensiveDoctor(opts: {
           : `Python REPL test failed: ${replTest?.stderr || "unexpected output"}`,
         ...(!replOk
           ? {
-              error_code: "PYTHON_REPL_FAILED",
-              error_definition: `In-app Python 3 kernel failed sanity check (${replTest?.stderr || "no result"}).`,
-              repair_steps: [
-                `1. Verify '${pyBin} --version' works in PowerShell/CMD.`,
-                "2. Check System -> Python REPL kernel logs and restart if locked.",
-              ],
-            }
+            error_code: "PYTHON_REPL_FAILED",
+            error_definition: `In-app Python 3 kernel failed sanity check (${replTest?.stderr || "no result"}).`,
+            repair_steps: [
+              `1. Verify '${pyBin} --version' works in PowerShell/CMD.`,
+              "2. Check System -> Python REPL kernel logs and restart if locked.",
+            ],
+          }
           : {}),
       });
     } catch (err: any) {
@@ -1141,13 +1136,13 @@ export async function runComprehensiveDoctor(opts: {
         `${syntax.checks.length} JS/HTML/JSON syntax checks (${broken.length} failed) · dist/index.html=${distHtmlExists ? "PRESENT" : "DEV"} · dist-server/server.cjs=${bundledServerExists ? "PRESENT" : "DEV"}`,
       ...(broken.length
         ? {
-            error_code: "SYNTAX_OR_CATALOG_ERROR",
-            error_definition: `Syntax or JSON errors detected in: ${broken.map((b) => `${b.file} (${b.detail})`).join("; ")}`,
-            repair_steps: [
-              "1. Inspect the reported file and line number, or run '/rollback' in Guardian CLI to restore the last clean snapshot.",
-              "2. Run 'npm run build:desktop' to regenerate dist/ and dist-server/.",
-            ],
-          }
+          error_code: "SYNTAX_OR_CATALOG_ERROR",
+          error_definition: `Syntax or JSON errors detected in: ${broken.map((b) => `${b.file} (${b.detail})`).join("; ")}`,
+          repair_steps: [
+            "1. Inspect the reported file and line number, or run '/rollback' in Guardian CLI to restore the last clean snapshot.",
+            "2. Run 'npm run build:desktop' to regenerate dist/ and dist-server/.",
+          ],
+        }
         : {}),
     });
   }
@@ -1171,13 +1166,13 @@ export async function runComprehensiveDoctor(opts: {
       summary: `Active Backends=${BACKENDS.length} · MCP Servers=${mcps.length} · Custom Tools=${tools.length}`,
       ...(BACKENDS.length === 0
         ? {
-            error_code: "NO_BACKENDS_LOADED",
-            error_definition: "BACKENDS list is empty; no models are currently registered in the runtime router.",
-            repair_steps: [
-              "1. Check .council_data/lineup_ng.json and src/council_catalog.json.",
-              "2. Run '/doctor' or click Reset State (↺).",
-            ],
-          }
+          error_code: "NO_BACKENDS_LOADED",
+          error_definition: "BACKENDS list is empty; no models are currently registered in the runtime router.",
+          repair_steps: [
+            "1. Check .council_data/lineup_ng.json and src/council_catalog.json.",
+            "2. Run '/doctor' or click Reset State (↺).",
+          ],
+        }
         : {}),
     });
   }
@@ -1198,10 +1193,10 @@ export async function runComprehensiveDoctor(opts: {
           : `${tbProbe.error || "Endpoint probe failed"} (${tbProbe.error_code || "UNREACHABLE"})`,
         ...(!tbProbe.ok
           ? {
-              error_code: tbProbe.error_code,
-              error_definition: tbProbe.error_definition,
-              repair_steps: tbProbe.fix_steps,
-            }
+            error_code: tbProbe.error_code,
+            error_definition: tbProbe.error_definition,
+            repair_steps: tbProbe.fix_steps,
+          }
           : {}),
       });
     } else {

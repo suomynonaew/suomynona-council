@@ -235,11 +235,11 @@ function ensureMasterKeypair(): MasterKeypairVault {
               fs.mkdirSync(path.dirname(devVaultPath), { recursive: true });
               fs.writeFileSync(devVaultPath, JSON.stringify(v, null, 2), "utf-8");
             }
-          } catch {}
+          } catch { }
           return v;
         }
       }
-    } catch {}
+    } catch { }
   }
 
   const { publicKey, privateKey } = crypto.generateKeyPairSync("ed25519", {
@@ -260,7 +260,7 @@ function ensureMasterKeypair(): MasterKeypairVault {
     try {
       fs.mkdirSync(path.dirname(devVaultPath), { recursive: true });
       fs.writeFileSync(devVaultPath, JSON.stringify(vault, null, 2), "utf-8");
-    } catch {}
+    } catch { }
   }
   return vault;
 }
@@ -288,7 +288,7 @@ function loadMasterRegistry(): MasterRegistryStore {
       const parsed = JSON.parse(fs.readFileSync(regPath, "utf-8")) as MasterRegistryStore;
       if (parsed && Array.isArray(parsed.users)) return parsed;
     }
-  } catch {}
+  } catch { }
   return {
     updated_at: new Date().toISOString(),
     remote_ledger_url: loadEditionBuildConfig().remoteLedgerUrl || "",
@@ -626,7 +626,7 @@ export async function evaluateCurrentLicenseState(): Promise<LicenseEvaluationRe
       // Admin unlinked this key from this PC! Clear seal so it must be re-activated or used on new PC
       try {
         fs.unlinkSync(getClientSealPath());
-      } catch {}
+      } catch { }
       return {
         valid: false,
         edition: "client",
@@ -878,15 +878,15 @@ export function registerLicensingRoutes(app: Express): void {
     const legacyLicenses =
       edition === "master" && masterUsers
         ? masterUsers.map((u) => ({
-            key: u.cd_key,
-            key_id: u.key_id,
-            buyer_name: u.user_name,
-            buyer_email: u.user_email,
-            bound_hwid: u.bound_hwid,
-            bound_at: u.bound_at,
-            revoked: u.revoked,
-            expires_at: u.expires_at,
-          }))
+          key: u.cd_key,
+          key_id: u.key_id,
+          buyer_name: u.user_name,
+          buyer_email: u.user_email,
+          bound_hwid: u.bound_hwid,
+          bound_at: u.bound_at,
+          revoked: u.revoked,
+          expires_at: u.expires_at,
+        }))
         : [];
 
     res.json({
@@ -1054,7 +1054,7 @@ export function registerLicensingRoutes(app: Express): void {
     try {
       const p = getClientSealPath();
       if (fs.existsSync(p)) fs.unlinkSync(p);
-    } catch {}
+    } catch { }
     invalidateLicenseEvalCache();
     res.json({ ok: true, activated: false });
   });

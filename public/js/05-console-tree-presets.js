@@ -466,7 +466,7 @@ function attachUniversalCliHistory(inputEl, cliKey = "global") {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) history = parsed;
     }
-  } catch (_) {}
+  } catch (_) { }
 
   const state = {
     history,
@@ -484,7 +484,7 @@ function attachUniversalCliHistory(inputEl, cliKey = "global") {
       try {
         localStorage.setItem(storageKey, JSON.stringify(state.history.slice(0, 50)));
         localStorage.setItem("suomynona_cli_hist_global", JSON.stringify(state.history.slice(0, 50)));
-      } catch (_) {}
+      } catch (_) { }
     }
     state.idx = -1;
     state.tempDraft = "";
@@ -505,7 +505,7 @@ function attachUniversalCliHistory(inputEl, cliKey = "global") {
       setTimeout(() => {
         try {
           inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
-        } catch (_) {}
+        } catch (_) { }
       }, 0);
     } else if (e.key === "ArrowDown") {
       if (state.idx === -1) return;
@@ -521,7 +521,7 @@ function attachUniversalCliHistory(inputEl, cliKey = "global") {
       setTimeout(() => {
         try {
           inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
-        } catch (_) {}
+        } catch (_) { }
       }, 0);
     }
   });
@@ -856,11 +856,11 @@ function buildHostUrlMatrixBanner() {
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
         ${hostKeys.map((hk) => {
-          const h = hostsMap[hk] || {};
-          const curUrl = h.custom_url || `http://127.0.0.1:${defaultPorts[hk]}/v1`;
-          const tunUrl = h.tunnel_url || "";
-          const isOnline = h.status === "connected" || !!curUrl;
-          return `
+      const h = hostsMap[hk] || {};
+      const curUrl = h.custom_url || `http://127.0.0.1:${defaultPorts[hk]}/v1`;
+      const tunUrl = h.tunnel_url || "";
+      const isOnline = h.status === "connected" || !!curUrl;
+      return `
             <div style="padding:10px 12px;border-radius:10px;background:rgba(15,23,42,0.85);border:1px solid ${isOnline ? "rgba(16,185,129,0.4)" : "rgba(148,163,184,0.25)"}">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
                 <span style="font-size:12px;font-weight:900;color:#f8fafc">🖥 HOST ${hk.toUpperCase()} (${esc(h.gpu || "G4 96GB")})</span>
@@ -876,7 +876,7 @@ function buildHostUrlMatrixBanner() {
               </div>
             </div>
           `;
-        }).join("")}
+    }).join("")}
       </div>
       <div id="host-matrix-boot-output" style="margin-top:8px;font-size:11px;font-family:var(--mono);color:#6ee7b7"></div>
     `;
@@ -889,7 +889,7 @@ function buildHostUrlMatrixBanner() {
         btn.textContent = "Saving…";
         await postJSON("/api/colab/connect", { host: hk, custom_url: urlVal }).catch(() => ({}));
         pushClientLiveConsole("HOST", `Bound Host ${hk.toUpperCase()} Custom URL → ${urlVal || "(cleared)"}`);
-        await reloadState().catch(() => {});
+        await reloadState().catch(() => { });
         renderMatrix();
       });
     });
@@ -900,7 +900,7 @@ function buildHostUrlMatrixBanner() {
         await postJSON("/api/colab/connect", { host: hk, custom_url: stdUrl }).catch(() => ({}));
       }
       pushClientLiveConsole("HOST", "Standardized all 4 Hosts (A=:8080, B=:8081, C=:8082, D=:8083) with active local OpenAI/Ollama endpoints.");
-      await reloadState().catch(() => {});
+      await reloadState().catch(() => { });
       renderMatrix();
     });
 
@@ -911,7 +911,7 @@ function buildHostUrlMatrixBanner() {
       if (res?.ok && outEl) {
         const summary = (res.results || []).map((r) => `Host ${String(r.host).toUpperCase()}: ${r.ok ? "✅" : "⚠️"} ${r.latency_ms}ms (${r.models_ready} models)`).join(" · ");
         outEl.textContent = `✅ Boot Cell Live Handshake Verified: ${summary}`;
-        await reloadState().catch(() => {});
+        await reloadState().catch(() => { });
       } else if (outEl) {
         outEl.textContent = `⚠️ ${res?.error || "Boot verification failed"}`;
       }
@@ -1135,7 +1135,7 @@ try {
   if (Array.isArray(localPresets) && localPresets.length) {
     HOST_TREE_UI_STATE.savedTreePresets = localPresets;
   }
-} catch (_) {}
+} catch (_) { }
 
 function hydrateHostTreeModelsFromGlobalState() {
   const existingKeySet = new Set(HOST_TREE_UI_STATE.models.map((m) => `${m.host}:${m.id}`));
@@ -1235,14 +1235,14 @@ async function syncHostTreeToGlobalLineupAndUI() {
       lineup: combinedLineup,
       allocations,
       custom_models_meta: customModelsMeta,
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Reload backend indices so picked always holds valid numeric b.i indices for Council & Swarm
-    await reloadState().catch(() => {});
+    await reloadState().catch(() => { });
     if (typeof renderLineup === "function") renderLineup({ skipHoverMount: true });
     if (typeof renderChips === "function") renderChips();
     if (typeof renderRightModelsRail === "function") renderRightModelsRail();
-  } catch (_) {}
+  } catch (_) { }
 }
 
 async function syncHostTreeStateFromServer() {
@@ -1270,19 +1270,19 @@ async function syncHostTreeStateFromServer() {
         HOST_TREE_UI_STATE.savedTreePresets = res.host_tree.saved_presets;
         try {
           localStorage.setItem("suomynona_custom_tree_presets_v1", JSON.stringify(HOST_TREE_UI_STATE.savedTreePresets));
-        } catch (_) {}
+        } catch (_) { }
       }
       if (res.quantization_specs) HOST_TREE_UI_STATE.quantizationSpecs = res.quantization_specs;
       if (res.data_tuning_modes) HOST_TREE_UI_STATE.dataTuningModes = res.data_tuning_modes;
       HOST_TREE_UI_STATE.loadedFromServer = true;
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 async function persistHostTreeStateToServer() {
   try {
     localStorage.setItem("suomynona_custom_tree_presets_v1", JSON.stringify(HOST_TREE_UI_STATE.savedTreePresets || []));
-  } catch (_) {}
+  } catch (_) { }
   try {
     await postJSON("/api/host-tree/save", {
       hosts: HOST_TREE_UI_STATE.hostConfigs,
@@ -1290,7 +1290,7 @@ async function persistHostTreeStateToServer() {
       custom_hosts: HOST_TREE_UI_STATE.customHosts,
       saved_presets: HOST_TREE_UI_STATE.savedTreePresets,
     });
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // ============================================================================
@@ -1487,8 +1487,8 @@ function buildUpwardHostTreeBuilder() {
     const customVaultList = Array.isArray(STATE?.custom_gguf)
       ? STATE.custom_gguf
       : Array.isArray(STATE?.custom_gguf_models)
-      ? STATE.custom_gguf_models
-      : [];
+        ? STATE.custom_gguf_models
+        : [];
     customVaultList.forEach((g) => {
       const id = g.id || g.repo || g.repo_id || g.filename || g.name;
       pushUnique({
@@ -1580,8 +1580,8 @@ function buildUpwardHostTreeBuilder() {
     const serverList = Array.isArray(STATE?.agents) && STATE.agents.length
       ? STATE.agents
       : Array.isArray(AGENTS) && AGENTS.length
-      ? AGENTS
-      : [];
+        ? AGENTS
+        : [];
     serverList.forEach((ag) => {
       if (!ag || !ag.id) return;
       if (mergedMap.has(ag.id)) {
@@ -1730,22 +1730,22 @@ function buildUpwardHostTreeBuilder() {
         <div class="host-model-scroll-viewport">
           <div class="host-leaf-items-grid">
             ${allModels
-              .map((m, idx) => {
-                const isSel = selectedIds.has(m.id);
-                const placedHosts = modelHostMap[m.id] || [];
-                const otherHosts = placedHosts.filter((h) => h.id !== String(hk).toLowerCase());
-                const isCyber = (m.categories || []).includes("cybersecurity");
-                const isAblit = (m.categories || []).includes("abliterated");
-                const tagTxt = isCyber ? "RedHat/Cyber · " : isAblit ? "Unrestricted · " : "";
-                const hostBadgesHtml =
-                  isSel || otherHosts.length
-                    ? `<div class="model-host-badges">
+          .map((m, idx) => {
+            const isSel = selectedIds.has(m.id);
+            const placedHosts = modelHostMap[m.id] || [];
+            const otherHosts = placedHosts.filter((h) => h.id !== String(hk).toLowerCase());
+            const isCyber = (m.categories || []).includes("cybersecurity");
+            const isAblit = (m.categories || []).includes("abliterated");
+            const tagTxt = isCyber ? "RedHat/Cyber · " : isAblit ? "Unrestricted · " : "";
+            const hostBadgesHtml =
+              isSel || otherHosts.length
+                ? `<div class="model-host-badges">
                         ${isSel ? `<span class="model-host-pill is-here">✓ On Host ${hk.toUpperCase()}</span>` : ""}
                         ${otherHosts.length ? `<span class="model-host-pill is-other">⚠ Already on ${esc(otherHosts.map((h) => h.label).join(", "))}</span>` : ""}
                         ${placedHosts.length > 1 ? `<span class="model-host-pill is-multi">×${placedHosts.length} copies</span>` : ""}
                       </div>`
-                    : "";
-                return `
+                : "";
+            return `
                   <button type="button" class="host-leaf-pick-btn ${isSel ? "is-selected" : ""} ${otherHosts.length ? "has-other-host" : ""}" data-flyout-pick-model="${idx}" data-model-lighthouse="${esc(m.id || m.hf || m.label)}">
                     <div class="host-model-card-top">
                       <span class="host-model-card-title">${esc(m.label)}</span>
@@ -1755,8 +1755,8 @@ function buildUpwardHostTreeBuilder() {
                     <div class="host-model-card-meta tabular-nums">${tagTxt}${esc(m.hf || m.id)} · ${esc(m.quant)} · ${m.vram}GB</div>
                   </button>
                 `;
-              })
-              .join("")}
+          })
+          .join("")}
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;padding-top:6px;border-top:1px solid rgba(148,163,184,0.14);margin-top:auto">
@@ -1851,17 +1851,17 @@ function buildUpwardHostTreeBuilder() {
               </div>
               <div class="specialist-tickets-grid">
                 ${items
-                  .map((ag) => {
-                    const agName = ag.name || ag.title || ag.id;
-                    const agKey = ag.id || agName;
-                    const intel = SPECIALIST_AGENT_LIGHTHOUSE_INTEL[ag.id];
-                    const plainSummary =
-                      ag.role ||
-                      intel?.what ||
-                      ag.description ||
-                      (ag.system ? String(ag.system) : "Autonomous specialist that runs commands and writes code for this area.");
-                    const isSel = hCfg.assigned_agent === agName;
-                    return `
+              .map((ag) => {
+                const agName = ag.name || ag.title || ag.id;
+                const agKey = ag.id || agName;
+                const intel = SPECIALIST_AGENT_LIGHTHOUSE_INTEL[ag.id];
+                const plainSummary =
+                  ag.role ||
+                  intel?.what ||
+                  ag.description ||
+                  (ag.system ? String(ag.system) : "Autonomous specialist that runs commands and writes code for this area.");
+                const isSel = hCfg.assigned_agent === agName;
+                return `
                       <button type="button" class="specialist-ticket-card ${isSel ? "is-selected" : ""}" data-flyout-pick-agent="${esc(agName)}" data-agent-lighthouse="${esc(agKey)}">
                         <div class="specialist-ticket-top">
                           <span class="specialist-ticket-title">${esc(agName)}</span>
@@ -1870,8 +1870,8 @@ function buildUpwardHostTreeBuilder() {
                         <div class="specialist-ticket-desc">${esc(plainSummary)}</div>
                       </button>
                     `;
-                  })
-                  .join("")}
+              })
+              .join("")}
               </div>
             </section>
           `
@@ -1889,7 +1889,7 @@ function buildUpwardHostTreeBuilder() {
               if (openLighthouseHost && activeLighthouseTab === "agents") renderLighthouseTabBody();
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       }
 
       bodyEl.innerHTML = `
@@ -1904,12 +1904,12 @@ function buildUpwardHostTreeBuilder() {
             <select id="flyout-agent-cat" style="height:27px;padding:2px 8px;border-radius:6px;background:#030711;border:1px solid rgba(46,230,166,0.45);color:#2ee6a6;font-size:11px;font-weight:700">
               <option value="all" ${agentFilterCat === "all" ? "selected" : ""}>All Work Areas (${allAgents.length})</option>
               ${Array.from(groupCounts.entries())
-                .filter(([, cnt]) => cnt > 0)
-                .map(
-                  ([gName, cnt]) =>
-                    `<option value="${esc(gName)}" ${agentFilterCat === gName ? "selected" : ""}>${esc(gName)} (${cnt})</option>`
-                )
-                .join("")}
+          .filter(([, cnt]) => cnt > 0)
+          .map(
+            ([gName, cnt]) =>
+              `<option value="${esc(gName)}" ${agentFilterCat === gName ? "selected" : ""}>${esc(gName)} (${cnt})</option>`
+          )
+          .join("")}
             </select>
           </div>
         </div>
@@ -1917,11 +1917,11 @@ function buildUpwardHostTreeBuilder() {
         <div class="specialist-squad-bar">
           <span style="font-size:10.5px;font-weight:800;color:#2ee6a6">⚡ 1-Click Squads (Auto-Bind Hosts A–D):</span>
           ${cachedSquads
-            .map(
-              (sq) =>
-                `<button type="button" class="specialist-squad-chip" data-load-squad-id="${esc(sq.id)}" title="Bind ${(sq.specialists || []).length} specialists across Hosts A–D">${esc(sq.name)}</button>`
-            )
-            .join("")}
+          .map(
+            (sq) =>
+              `<button type="button" class="specialist-squad-chip" data-load-squad-id="${esc(sq.id)}" title="Bind ${(sq.specialists || []).length} specialists across Hosts A–D">${esc(sq.name)}</button>`
+          )
+          .join("")}
           <span class="spacer"></span>
           <input type="text" id="flyout-new-squad-name" placeholder="Save Hosts A–D squad name…" style="height:24px;width:170px;padding:1px 7px;border-radius:5px;background:#030711;border:1px solid rgba(148,163,184,0.3);color:#f8fafc;font-size:10.5px">
           <button type="button" id="flyout-save-squad-btn" class="primary xs" style="height:24px;padding:0 8px">💾 Save Squad</button>
@@ -2036,14 +2036,14 @@ function buildUpwardHostTreeBuilder() {
           <label style="font-size:11px;color:#94a3b8">Data Tuning Mode
             <select id="flyout-cust-dt" style="width:100%;height:27px;margin-top:3px;border-radius:6px;background:#030711;border:1px solid rgba(46,230,166,0.4);color:#a7f3d0;font-size:11px">
               ${[
-                ["standard_dpo", "Online DPO Alignment"],
-                ["reasoning_cot", "Chain-of-Thought Verifier"],
-                ["code_verification", "Compiler-Verified Code"],
-                ["security_redteam", "Red-Team SecOps"],
-                ["uncensored_raw", "Zero-Refusal Raw"],
-              ]
-                .map(([k, lbl]) => `<option value="${k}" ${hCfg.data_tuning_mode === k ? "selected" : ""}>${lbl}</option>`)
-                .join("")}
+          ["standard_dpo", "Online DPO Alignment"],
+          ["reasoning_cot", "Chain-of-Thought Verifier"],
+          ["code_verification", "Compiler-Verified Code"],
+          ["security_redteam", "Red-Team SecOps"],
+          ["uncensored_raw", "Zero-Refusal Raw"],
+        ]
+          .map(([k, lbl]) => `<option value="${k}" ${hCfg.data_tuning_mode === k ? "selected" : ""}>${lbl}</option>`)
+          .join("")}
             </select>
           </label>
           <label style="font-size:11px;color:#94a3b8">Speculative Draft Pair
@@ -2142,8 +2142,8 @@ function buildUpwardHostTreeBuilder() {
     const lockedGgufList = Array.isArray(STATE?.custom_gguf)
       ? STATE.custom_gguf
       : Array.isArray(STATE?.custom_gguf_models)
-      ? STATE.custom_gguf_models
-      : [];
+        ? STATE.custom_gguf_models
+        : [];
     const hfAutoSyncEnabled = STATE?.hf_auto_sync_on_startup !== false;
     const hbMap = window._lastHostHeartbeatMap || {};
 
@@ -2168,31 +2168,30 @@ function buildUpwardHostTreeBuilder() {
           </div>
         </div>
         ${(() => {
-          const overHosts = allHosts.filter((hid) => computeHostVramStats(hid).pct > 85);
-          if (!overHosts.length) return "";
-          return `<div style="margin:0 0 8px 0;padding:6px 11px;border-radius:6px;background:rgba(244,63,94,0.14);border:1px solid rgba(251,113,133,0.45);display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#fecdd3">
+        const overHosts = allHosts.filter((hid) => computeHostVramStats(hid).pct > 85);
+        if (!overHosts.length) return "";
+        return `<div style="margin:0 0 8px 0;padding:6px 11px;border-radius:6px;background:rgba(244,63,94,0.14);border:1px solid rgba(251,113,133,0.45);display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#fecdd3">
             <span>⚠️ VRAM Guardrail Alert: ${overHosts.map((h) => `Host ${h.toUpperCase()} (${computeHostVramStats(h).pct}%)`).join(", ")} exceeds the 85% KV-cache safety ceiling.</span>
             <span style="color:#fde68a">Click [⚖️ FFD Rebalance A–D] or [Auto-Fit Quant] above to pack cleanly.</span>
           </div>`;
-        })()}
+      })()}
 
         <!-- ══ COMPACT HORIZONTAL SAVED CUSTOM LINEUPS & QUICK PRESETS RIBBON ══ -->
         <div class="lighthouse-presets-ribbon">
           <span style="font-size:10.5px;font-weight:700;color:#94a3b8;margin-right:2px">Saved Lineups:</span>
-          ${
-            savedPresets.length === 0
-              ? `<span style="font-size:10.5px;color:#64748b">None yet — pick models/specialists below and click ＋ Save Custom Lineup above.</span>`
-              : savedPresets
-                  .map(
-                    (p, pIdx) => `
+          ${savedPresets.length === 0
+        ? `<span style="font-size:10.5px;color:#64748b">None yet — pick models/specialists below and click ＋ Save Custom Lineup above.</span>`
+        : savedPresets
+          .map(
+            (p, pIdx) => `
                   <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(46,230,166,0.12);border:1px solid rgba(46,230,166,0.4);border-radius:6px;padding:2px 7px">
                     <button type="button" data-load-custom-tree-preset="${pIdx}" style="background:none;border:none;color:#2ee6a6;font-size:10.5px;font-weight:700;cursor:pointer;padding:0">▶ ${esc(p.name)} (${(p.models || []).length})</button>
                     <button type="button" data-del-custom-tree-preset="${pIdx}" style="background:none;border:none;color:#f87171;font-size:10px;cursor:pointer;padding:0 2px">✕</button>
                   </div>
                 `
-                  )
-                  .join("")
-          }
+          )
+          .join("")
+      }
           <span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap">
             <span style="font-size:10px;color:#64748b">Quick Load:</span>
             <button type="button" class="ghost xs" data-quick-lighthouse-preset="cybersecurity" style="height:22px;padding:0 8px;border-color:rgba(248,113,113,0.4);color:#fca5a5">RedHat &amp; Cyber</button>
@@ -2206,23 +2205,23 @@ function buildUpwardHostTreeBuilder() {
         <div class="lighthouse-stage-canvas">
           <div class="lighthouse-sidebyside-lineup-grid">
             ${allHosts
-              .map((hId, idx) => {
-                const hc = HOST_TREE_UI_STATE.hostConfigs[hId] || { label: `Host ${hId.toUpperCase()}`, quantization: "Q4_K_M", url: `http://127.0.0.1:${8080 + idx}/v1` };
-                const modelsOnHost = getHostModels(hId);
-                const vram = computeHostVramStats(hId);
-                const hb = hbMap[hId] || {};
-                const portMatch = String(hc.url || "").match(/:(\d+)/);
-                const portStr = portMatch ? `:${portMatch[1]}` : `:808${idx}`;
-                const statusTxt =
-                  vram.circuitState === "OPEN"
-                    ? "⚡ CB:OPEN (Fast-Bypass)"
-                    : hb.online
-                    ? `Online · ${hb.latency_ms || 12}ms`
-                    : hb.configured
-                    ? "Tunnel Saved"
-                    : `Port ${portStr}`;
-                const pColor = vram.pct > 90 ? "#fb7185" : vram.pct >= 75 ? "#fbbf24" : "#2ee6a6";
-                return `
+        .map((hId, idx) => {
+          const hc = HOST_TREE_UI_STATE.hostConfigs[hId] || { label: `Host ${hId.toUpperCase()}`, quantization: "Q4_K_M", url: `http://127.0.0.1:${8080 + idx}/v1` };
+          const modelsOnHost = getHostModels(hId);
+          const vram = computeHostVramStats(hId);
+          const hb = hbMap[hId] || {};
+          const portMatch = String(hc.url || "").match(/:(\d+)/);
+          const portStr = portMatch ? `:${portMatch[1]}` : `:808${idx}`;
+          const statusTxt =
+            vram.circuitState === "OPEN"
+              ? "⚡ CB:OPEN (Fast-Bypass)"
+              : hb.online
+                ? `Online · ${hb.latency_ms || 12}ms`
+                : hb.configured
+                  ? "Tunnel Saved"
+                  : `Port ${portStr}`;
+          const pColor = vram.pct > 90 ? "#fb7185" : vram.pct >= 75 ? "#fbbf24" : "#2ee6a6";
+          return `
                   <div class="lighthouse-beacon-node ${openLighthouseHost === hId ? "is-open" : ""}">
                     <!-- Host Column Header -->
                     <div data-open-lighthouse="${hId}" tabindex="0" role="button" aria-label="Configure Host ${hId.toUpperCase()}" style="display:flex;align-items:center;justify-content:space-between;gap:6px;cursor:pointer">
@@ -2252,40 +2251,38 @@ function buildUpwardHostTreeBuilder() {
 
                     <!-- Bound Specialist Agent Slot (Hover shows semi-opaque Specialist Lighthouse!) -->
                     <div class="lighthouse-agent-slot-bar">
-                      ${
-                        hc.assigned_agent
-                          ? `
+                      ${hc.assigned_agent
+              ? `
                             <span data-agent-lighthouse="${esc(hc.assigned_agent)}" data-open-lh-agents="${hId}" style="color:#e9d5ff;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;flex:1">${esc(hc.assigned_agent)}</span>
                             <button type="button" data-unbind-host-agent="${hId}" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:10px;padding:0 2px;line-height:1" title="Unbind Specialist Agent">✕</button>
                           `
-                          : `
+              : `
                             <button type="button" data-open-lh-agents="${hId}" style="background:none;border:none;color:#c084fc;font-size:10.5px;font-weight:600;cursor:pointer;padding:0;text-align:left;width:100%">＋ Bind Specialist Agent…</button>
                           `
-                      }
+            }
                     </div>
 
                     <!-- Active Selected Models on This Host (Side-by-Side Column Chips) -->
                     <div class="lighthouse-host-models-wrap">
-                      ${
-                        modelsOnHost.length === 0
-                          ? `<button type="button" class="ghost xs" data-open-lighthouse="${hId}" style="width:100%;justify-content:center;border-style:dashed;color:#94a3b8">＋ Pick Models for Host ${hId.toUpperCase()}</button>`
-                          : modelsOnHost
-                              .map(
-                                (m) => `
+                      ${modelsOnHost.length === 0
+              ? `<button type="button" class="ghost xs" data-open-lighthouse="${hId}" style="width:100%;justify-content:center;border-style:dashed;color:#94a3b8">＋ Pick Models for Host ${hId.toUpperCase()}</button>`
+              : modelsOnHost
+                .map(
+                  (m) => `
                               <span class="host-square-model-chip" data-model-lighthouse="${esc(m.id || m.hf || m.label)}">
                                 <span style="overflow:hidden;text-overflow:ellipsis;max-width:165px;white-space:nowrap">${esc(m.label || m.id)}</span>
                                 <button type="button" data-sq-remove-model="${esc(m.id)}" data-sq-host="${hId}" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:10px;padding:0 2px;line-height:1">✕</button>
                               </span>
                             `
-                              )
-                              .join("") +
-                            `<button type="button" class="ghost xs" data-open-lighthouse="${hId}" style="height:21px;padding:0 6px;font-size:9.5px;color:#38bdf8">＋ Model</button>`
-                      }
+                )
+                .join("") +
+              `<button type="button" class="ghost xs" data-open-lighthouse="${hId}" style="height:21px;padding:0 6px;font-size:9.5px;color:#38bdf8">＋ Model</button>`
+            }
                     </div>
                   </div>
                 `;
-              })
-              .join("")}
+        })
+        .join("")}
           </div>
 
           <!-- ══ SEMI-OPAQUE GLASS HOST LIGHTHOUSE OVERLAY (Opens ONLY when a Host Beacon is clicked!) ══ -->
@@ -2295,13 +2292,12 @@ function buildUpwardHostTreeBuilder() {
                 <strong style="font-size:13.5px;color:#f8fafc">Host ${(openLighthouseHost || "a").toUpperCase()} Lighthouse</strong>
                 <div style="display:inline-flex;gap:4px">
                   ${allHosts
-                    .map(
-                      (hid) =>
-                        `<button type="button" class="ghost xs" data-switch-lh-host="${hid}" style="height:23px;padding:0 8px;${
-                          openLighthouseHost === hid ? "border-color:#2ee6a6;color:#2ee6a6;background:rgba(46,230,166,0.15);font-weight:800" : ""
-                        }">Host ${hid.toUpperCase()}</button>`
-                    )
-                    .join("")}
+        .map(
+          (hid) =>
+            `<button type="button" class="ghost xs" data-switch-lh-host="${hid}" style="height:23px;padding:0 8px;${openLighthouseHost === hid ? "border-color:#2ee6a6;color:#2ee6a6;background:rgba(46,230,166,0.15);font-weight:800" : ""
+            }">Host ${hid.toUpperCase()}</button>`
+        )
+        .join("")}
                 </div>
               </div>
 
@@ -2352,13 +2348,12 @@ function buildUpwardHostTreeBuilder() {
                   <strong style="font-size:11.5px;color:#38bdf8">Linked Hugging Face Buckets</strong>
                   <span class="tabular-nums" style="font-size:10.5px;color:#64748b">${hfBucketsList.length} total</span>
                 </div>
-                ${
-                  hfBucketsList.length === 0
-                    ? `<div style="font-size:11px;color:#64748b;padding:10px 0">No Hugging Face Buckets linked yet. Paste a bucket URI (<code>hf://buckets/owner/bucket</code>) or HF org/repo above and click <strong>Link &amp; Scan</strong>.</div>`
-                    : hfBucketsList
-                        .map((b) => {
-                          const bModels = Array.isArray(b.models) ? b.models : [];
-                          return `
+                ${hfBucketsList.length === 0
+        ? `<div style="font-size:11px;color:#64748b;padding:10px 0">No Hugging Face Buckets linked yet. Paste a bucket URI (<code>hf://buckets/owner/bucket</code>) or HF org/repo above and click <strong>Link &amp; Scan</strong>.</div>`
+        : hfBucketsList
+          .map((b) => {
+            const bModels = Array.isArray(b.models) ? b.models : [];
+            return `
                         <div style="padding:7px 9px;border-radius:6px;background:#050a14;border:1px solid rgba(148,163,184,0.14);display:flex;flex-direction:column;gap:5px">
                           <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
                             <strong style="font-size:11.5px;color:#f8fafc">${esc(b.name || b.bucket_uri)}</strong>
@@ -2372,9 +2367,9 @@ function buildUpwardHostTreeBuilder() {
                           </div>
                         </div>
                       `;
-                        })
-                        .join("")
-                }
+          })
+          .join("")
+      }
               </div>
 
               <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:8px;background:rgba(8,14,28,0.85);border:1px solid rgba(148,163,184,0.16)">
@@ -2382,13 +2377,12 @@ function buildUpwardHostTreeBuilder() {
                   <strong style="font-size:11.5px;color:#2ee6a6">Locked Vault GGUF Weights</strong>
                   <span class="tabular-nums" style="font-size:10.5px;color:#64748b">${lockedGgufList.length} locked</span>
                 </div>
-                ${
-                  lockedGgufList.length === 0
-                    ? `<div style="font-size:11px;color:#64748b;padding:10px 0">No custom GGUF weights locked in the vault yet. Import weights from a linked HF Bucket on the left, and they become available inside any Host Lighthouse automatically.</div>`
-                    : lockedGgufList
-                        .map((g) => {
-                          const gid = g.id || g.repo || g.repo_id || g.name;
-                          return `
+                ${lockedGgufList.length === 0
+        ? `<div style="font-size:11px;color:#64748b;padding:10px 0">No custom GGUF weights locked in the vault yet. Import weights from a linked HF Bucket on the left, and they become available inside any Host Lighthouse automatically.</div>`
+        : lockedGgufList
+          .map((g) => {
+            const gid = g.id || g.repo || g.repo_id || g.name;
+            return `
                         <div style="padding:6px 9px;border-radius:6px;background:#050a14;border:1px solid rgba(148,163,184,0.14);display:flex;justify-content:space-between;align-items:center;gap:8px">
                           <div style="min-width:0;flex:1">
                             <div style="font-size:11px;font-weight:600;color:#f8fafc;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.name || gid)}</div>
@@ -2397,9 +2391,9 @@ function buildUpwardHostTreeBuilder() {
                           <button type="button" class="ghost xs" data-hfo-del-gguf="${esc(gid)}" style="color:#fca5a5" title="Remove weight from Vault">Remove</button>
                         </div>
                       `;
-                        })
-                        .join("")
-                }
+          })
+          .join("")
+      }
               </div>
             </div>
           </div>
@@ -2512,7 +2506,7 @@ function buildUpwardHostTreeBuilder() {
     container.querySelector("#tree-autofit-vram-btn")?.addEventListener("click", autoFitHostVramQuantization);
 
     const syncSnapshotIntoHostTree = async (snapAfter) => {
-      await reloadState().catch(() => {});
+      await reloadState().catch(() => { });
       if (snapAfter?.hosts_map) {
         const nextModels = [];
         for (const [hid, hTel] of Object.entries(snapAfter.hosts_map)) {
@@ -2626,8 +2620,8 @@ function buildUpwardHostTreeBuilder() {
           lineup: STATE?.lineup || {},
           allocations: STATE?.host_lineups || {},
         },
-      }).catch(() => {});
-      if (typeof renderSavedLineups === "function") renderSavedLineups().catch(() => {});
+      }).catch(() => { });
+      if (typeof renderSavedLineups === "function") renderSavedLineups().catch(() => { });
       pushClientLiveConsole("HOSTS", `Saved custom lineup preset '${rawName}' (${snapshot.models.length} models across Hosts A–D)`);
       status(`✅ Saved Custom Lineup "${rawName}" (${snapshot.models.length} models & bound specialists)!`);
       renderCascade();
@@ -2660,8 +2654,8 @@ function buildUpwardHostTreeBuilder() {
         const removed = (HOST_TREE_UI_STATE.savedTreePresets || []).splice(pIdx, 1)[0];
         await persistHostTreeStateToServer();
         if (removed?.id) {
-          await fetch(`/api/custom-lineups/${encodeURIComponent(removed.id)}`, { method: "DELETE" }).catch(() => {});
-          if (typeof renderSavedLineups === "function") renderSavedLineups().catch(() => {});
+          await fetch(`/api/custom-lineups/${encodeURIComponent(removed.id)}`, { method: "DELETE" }).catch(() => { });
+          if (typeof renderSavedLineups === "function") renderSavedLineups().catch(() => { });
         }
         if (removed) pushClientLiveConsole("HOSTS", `Deleted custom lineup preset '${removed.name}'`);
         renderCascade();
@@ -2854,7 +2848,7 @@ function buildUpwardHostTreeBuilder() {
         const bid = btn.getAttribute("data-hfo-unlink-bucket");
         if (!bid) return;
         if (typeof markModelDeletedInLocalVault === "function") markModelDeletedInLocalVault(bid);
-        await fetch(`/api/hf-buckets/${encodeURIComponent(bid)}`, { method: "DELETE" }).catch(() => {});
+        await fetch(`/api/hf-buckets/${encodeURIComponent(bid)}`, { method: "DELETE" }).catch(() => { });
         await reloadState();
         renderCascade();
       });
@@ -2865,7 +2859,7 @@ function buildUpwardHostTreeBuilder() {
         const gid = btn.getAttribute("data-hfo-del-gguf");
         if (!gid) return;
         if (typeof markModelDeletedInLocalVault === "function") markModelDeletedInLocalVault(gid);
-        await fetch(`/api/custom-gguf/${encodeURIComponent(gid)}`, { method: "DELETE" }).catch(() => {});
+        await fetch(`/api/custom-gguf/${encodeURIComponent(gid)}`, { method: "DELETE" }).catch(() => { });
         await reloadState();
         renderCascade();
       });
@@ -2907,7 +2901,7 @@ function openSlashConfigPopupWindow(rawKey = "host") {
     } else if (key === "mcp") {
       if (typeof renderMcp === "function") renderMcp();
     }
-  } catch (_) {}
+  } catch (_) { }
 
   if (isUnifiedHostConfig) {
     const initialHcTab = key === "models" ? "models" : "hosts";
@@ -2959,7 +2953,7 @@ function openSlashConfigPopupWindow(rawKey = "host") {
           window.refreshTabbedHostSetupUI?.(window._activeHostSetupTab || "a");
         } else {
           HOST_TREE_UI_STATE.loadedFromServer = false;
-          await syncHostTreeStateFromServer().catch(() => {});
+          await syncHostTreeStateFromServer().catch(() => { });
           hydrateHostTreeModelsFromGlobalState();
           modelsPane.innerHTML = "";
           treeBuilderEl = buildUpwardHostTreeBuilder();
@@ -3060,11 +3054,11 @@ function renderLiveConsoleRowDom(out, entry) {
 
   const catColor =
     rawCat.includes("ERR") || rawCat.includes("FAIL") ? "#f87171" :
-    normCat === "QUANT_DPO" ? "#c084fc" :
-    normCat === "HOSTS" ? "#2ee6a6" :
-    normCat === "INFERENCE" ? "#38bdf8" :
-    normCat === "AGENTS" ? "#fbbf24" :
-    normCat === "COMPILER" ? "#6ee7b7" : "#a7f3d0";
+      normCat === "QUANT_DPO" ? "#c084fc" :
+        normCat === "HOSTS" ? "#2ee6a6" :
+          normCat === "INFERENCE" ? "#38bdf8" :
+            normCat === "AGENTS" ? "#fbbf24" :
+              normCat === "COMPILER" ? "#6ee7b7" : "#a7f3d0";
 
   const tsStr = entry.ts
     ? (String(entry.ts).includes("T") ? String(entry.ts).slice(11, 23) : String(entry.ts))
@@ -3108,7 +3102,7 @@ function pushClientLiveConsole(category, message, level = "info") {
     message: String(message || ""),
   };
   appendLiveConsoleDomEntry(entry);
-  postJSON("/api/live-console/push", { category: entry.category, level, message: entry.message }).catch(() => {});
+  postJSON("/api/live-console/push", { category: entry.category, level, message: entry.message }).catch(() => { });
 }
 
 async function pollLiveConsoleStream() {
@@ -3129,7 +3123,7 @@ async function pollLiveConsoleStream() {
       const hostCount = getAllConfiguredHostSummary();
       statEl.textContent = `Events: ${_liveConsoleBuffer.length} · ${hostCount}`;
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function getAllConfiguredHostSummary() {
@@ -3431,7 +3425,7 @@ function loadProjectModulesState() {
         return _projectModulesState;
       }
     }
-  } catch (_) {}
+  } catch (_) { }
   _projectModulesState = JSON.parse(JSON.stringify(DEFAULT_PROJECT_MODULES));
   return _projectModulesState;
 }
@@ -3441,7 +3435,7 @@ function saveProjectModulesState() {
     if (_projectModulesState) {
       localStorage.setItem("suomynona_project_modules_v1", JSON.stringify(_projectModulesState));
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 function renderProjectModuleProgressBar() {

@@ -47,7 +47,7 @@
     if (persist) {
       try {
         localStorage.setItem("suomynona-app-theme", clean);
-      } catch (_) {}
+      } catch (_) { }
     }
     window.dispatchEvent(new CustomEvent("suomynona:theme-changed", { detail: { theme: clean } }));
     return clean;
@@ -57,7 +57,7 @@
   try {
     const savedTheme = localStorage.getItem("suomynona-app-theme") || "obsidian";
     window.setAppTheme(savedTheme, false);
-  } catch (_) {}
+  } catch (_) { }
 
   // ══════════════════════════════════════════════════════════════════════════
   // 2. WHOLE-APP VIEW MODE ENGINE (List | Tiles | Dropdowns | Lighthouse | Compact)
@@ -104,7 +104,7 @@
       try {
         await navigator.clipboard.writeText(raw);
         if (typeof status === "function") status(`📋 Copied ${title} response`);
-      } catch (_) {}
+      } catch (_) { }
     });
     pane.querySelector("#lh-popup-btn")?.addEventListener("click", () => {
       window.AppHoverPreview?.show({
@@ -124,7 +124,7 @@
           const prev = btn.textContent;
           btn.textContent = "✅ Copied";
           setTimeout(() => { btn.textContent = prev; }, 1200);
-        } catch (_) {}
+        } catch (_) { }
       };
     });
   }
@@ -172,7 +172,7 @@
     if (persist) {
       try {
         localStorage.setItem("suomynona-app-view-mode", clean);
-      } catch (_) {}
+      } catch (_) { }
     }
     window.dispatchEvent(new CustomEvent("suomynona:view-mode-changed", { detail: { viewMode: clean } }));
     return clean;
@@ -320,7 +320,7 @@
             const prev = btn.textContent;
             btn.textContent = "✅ Copied";
             setTimeout(() => { btn.textContent = prev; }, 1200);
-          } catch (_) {}
+          } catch (_) { }
         };
       });
 
@@ -362,7 +362,7 @@
           btn.textContent = "✅ Copied";
           setTimeout(() => { btn.textContent = "📋 Copy"; }, 1200);
         }
-      } catch (_) {}
+      } catch (_) { }
     });
     qs("#ghp-to-prompt-btn")?.addEventListener("click", () => {
       const txt = currentPayload?.rawText || qs("#ghp-body")?.textContent || "";
@@ -650,7 +650,7 @@
         const sid = btn.getAttribute("data-vslot-del");
         await fetch(`/api/vault/slots/${encodeURIComponent(sid)}`, { method: "DELETE" });
         await window.refreshVaultHubView();
-        if (typeof reloadState === "function") reloadState().catch(() => {});
+        if (typeof reloadState === "function") reloadState().catch(() => { });
         if (typeof status === "function") status("Removed custom slot");
       });
     });
@@ -779,7 +779,7 @@
           inp.value = "";
         });
         renderVaultOverviewIntoUi(ov);
-        if (typeof reloadState === "function") reloadState().catch(() => {});
+        if (typeof reloadState === "function") reloadState().catch(() => { });
         if (fb) fb.innerHTML = `<span style="color:var(--ok)">✅ Saved & synced into active runtime!</span>`;
         if (typeof status === "function") status("✅ Saved API keys & runtime profile to Vault");
       } finally {
@@ -860,7 +860,7 @@
           if (qs(s)) qs(s).value = "";
         });
         await window.refreshVaultHubView();
-        if (typeof reloadState === "function") reloadState().catch(() => {});
+        if (typeof reloadState === "function") reloadState().catch(() => { });
         if (typeof status === "function") status(`✅ Added Custom Slot "${res.slot.name}"`);
       }
     });
@@ -901,7 +901,7 @@
     _shellHistory = JSON.parse(localStorage.getItem("suomynona-deck-history") || "[]");
     if (!Array.isArray(_shellHistory)) _shellHistory = [];
     _shellHistCursor = _shellHistory.length;
-  } catch (_) {}
+  } catch (_) { }
 
   function linkifyPathsHtml(text) {
     const escaped = escHtml(text);
@@ -958,7 +958,7 @@
         await navigator.clipboard.writeText(fullText);
         e.currentTarget.textContent = "✅";
         setTimeout(() => { e.currentTarget.textContent = "📋"; }, 1000);
-      } catch (_) {}
+      } catch (_) { }
     });
     card.querySelector(".gft-blk-toprompt")?.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -988,7 +988,7 @@
     restorePill?.classList.add("hidden");
     const minExpBtn = qs("#gft-min-exp-btn");
     if (minExpBtn) minExpBtn.textContent = "▼ Collapse";
-    try { localStorage.setItem("suomynona-live-footer-v2-state", "expanded"); } catch (_) {}
+    try { localStorage.setItem("suomynona-live-footer-v2-state", "expanded"); } catch (_) { }
 
     _deckTab = ["split", "shell", "stream", "copilot"].includes(tab) ? tab : "split";
     footer.classList.toggle("gft-split-mode", _deckTab === "split");
@@ -1031,7 +1031,7 @@
     if (_shellHistory[_shellHistory.length - 1] !== raw) {
       _shellHistory.push(raw);
       if (_shellHistory.length > 80) _shellHistory.shift();
-      try { localStorage.setItem("suomynona-deck-history", JSON.stringify(_shellHistory)); } catch (_) {}
+      try { localStorage.setItem("suomynona-deck-history", JSON.stringify(_shellHistory)); } catch (_) { }
     }
     _shellHistCursor = _shellHistory.length;
     window.openUnifiedTerminal(_deckTab === "split" ? "split" : "shell");
@@ -1140,7 +1140,7 @@
       const checks = Array.isArray(r?.report?.checks) ? r.report.checks : [];
       const compactSummary = checks.length
         ? `${r.report.repair_summary}\n\n` +
-          checks.map((c) => `${c.status === "ok" ? "✅" : c.status === "repaired" ? "🛠️" : c.status === "warn" ? "⚠️" : "❌"} [${c.domain}] ${c.title}: ${c.summary}`).join("\n")
+        checks.map((c) => `${c.status === "ok" ? "✅" : c.status === "repaired" ? "🛠️" : c.status === "warn" ? "⚠️" : "❌"} [${c.domain}] ${c.title}: ${c.summary}`).join("\n")
         : r?.output || "Doctor completed.";
       window.appendUnifiedTerminalEntry({
         command: raw,
@@ -1262,12 +1262,12 @@
     const bucket = isErr
       ? "ERROR"
       : /INF|MODEL|COUNCIL|SWARM|JUDGE|AGENT/i.test(cat)
-      ? "INFERENCE"
-      : /COMPIL|BUILD|EXE|FORGE|SHELL|PY|GO/i.test(cat)
-      ? "COMPILER"
-      : /INPUT|PROMPT|HTTP|API/i.test(cat)
-      ? "INPUT"
-      : "SYS";
+        ? "INFERENCE"
+        : /COMPIL|BUILD|EXE|FORGE|SHELL|PY|GO/i.test(cat)
+          ? "COMPILER"
+          : /INPUT|PROMPT|HTTP|API/i.test(cat)
+            ? "INPUT"
+            : "SYS";
     if (filter !== "ALL" && bucket !== filter) return;
 
     const fullMsg = String(ev.message || "");
@@ -1312,7 +1312,7 @@
         footer.classList.remove("gft-split-mode");
         if (qs("#gft-min-exp-btn")) qs("#gft-min-exp-btn").textContent = "▲ Expand";
       }
-      try { localStorage.setItem("suomynona-live-footer-v2-state", mode); } catch (_) {}
+      try { localStorage.setItem("suomynona-live-footer-v2-state", mode); } catch (_) { }
     };
 
     try {
@@ -1646,7 +1646,7 @@
     try {
       const savedView = localStorage.getItem("suomynona-app-view-mode") || "tiles";
       window.setAppViewMode(savedView, false);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   function bootAllUxSystems() {

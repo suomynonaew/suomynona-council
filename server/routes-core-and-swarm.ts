@@ -477,12 +477,24 @@ export function registerCoreAndSwarmRoutes(app: Express): void {
     const enableFrontierBoost = body.frontier_boost !== false;
     const enableVisionBridge = body.vision_bridge !== false;
 
-    let modeInstruction =
-      "You are an autonomous Omega-class Multi-Agent Engineer with full tool access (Live Shell, Stateful Python 3 Kernel, Filesystem, and Web/CVE Intelligence). Always include complete, non-truncated, runnable files formatted with exact `=== FILE: filename.ext ===` headers followed by fenced code blocks so your files appear in the Grouped Agent File Hub and can be launched as EXE, CLI, GUI, or WebApp.";
-    if (mode === "plan") {
-      modeInstruction += " Also provide a structured architectural & execution plan with milestones and verification commands.";
-    } else if (mode === "build") {
-      modeInstruction += " Focus on writing a complete, multi-file, zero-placeholder production application ready for immediate compilation and execution.";
+    const wantsCodeFiles =
+      mode === "build" ||
+      /\b(build\s+(?:a|an|me|the)|create\s+(?:a|an|the)\s+(?:app|webapp|website|script|project|tool|cli|game|server|api)|write\s+(?:a|the)\s+(?:full|complete)\s+(?:app|program|script|project)|multi-file|=== FILE:)\b/i.test(
+        rawPrompt
+      );
+    let modeInstruction = "";
+    if (mode === "build") {
+      modeInstruction =
+        "Write a complete, multi-file, zero-placeholder production implementation. Format each file with an exact `=== FILE: filename.ext ===` header followed by a fenced code block so files can be opened, merged, and compiled in Suomynona Explorer.";
+    } else if (mode === "plan") {
+      modeInstruction =
+        "Provide a clear, structured architectural and execution plan with concrete milestones, trade-offs, and verification steps in your own independent perspective.";
+    } else if (wantsCodeFiles) {
+      modeInstruction =
+        "When emitting runnable source files, format each file with `=== FILE: filename.ext ===` followed by a fenced code block so it appears in Suomynona Explorer.";
+    } else {
+      modeInstruction =
+        "Answer directly, clearly, and authentically in your own natural reasoning voice and style. Do not force boilerplate templates or artificial file headers unless code files were asked for.";
     }
 
     const contextualPrompt = buildContextualPrompt(rawPrompt, rag, mem, b);

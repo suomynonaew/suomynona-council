@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
-import {defineConfig, Plugin} from 'vite';
+import { defineConfig, Plugin } from 'vite';
 
 function preserveCompiledIndexHtml(): Plugin {
   let compiledHtml = '';
@@ -43,13 +43,13 @@ export default defineConfig(() => {
         process.env.DISABLE_HMR === 'true'
           ? null
           : {
-              ignored: [
-                '**/.council_data/**',
-                '**/council_outputs/**',
-                '**/council_builds/**',
-                '**/public/built_webapps/**',
-              ],
-            },
+            ignored: [
+              '**/.council_data/**',
+              '**/council_outputs/**',
+              '**/council_builds/**',
+              '**/public/built_webapps/**',
+            ],
+          },
     },
   };
 });

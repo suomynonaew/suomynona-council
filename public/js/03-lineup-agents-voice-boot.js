@@ -609,7 +609,7 @@ function renderLineup(opts = {}) {
       </label>
       <label>Accelerator
         <select class="select slim" data-host-accelerator>${acceleratorOptions.map((option) =>
-          `<option value="${esc(option)}" ${(host.accelerator || acceleratorOptions[0]) === option ? "selected" : ""}>${esc(option)}</option>`).join("")}</select>
+      `<option value="${esc(option)}" ${(host.accelerator || acceleratorOptions[0]) === option ? "selected" : ""}>${esc(option)}</option>`).join("")}</select>
       </label>
       <label data-host-url-wrap style="display:flex;align-items:center;gap:4px">Tunnel/URL
         <input class="input slim" data-host-custom-url value="${esc(endpointVal)}" placeholder="https://xxx.trycloudflare.com or http://127.0.0.1:8080/v1" style="width:205px" title="Tunnel URL (Cloudflare/ngrok) or local inference server endpoint for Host ${esc(host.id.toUpperCase())}">
@@ -629,11 +629,11 @@ function renderLineup(opts = {}) {
         <strong style="font-size:11px;color:var(--ok)">🔐 Authenticate Accelerators on ${esc(host.name || `Host ${host.id.toUpperCase()}`)}:</strong>
         <div class="row" data-host-accel-auth-pills style="gap:4px;flex-wrap:wrap">
           ${acceleratorOptions.map((acc) => {
-            const isActive = (host.accelerator || acceleratorOptions[0]) === acc;
-            const isAuthed = authedAccels.includes(acc);
-            const vram = getClientGpuVramGb(provider, acc);
-            return `<button type="button" class="${isActive ? "primary" : "ghost"} xs" data-auth-pick-accel="${esc(acc)}" title="Click to select, save &amp; authenticate ${esc(acc)} (${vram}GB VRAM) on ${esc(host.name || host.id)}">${isAuthed ? "🟢" : "🔑"} ${esc(acc)} (${vram}GB)${isActive ? " ★ Active" : ""}</button>`;
-          }).join("")}
+        const isActive = (host.accelerator || acceleratorOptions[0]) === acc;
+        const isAuthed = authedAccels.includes(acc);
+        const vram = getClientGpuVramGb(provider, acc);
+        return `<button type="button" class="${isActive ? "primary" : "ghost"} xs" data-auth-pick-accel="${esc(acc)}" title="Click to select, save &amp; authenticate ${esc(acc)} (${vram}GB VRAM) on ${esc(host.name || host.id)}">${isAuthed ? "🟢" : "🔑"} ${esc(acc)} (${vram}GB)${isActive ? " ★ Active" : ""}</button>`;
+      }).join("")}
         </div>
         <span class="spacer"></span>
         <input class="input slim" data-host-inline-account value="${esc(host.google_account || host.kaggle_username || "")}" placeholder="${provider === "kaggle" ? "Kaggle Username / Key…" : "Google Pro Account Email or Tunnel URL…"}" style="min-width:190px;max-width:240px;height:23px;font-size:11px;padding:2px 7px">
@@ -698,7 +698,7 @@ function renderLineup(opts = {}) {
         const val = urlInput.value.trim();
         host.custom_url = val;
         if (host.provider === "localhost") host.local_url = val;
-        putJSON(`/api/runtime-hosts/${encodeURIComponent(host.id)}`, { custom_url: val }).catch(() => {});
+        putJSON(`/api/runtime-hosts/${encodeURIComponent(host.id)}`, { custom_url: val }).catch(() => { });
       };
       urlInput.addEventListener("change", saveUrlChange);
       urlInput.addEventListener("blur", saveUrlChange);
@@ -998,7 +998,7 @@ function renderLineup(opts = {}) {
           lineup: STATE.lineup || {},
           allocations: allocations || STATE.host_lineups || {},
           host_configs,
-        }).catch(() => {});
+        }).catch(() => { });
         await syncCrossSessionHardwareAndIntelligence({ forceHardware: true });
         STATE.runtime_hosts = result.hosts;
         STATE.colab_hosts = result.hosts;
@@ -1114,7 +1114,7 @@ function renderLineup(opts = {}) {
         instructions: customPanel.querySelector("[data-host-instructions]").value,
       };
       for (const [field, selector] of [["temperature", "[data-host-temperature]"],
-        ["top_p", "[data-host-top-p]"], ["max_tokens", "[data-host-max-tokens]"]]) {
+      ["top_p", "[data-host-top-p]"], ["max_tokens", "[data-host-max-tokens]"]]) {
         const value = customPanel.querySelector(selector).value;
         if (value !== "") payload[field] = Number(value);
       }
@@ -1136,18 +1136,18 @@ function renderLineup(opts = {}) {
 
     // ── On-Demand Category Subsection per Host (Do NOT list all empty slots straight away!) ──
     const SLOT_META = {
-      fast:  { icon: "⚡", label: "Fast" },
-      chat:  { icon: "💬", label: "Chat" },
-      code:  { icon: "💻", label: "Code" },
+      fast: { icon: "⚡", label: "Fast" },
+      chat: { icon: "💬", label: "Chat" },
+      code: { icon: "💻", label: "Code" },
       think: { icon: "🧠", label: "Think / Reasoning" },
       cyber: { icon: "🛡", label: "Cyber / Security" },
-      sec:   { icon: "🛡", label: "Security" },
-      unc:   { icon: "🔓", label: "Uncensored" },
-      role:  { icon: "🎭", label: "Roleplay" },
-      math:  { icon: "∑",  label: "Math" },
+      sec: { icon: "🛡", label: "Security" },
+      unc: { icon: "🔓", label: "Uncensored" },
+      role: { icon: "🎭", label: "Roleplay" },
+      math: { icon: "∑", label: "Math" },
       trans: { icon: "🌐", label: "Translate" },
       agent: { icon: "🤖", label: "Agent" },
-      ocr:   { icon: "👁", label: "Vision / OCR" },
+      ocr: { icon: "👁", label: "Vision / OCR" },
       embed: { icon: "📐", label: "Embeddings" },
     };
 
@@ -1507,8 +1507,8 @@ function applyConsoleLogFilter() {
     activeTab === "activity"
       ? [$("#activity")]
       : activeTab === "colab-cli"
-      ? [$("#cli-out"), $("#cli-out-a"), $("#cli-out-b"), $("#cli-out-c")]
-      : [$("#guardian-out"), $("#activity")];
+        ? [$("#cli-out"), $("#cli-out-a"), $("#cli-out-b"), $("#cli-out-c")]
+        : [$("#guardian-out"), $("#activity")];
 
   containers.forEach((container) => {
     const lines = [...container.children].filter(
@@ -1655,11 +1655,11 @@ async function runColabTroubleshooting(button) {
       const troubleText =
         report.formatted ||
         ("Runtime troubleshooting:\n" +
-        (report.checks || []).map(c => `${c.severity.toUpperCase()}: ${c.message}`).join("\n"));
+          (report.checks || []).map(c => `${c.severity.toUpperCase()}: ${c.message}`).join("\n"));
       appendTypedTerminalBlock(cliOut, troubleText, { color: errors.length ? "#ffcc66" : "#2ee6a6" });
     }
     status(errors.length ? `Troubleshooting found ${errors.length} item(s); see Unified CLI or run /doctor for step-by-step fixes.`
-                         : "Full-app /doctor diagnostics passed across all domains.");
+      : "Full-app /doctor diagnostics passed across all domains.");
   } catch (error) {
     status("Troubleshooting failed: " + error);
   } finally {
@@ -1911,7 +1911,7 @@ async function renderColabHosts() {
         const out = card.querySelector(`#${outId}`);
         appendTypedTerminalBlock(out, `${host.name} [${prov.toUpperCase()}]> ${cmd}`, { color: "#00d4ff", instant: true });
         try {
-          const r = await fetch("/api/cli/stream", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({cmd, host:host.id, timeout:600}) });
+          const r = await fetch("/api/cli/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cmd, host: host.id, timeout: 600 }) });
           if (!r.ok) {
             const error = await r.json().catch(() => ({}));
             appendTypedTerminalBlock(out, `CLI error: ${error.error || r.statusText || r.status}`, { color: "#ff6b8b" });
@@ -1921,7 +1921,7 @@ async function renderColabHosts() {
           while (true) {
             const chunk = await reader.read();
             if (chunk.done) break;
-            buf += dec.decode(chunk.value, {stream:true});
+            buf += dec.decode(chunk.value, { stream: true });
             const events = buf.split("\n\n"); buf = events.pop();
             for (const event of events) {
               const payload = event.split("\n").filter(line => line.startsWith("data:"))
@@ -1975,9 +1975,9 @@ async function refreshColabHostsUI() { await renderColabHosts(); }
 
 // ── restart app (kill + respawn the server) ──
 $("#restart-btn").onclick = async () => {
-  
+
   status("⏻ restarting…");
-  try { await postJSON("/api/restart", {}); } catch (_) {}
+  try { await postJSON("/api/restart", {}); } catch (_) { }
   const wait = setInterval(async () => {
     try {
       const r = await fetch("/api/state", { cache: "no-store" });
@@ -2033,11 +2033,11 @@ function splitSpeechSentences(text, maxChunk = 280) {
 function stopSpeech() {
   _ttsSession++;
   if (_ttsAudio) {
-    try { _ttsAudio.pause(); _ttsAudio.src = ""; } catch (_) {}
+    try { _ttsAudio.pause(); _ttsAudio.src = ""; } catch (_) { }
     _ttsAudio = null;
   }
   if (window.speechSynthesis) {
-    try { window.speechSynthesis.cancel(); } catch (_) {}
+    try { window.speechSynthesis.cancel(); } catch (_) { }
   }
   if (_ttsActiveBtn) {
     _ttsActiveBtn.classList.remove("speaking");
@@ -2128,7 +2128,7 @@ $("#ve-pitch")?.addEventListener("input", (e) => {
 $("#voice")?.addEventListener("change", (e) => {
   const vid = e.target.value;
   editingVoiceId = vid;
-  try { localStorage.setItem("cng_selected_voice", vid); } catch (_) {}
+  try { localStorage.setItem("cng_selected_voice", vid); } catch (_) { }
   renderVoiceEditorSlots();
   const vp = getSelectedVoiceProfile(vid);
   status(`🔊 Switched smooth AI voice to: ${vp.name}`);
@@ -2293,7 +2293,7 @@ function ensureHostAutoReconnectEntry(hostId, defaultEnabled = true, isOnline = 
     let stored = null;
     try {
       stored = localStorage.getItem(`council-autoreconnect-${id}`);
-    } catch (_) {}
+    } catch (_) { }
     const enabled = stored !== null ? stored !== "0" : Boolean(defaultEnabled);
     HOST_AUTO_RECONNECT_STATE[id] = {
       enabled,
@@ -2446,7 +2446,7 @@ async function attemptHostHandshakeWithBackoff(hostId, contextLabel = "Handshake
     if (res && res.ok) {
       markHostStatusGreen(id, res);
       status(`🟢 Host ${id.toUpperCase()} connected & verified (${res.provider?.toUpperCase() || "COLAB"} · ${res.accelerator || "GPU"})`);
-      await reloadState().catch(() => {});
+      await reloadState().catch(() => { });
       return true;
     }
     scheduleHostAutoReconnect(id, res?.error || "handshake rejected");
@@ -2488,7 +2488,7 @@ function setHostAutoReconnect(hostId, enabled, { persist = true, triggerHandshak
   st.enabled = isOn;
   try {
     localStorage.setItem(`council-autoreconnect-${id}`, isOn ? "1" : "0");
-  } catch (_) {}
+  } catch (_) { }
 
   if (!isOn) {
     clearHostBackoffTimers(st);
@@ -2498,7 +2498,7 @@ function setHostAutoReconnect(hostId, enabled, { persist = true, triggerHandshak
   }
 
   if (persist && ["a", "b", "c"].includes(id)) {
-    postJSON(`/api/runtime-hosts/${encodeURIComponent(id)}`, { auto_reconnect: isOn }, "PUT").catch(() => {});
+    postJSON(`/api/runtime-hosts/${encodeURIComponent(id)}`, { auto_reconnect: isOn }, "PUT").catch(() => { });
   }
 
   syncTargetHostAutoReconnectUI();
@@ -2550,8 +2550,8 @@ function syncTargetHostAutoReconnectUI(explicitHosts = null) {
       dotEmoji === "🟢"
         ? `Target Host (${currentTarget.toUpperCase()}) Status: Connected (Green)`
         : dotEmoji === "🟡"
-        ? `Target Host (${currentTarget.toUpperCase()}) Status: Reconnecting with Exponential Backoff`
-        : `Target Host (${currentTarget.toUpperCase()}) Status: Disconnected (Red)`;
+          ? `Target Host (${currentTarget.toUpperCase()}) Status: Reconnecting with Exponential Backoff`
+          : `Target Host (${currentTarget.toUpperCase()}) Status: Disconnected (Red)`;
   }
 
   if (mainCheckbox) {
@@ -2817,7 +2817,7 @@ function markModelDeletedInLocalVault(id) {
     };
     localStorage.setItem(MODEL_VAULT_STORAGE_KEY, JSON.stringify(nextVault));
     updateVaultLockBadgeUI(nextVault);
-  } catch {}
+  } catch { }
 }
 
 function updateVaultLockBadgeUI(vaultObj) {
@@ -2879,9 +2879,10 @@ function renderCustomModels() {
 $("#cm-test").onclick = async () => {
   $("#cm-info").textContent = "testing…";
   const res = await postJSON("/api/custom-models/test", {
-    base: $("#cm-base").value, key: "" });
+    base: $("#cm-base").value, key: ""
+  });
   $("#cm-info").textContent = res.ok ? `✅ Found ${res.models.length} model(s); none selected automatically.`
-                                     : "❌ " + (res.error || res.status);
+    : "❌ " + (res.error || res.status);
   discoveredCustomModels = res.ok ? res.models : [];
   const list = $("#cm-discovered");
   list.innerHTML = "";
@@ -2944,7 +2945,8 @@ $("#cm-add").onclick = async () => {
   if (!$("#cm-name").value || !$("#cm-base").value || !$("#cm-model").value) { status("name, base URL and model id required"); return; }
   const res = await postJSON("/api/custom-models", {
     name: $("#cm-name").value, base: $("#cm-base").value,
-    key: "", model: $("#cm-model").value });
+    key: "", model: $("#cm-model").value
+  });
   if (res.ok) {
     saveLocalModelVault({ custom_models: res.custom_models || [res.model] });
     await reloadState();
@@ -2979,7 +2981,8 @@ $("#cg-add").onclick = async () => {
   const res = await postJSON("/api/custom-gguf", {
     name: $("#cg-name").value.trim(), repo: $("#cg-repo").value.trim(),
     gb: +$("#cg-gb").value || 5, slot: $("#cg-slot").value || "uncensored",
-    vision: $("#cg-vision").checked, gated: $("#cg-gated").checked });
+    vision: $("#cg-vision").checked, gated: $("#cg-gated").checked
+  });
   if (res.ok) {
     saveLocalModelVault({ custom_gguf: res.custom_gguf || [res.model] });
     await reloadState(); renderCustomGguf(); renderLineup();
@@ -3153,7 +3156,7 @@ async function runStartupHfBucketAutoSyncIfEnabled() {
       await reloadState();
       status(`🔄 Auto-Sync complete: Pulled latest metadata & weights across ${res.synced_buckets || buckets.length} linked HF Bucket(s) (${res.total_models_discovered || 0} models verified).`);
     }
-  } catch (_) {}
+  } catch (_) { }
 }
 
 // Bind Compact Scroll-Down HF Bucket & Vault Controls
@@ -3245,7 +3248,7 @@ $("#hfb-import-selected-model-btn")?.addEventListener("click", async () => {
       await reloadState();
       status(`🔒 Imported & locked "${parsed.name}" (${parsed.repo}) into Suomynona Council!`);
     }
-  } catch (_) {}
+  } catch (_) { }
 });
 
 $("#hfb-import-all-bucket-btn")?.addEventListener("click", async () => {
@@ -3316,8 +3319,8 @@ async function handleLinkHfBucket(autoImportTop = false) {
         foundCount === 0
           ? `🤗 Linked bucket "${res.bucket?.name}" (${res.bucket?.bucket_uri}) — 0 model files currently in bucket.`
           : autoImportTop
-          ? `🤗 Linked "${res.bucket?.name}" & imported ${res.imported?.length || foundCount} real model(s) into Suomynona Council!`
-          : `🤗 Linked Hugging Face Bucket "${res.bucket?.name}" (${foundCount} real model(s) found & listed in scroll-down menu)!`
+            ? `🤗 Linked "${res.bucket?.name}" & imported ${res.imported?.length || foundCount} real model(s) into Suomynona Council!`
+            : `🤗 Linked Hugging Face Bucket "${res.bucket?.name}" (${foundCount} real model(s) found & listed in scroll-down menu)!`
       );
     } else {
       status(`❌ HF Bucket error: ${res?.error || "could not link bucket"}`);
@@ -3507,7 +3510,7 @@ function renderMcp() {
       b.textContent = res?.ok ? `✅ OK (${elapsed}ms)` : "⚠️ Error";
       b.title = res?.ok ? payloadStr.slice(0, 400) : (res?.error || "failed");
       const summary = res?.ok
-        ? `✅ MCP [${srvId} → ${ res.tool || toolName }] (${elapsed}ms): ${payloadStr.replace(/\s+/g, " ").slice(0, 260)}`
+        ? `✅ MCP [${srvId} → ${res.tool || toolName}] (${elapsed}ms): ${payloadStr.replace(/\s+/g, " ").slice(0, 260)}`
         : `❌ MCP [${srvId}] Error: ${res?.error || "unknown error"}`;
       logMcpOut(summary);
       status(summary.slice(0, 140));
@@ -3567,9 +3570,12 @@ $("#mc-add").onclick = async () => {
   if (!$("#mc-name").value.trim() || !$("#mc-cmd").value.trim()) { status("name + command required"); return; }
   const res = await postJSON("/api/mcp", {
     name: $("#mc-name").value.trim(), command: $("#mc-cmd").value.trim(),
-    args: $("#mc-args").value.split(/\s+/).filter(Boolean) });
-  if (res.ok) { await reloadState(); renderMcp(); status("MCP server added — enable 🔗 MCP on an agent");
-    ["#mc-name", "#mc-cmd", "#mc-args"].forEach((i) => $(i).value = ""); }
+    args: $("#mc-args").value.split(/\s+/).filter(Boolean)
+  });
+  if (res.ok) {
+    await reloadState(); renderMcp(); status("MCP server added — enable 🔗 MCP on an agent");
+    ["#mc-name", "#mc-cmd", "#mc-args"].forEach((i) => $(i).value = "");
+  }
 };
 
 // ── system ──
@@ -3655,8 +3661,8 @@ async function authenticateColabHost(hostId, label) {
     status(`${label} authentication failed: ${err.message || err}`);
     handleHostConnectionFailure(id, err.message || String(err));
   }
-  await reloadState().catch(() => {});
-  await renderColabHosts().catch(() => {});
+  await reloadState().catch(() => { });
+  await renderColabHosts().catch(() => { });
 }
 $("#cli-reauth-a")?.addEventListener("click", () => authenticateColabHost("a", "Host A"));
 $("#cli-reauth-b")?.addEventListener("click", () => authenticateColabHost("b", "Host B"));
@@ -3760,7 +3766,7 @@ $("#stop-all-btn").onclick = async () => {
       if (out) appendTypedTerminalBlock(out, line, { color: "#ffcc66" });
     });
     status(res.ok ? `confirmed stopped ${res.count} runtime(s)`
-            : `Confirmed ${res.count} stop(s); some runtimes remain active or could not be verified.`);
+      : `Confirmed ${res.count} stop(s); some runtimes remain active or could not be verified.`);
     await renderColabHosts();
   } catch (error) {
     status("Stop all failed: " + error);
@@ -3858,14 +3864,14 @@ promptEl.addEventListener("keydown", (e) => {
         rawShell === "prompt"
           ? "prompt"
           : rawShell === "pwsh" || rawShell === "powershell"
-          ? "pwsh"
-          : rawShell === "python" || rawShell === "py"
-          ? "python"
-          : rawShell === "go" || rawShell === "golang"
-          ? "go"
-          : rawShell === "cmd"
-          ? "cmd"
-          : "bash";
+            ? "pwsh"
+            : rawShell === "python" || rawShell === "py"
+              ? "python"
+              : rawShell === "go" || rawShell === "golang"
+                ? "go"
+                : rawShell === "cmd"
+                  ? "cmd"
+                  : "bash";
 
       if (targetShell === "prompt") {
         if (typeof window.setAndSyncComposerShell === "function") window.setAndSyncComposerShell("prompt");
@@ -3903,8 +3909,8 @@ promptEl.addEventListener("keydown", (e) => {
       Array.isArray(promptHistory) && promptHistory.length
         ? promptHistory
         : Array.isArray(window._localRecentPrompts)
-        ? window._localRecentPrompts
-        : [];
+          ? window._localRecentPrompts
+          : [];
 
     if (shouldCycle && histList.length) {
       e.preventDefault();
@@ -4027,7 +4033,7 @@ $("#speculative-btn")?.addEventListener("click", async () => {
             fullText += delta;
             setCardBodyMarkdown(body, fullText, true);
           }
-        } catch (_) {}
+        } catch (_) { }
       }
     }
     setCardBodyMarkdown(body, fullText || "(no content)", false);
@@ -4275,12 +4281,12 @@ function renderGuardianHistory(history, { silentSyncOnly = false } = {}) {
       entry.type === "ok"
         ? "#22c55e"
         : entry.type === "err"
-        ? "#ef4444"
-        : entry.type === "warn"
-        ? "#f59e0b"
-        : entry.type === "diff"
-        ? "#c084fc"
-        : "#eef2fb";
+          ? "#ef4444"
+          : entry.type === "warn"
+            ? "#f59e0b"
+            : entry.type === "diff"
+              ? "#c084fc"
+              : "#eef2fb";
     appendTypedTerminalBlock(out, `${entry.text || ""}`, {
       color,
       marginBottom: "8px",
@@ -4323,8 +4329,8 @@ async function runGuardianCommand(promptText, customAppendFn = null) {
   const emitOut = customAppendFn
     ? (txt, col = "#e2e8f0", inst = true) => customAppendFn(txt, col, inst)
     : (txt, col = "#e2e8f0", inst = true) => {
-        if (out) appendTypedTerminalBlock(out, txt, { color: col, marginBottom: "8px", instant: inst });
-      };
+      if (out) appendTypedTerminalBlock(out, txt, { color: col, marginBottom: "8px", instant: inst });
+    };
   const rawText = String(promptText ?? inputEl?.value ?? "").trim();
   if (!rawText) return;
   if (inputEl && promptText === undefined) inputEl.value = "";

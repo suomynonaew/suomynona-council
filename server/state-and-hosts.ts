@@ -100,36 +100,28 @@ export function writeJson(filename: string, data: any): void {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 }
 
-// Inspect Gemini API key health (detect template placeholders and ephemeral AI Studio tokens)
+// Inspect Gemini API key health (detect missing or template placeholders; supports both AIzaSy... and live AQ.... Gemini keys)
 export function inspectGeminiKeyHealth(rawKey?: string): { valid: boolean; reason?: string; code?: string } {
   const k = String(rawKey || "").trim();
   if (!k) {
     return { valid: false, code: "MISSING", reason: "GEMINI_API_KEY is not set" };
   }
-  if (/^MY_GEMINI_API_KEY$/i.test(k) || /^YOUR_/i.test(k) || /^configured$/i.test(k)) {
+  if (/^MY_GEMINI_API_KEY$/i.test(k) || /^YOUR_/i.test(k) || /^configured$/i.test(k) || k.length < 12) {
     return {
       valid: false,
       code: "PLACEHOLDER",
-      reason: `GEMINI_API_KEY is set to placeholder value '${k}'`,
-    };
-  }
-  if (/^AQ\./.test(k)) {
-    return {
-      valid: false,
-      code: "EPHEMERAL_AISTUDIO_TOKEN",
-      reason:
-        "Token starts with 'AQ.' (ephemeral Google AI Studio proxy token that expires outside AI Studio; local desktop requires a standard 'AIzaSy...' key from https://aistudio.google.com/apikey)",
+      reason: `GEMINI_API_KEY is set to placeholder or invalid value '${k}'`,
     };
   }
   return { valid: true };
 }
 
 export function getValidGeminiApiKey(): string {
-  const envKey = String(process.env.GEMINI_API_KEY || "").trim();
-  if (inspectGeminiKeyHealth(envKey).valid) return envKey;
   const saved = readJson<Record<string, string>>("conf.json", {});
   const confKey = String(saved?.GEMINI_API_KEY || "").trim();
   if (inspectGeminiKeyHealth(confKey).valid) return confKey;
+  const envKey = String(process.env.GEMINI_API_KEY || "").trim();
+  if (inspectGeminiKeyHealth(envKey).valid) return envKey;
   return "";
 }
 
@@ -146,16 +138,66 @@ export function getGeminiClient(explicitKey?: string): GoogleGenAI {
   });
 }
 
-// Normalize model name to valid non-paid Gemini model if needed
-export function resolveGeminiModel(modelId: string): { model: string; thinkingLevel?: ThinkingLevel } {
-  const m = (modelId || "").toLowerCase();
-  if (m.includes("lite") || m === "l3b" || m === "l1b" || m === "q34" || m === "g4a" || m === "moe30i") {
-    return { model: "gemini-3.1-flash-lite" };
+// Diverse pool of live-verified Gemini & Gemma models so every Council slot gets distinct weights & originality
+export const VERIFIED_GEMINI_POOL = [
+  "gemini-3.8-flash",
+  "gemini-3.7-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.1-flash-lite",
+  "gemini-3.1-pro-preview",
+  "gemma-4-31b-it",
+  "gemma-4-26b-a4b-it",
+] as const;
+
+function hashModelIdForGemini(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
   }
-  if (m.includes("r1") || m.includes("qwq") || m.includes("think") || m.includes("70") || m.includes("32")) {
-    return { model: "gemini-3.8-flash", thinkingLevel: ThinkingLevel.HIGH };
+  return Math.abs(h >>> 0);
+}
+
+// Map each Council model slot deterministically across genuinely different live Gemini & Gemma models + temperatures
+export function resolveGeminiModel(
+  modelId: string,
+  slotHint = ""
+): { model: string; thinkingLevel?: ThinkingLevel; temperature: number } {
+  const raw = String(modelId || "").trim();
+  const m = raw.toLowerCase();
+  const h = hashModelIdForGemini(`${slotHint}:${raw}`);
+  const temperature = Math.round((0.35 + (h % 56) * 0.01) * 100) / 100; // 0.35 .. 0.90
+
+  // Direct verified Gemini/Gemma model ID passthrough
+  if ((VERIFIED_GEMINI_POOL as readonly string[]).includes(m)) {
+    return { model: m, temperature };
   }
-  return { model: "gemini-3.8-flash" };
+
+  // Spread model families across distinct real Google architectures (Gemini 3.1 Pro, Gemini 3.5–3.8 Flash, Flash-Lite, Gemma 4 31B & 26B MoE)
+  if (m.includes("gemma") || m.includes("g4")) {
+    const pool = ["gemma-4-31b-it", "gemma-4-26b-a4b-it"];
+    return { model: pool[h % pool.length], temperature };
+  }
+  if (m.includes("lite") || m === "l3b" || m === "l1b" || m === "q34" || m === "moe30i") {
+    const pool = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemma-4-26b-a4b-it"];
+    return { model: pool[h % pool.length], temperature };
+  }
+  if (m.includes("pro") || m.includes("70") || m.includes("r1") || m.includes("qwq") || m.includes("think")) {
+    const pool = ["gemini-3.1-pro-preview", "gemini-3.8-flash", "gemini-3.7-flash"];
+    const picked = pool[h % pool.length];
+    return { model: picked, thinkingLevel: picked === "gemini-3.8-flash" ? ThinkingLevel.MEDIUM : undefined, temperature };
+  }
+  if (m.includes("coder") || m.includes("qwen") || m.includes("deepseek") || m.includes("dev")) {
+    const pool = ["gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.8-flash", "gemini-3.1-pro-preview"];
+    return { model: pool[h % pool.length], temperature };
+  }
+  if (m.includes("llama") || m.includes("dolphin") || m.includes("hermes") || m.includes("mistral") || m.includes("ablit") || m.includes("cyber") || m.includes("baron") || m.includes("orca")) {
+    const pool = ["gemma-4-31b-it", "gemma-4-26b-a4b-it", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.8-flash"];
+    return { model: pool[h % pool.length], temperature };
+  }
+
+  return { model: VERIFIED_GEMINI_POOL[h % VERIFIED_GEMINI_POOL.length], temperature };
 }
 
 // Logs, Live Console Event Stream & Quantization/Data-Tuning Physics
@@ -2242,7 +2284,7 @@ export function buildBackendSystemPrompt(backend: any, rawUserPrompt = ""): stri
     );
   } else {
     parts.push(
-      `[Slot Context]: Your Suomynona Council slot has Persistent Memory (${turnsCount} turns, ${vaultCount} Vault facts), Live Shell/File Execution, Real-Time CVE/Web Search, 70B+ Frontier Co-Processor Escalation, and Universal Vision/PDF Reader active (Active hosts: ${hostsSummary || "Host A/B/C"}). Answer the user's prompt directly and naturally in your own distinct model voice without emitting <tool> or <tool_call> tags unless a shell command or file lookup was explicitly requested.`
+      `Answer directly and independently in your own authentic voice and specialty — avoid mimicking generic assistant boilerplate or repeating other models' phrasing.`
     );
   }
 

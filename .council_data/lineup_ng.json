@@ -1,70 +1,43 @@
 {
   "lineup": {
-    "chat": [
-      "l8"
-    ],
+    "chat": [],
     "think": [
-      "r1-32",
-      "r1l70",
-      "r1q7",
-      "qwq-32"
+      "r1-32"
     ],
-    "code": [
-      "qc14a",
-      "dscl",
-      "qc7a",
-      "coder14",
-      "codestral",
-      "seedc"
-    ],
+    "code": [],
     "cyber": [
-      "fsecred",
-      "pentgpt",
-      "baron8",
-      "orcacyber-ultra-1.0",
+      "pent32",
+      "seneca32",
+      "orca27",
       "orcacyber-zero-1.5",
-      "rednemo",
-      "seneca",
-      "lily7"
+      "cyag27",
+      "wrn8",
+      "pentgpt"
     ],
     "vision": [],
-    "fast": [
-      "l3bs",
-      "l3b"
-    ],
+    "fast": [],
     "roleplay": [],
-    "math": [
-      "math7"
-    ],
+    "math": [],
     "translate": [],
     "agent": [
-      "dphn8",
-      "hermes8"
+      "dphn8"
     ],
     "ocr": [],
     "medical": []
   },
   "allocations": {
     "a": {
-      "chat": [
-        "l8"
-      ],
-      "think": [
-        "r1-32"
-      ],
-      "code": [
-        "qc14a"
-      ],
+      "chat": [],
+      "think": [],
+      "code": [],
       "cyber": [
-        "fsecred",
-        "pentgpt"
+        "pent32",
+        "seneca32"
       ],
       "vision": [],
       "fast": [],
       "roleplay": [],
-      "math": [
-        "math7"
-      ],
+      "math": [],
       "translate": [],
       "agent": [],
       "ocr": [],
@@ -73,26 +46,18 @@
     "b": {
       "chat": [],
       "think": [
-        "r1l70",
-        "r1q7"
+        "r1-32"
       ],
-      "code": [
-        "dscl",
-        "qc7a"
-      ],
+      "code": [],
       "cyber": [
-        "baron8"
+        "orca27"
       ],
       "vision": [],
-      "fast": [
-        "l3bs"
-      ],
+      "fast": [],
       "roleplay": [],
       "math": [],
       "translate": [],
-      "agent": [
-        "dphn8"
-      ],
+      "agent": [],
       "ocr": [],
       "medical": []
     },
@@ -101,42 +66,34 @@
       "think": [],
       "code": [],
       "cyber": [
-        "orcacyber-ultra-1.0",
         "orcacyber-zero-1.5",
-        "rednemo",
-        "seneca",
-        "lily7"
+        "cyag27",
+        "wrn8"
       ],
-      "vision": [],
-      "fast": [
-        "l3b"
-      ],
-      "roleplay": [],
-      "math": [],
-      "translate": [],
-      "agent": [
-        "hermes8"
-      ],
-      "ocr": [],
-      "medical": []
-    },
-    "d": {
-      "chat": [],
-      "think": [
-        "qwq-32"
-      ],
-      "code": [
-        "coder14",
-        "codestral",
-        "seedc"
-      ],
-      "cyber": [],
       "vision": [],
       "fast": [],
       "roleplay": [],
       "math": [],
       "translate": [],
       "agent": [],
+      "ocr": [],
+      "medical": []
+    },
+    "d": {
+      "chat": [],
+      "think": [],
+      "code": [],
+      "cyber": [
+        "pentgpt"
+      ],
+      "vision": [],
+      "fast": [],
+      "roleplay": [],
+      "math": [],
+      "translate": [],
+      "agent": [
+        "dphn8"
+      ],
       "ocr": [],
       "medical": []
     }
@@ -197,11 +154,11 @@
       "accelerator": "G4",
       "high_memory": true,
       "ram_gb": 96,
-      "data_tuning_mode": "uncensored_cyber",
+      "data_tuning_mode": "custom",
       "quantization": "Q4_K_M",
       "context_size": 32768,
       "gpu_layers": 99,
-      "lora_adapter": "suomynona-council/EternalCortex-LoRA-r64",
+      "lora_adapter": "",
       "startup_flags": "--flash-attn --cont-batching --mlock",
       "google_account": "goodoldcanadian@gmail.com",
       "gh_username": "savingannabel",
