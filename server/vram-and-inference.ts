@@ -518,22 +518,50 @@ export function selectOptimalHostForDispatch(
     };
   }
 
+  const originLiveExternal = Boolean(
+    HOST_VERIFIED_STATE[origin]?.online &&
+      HOST_VERIFIED_STATE[origin]?.tunnel_ok &&
+      !HOST_VERIFIED_STATE[origin]?.is_internal_bridge
+  );
   const workersCap = Math.max(2, Number(clusterCfg?.batch_shard?.workers_per_host) || 4);
   const originOverloaded =
     degraded.has(origin) ||
     originTel.circuit_state === "OPEN" ||
     !originTel.enabled ||
-    originTel.pressure_pct >= snap.max_pressure_pct ||
+    (!originLiveExternal && originTel.pressure_pct >= snap.max_pressure_pct) ||
     originTel.in_flight >= workersCap;
+
+  // When a model's home Colab/GPU host is LIVE and not degraded/saturated, pin it to its own
+  // host so each model runs on its authentic loaded weights instead of being silently hijacked.
+  if (originLiveExternal && !originOverloaded) {
+    const backupPool = pool
+      .filter((h) => h.host_id !== origin)
+      .sort((a, b) => {
+        const aLive = HOST_VERIFIED_STATE[a.host_id]?.online && !HOST_VERIFIED_STATE[a.host_id]?.is_internal_bridge ? 1 : 0;
+        const bLive = HOST_VERIFIED_STATE[b.host_id]?.online && !HOST_VERIFIED_STATE[b.host_id]?.is_internal_bridge ? 1 : 0;
+        if (aLive !== bLive) return bLive - aLive;
+        return b.score - a.score;
+      });
+    return {
+      chosen_host: origin,
+      rerouted: false,
+      reason: "home_colab_host_live",
+      origin_telemetry: originTel,
+      target_telemetry: originTel,
+      ordered_candidates: [origin, ...backupPool.map((h) => h.host_id)],
+    };
+  }
 
   const scored = pool
     .map((h) => {
+      const hLive = Boolean(HOST_VERIFIED_STATE[h.host_id]?.online && !HOST_VERIFIED_STATE[h.host_id]?.is_internal_bridge);
       let adjustedScore =
         snap.policy === "vram_headroom_strict"
           ? h.free_vram_gb * 2.2 - h.pressure_pct * 1.1 - h.in_flight * 10
           : h.score;
+      if (hLive) adjustedScore += 45;
       if (h.host_id === origin && !originOverloaded) {
-        adjustedScore += 18;
+        adjustedScore += 35;
       }
       if (h.free_vram_gb < Math.min(8, modelGb * 0.4)) {
         adjustedScore -= 25;

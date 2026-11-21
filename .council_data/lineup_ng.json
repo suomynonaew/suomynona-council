@@ -119,8 +119,8 @@
       "kaggle_kernel_slug": "",
       "auto_reconnect": true,
       "enabled": true,
-      "custom_url": "http://127.0.0.1:8080/v1",
-      "local_url": "http://127.0.0.1:8080/v1",
+      "custom_url": "",
+      "local_url": "",
       "runtime_timeout": 21600
     },
     "b": {
@@ -143,8 +143,8 @@
       "kaggle_kernel_slug": "",
       "auto_reconnect": true,
       "enabled": true,
-      "custom_url": "http://127.0.0.1:8081/v1",
-      "local_url": "http://127.0.0.1:8081/v1",
+      "custom_url": "",
+      "local_url": "",
       "runtime_timeout": 21600
     },
     "c": {
@@ -167,8 +167,8 @@
       "kaggle_kernel_slug": "",
       "auto_reconnect": true,
       "enabled": true,
-      "custom_url": "http://127.0.0.1:8082/v1",
-      "local_url": "http://127.0.0.1:8082/v1",
+      "custom_url": "",
+      "local_url": "",
       "runtime_timeout": 21600
     },
     "d": {
@@ -191,8 +191,8 @@
       "kaggle_kernel_slug": "",
       "auto_reconnect": true,
       "enabled": true,
-      "custom_url": "http://127.0.0.1:8083/v1",
-      "local_url": "http://127.0.0.1:8083/v1",
+      "custom_url": "",
+      "local_url": "",
       "runtime_timeout": 21600
     }
   }

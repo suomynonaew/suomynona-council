@@ -4427,4 +4427,203 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
     res.json({ ok: true });
   });
 
+  // ── COMPLETE WIRING FOR ALL REMAINING FRONTEND ENDPOINTS (0 404s) ──
+  app.post("/api/colab/refresh", async (_req: Request, res: Response) => {
+    try {
+      await syncGistTunnels(true);
+      refreshBackends();
+      const hosts = loadColabHosts().map(publicColabHost);
+      const liveCount = Object.values(HOST_VERIFIED_STATE).filter((v: any) => v?.online && !v?.is_internal_bridge).length;
+      res.json({
+        ok: true,
+        updated: liveCount > 0,
+        live_hosts_count: liveCount,
+        tunnels: LIVE_HOST_TUNNELS,
+        hosts,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/colab/troubleshoot", async (_req: Request, res: Response) => {
+    try {
+      await syncGistTunnels(true);
+      const conf = readConf();
+      const hosts = loadColabHosts();
+      const diagnostics = await Promise.all(
+        hosts.map(async (h) => {
+          const hid = String(h.id).toLowerCase();
+          const url = String(LIVE_HOST_TUNNELS[hid] || (h.custom_url && !isBuiltInLoopbackStubUrl(h.custom_url) ? h.custom_url : "") || "").trim();
+          if (!url) {
+            return {
+              host: hid,
+              status: "standby",
+              url: "",
+              note: "No live Colab tunnel URL in Gist or Custom URL. Run the 1-Cell Colab Boot Script (with GH_TOKEN in Colab Secrets) or paste a live https://*.trycloudflare.com/v1 URL.",
+            };
+          }
+          const probe = await probeHostEndpoint(url, h, 3500);
+          return {
+            host: hid,
+            status: probe.ok && !probe.is_internal_bridge ? "online" : "offline",
+            url,
+            latency_ms: probe.ok ? probe.latency_ms : null,
+            models_loaded: probe.models,
+            error: probe.ok ? "" : probe.error,
+          };
+        })
+      );
+      const liveCount = diagnostics.filter((d) => d.status === "online").length;
+      res.json({
+        ok: true,
+        gist_id: conf.GIST_ID || "",
+        gh_token_set: Boolean(conf.GH_TOKEN),
+        gemini_key_valid: inspectGeminiKeyHealth(getValidGeminiApiKey()).valid,
+        live_hosts_count: liveCount,
+        diagnostics,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/brain/chat", async (req: Request, res: Response) => {
+    try {
+      const msg = String(req.body?.message || req.body?.prompt || "").trim();
+      if (!msg) return res.status(400).json({ ok: false, error: "Message is required" });
+      if (!BACKENDS.length) refreshBackends();
+      const copilotBackend = BACKENDS[0] || {
+        id: "brain-copilot",
+        name: "Suomynona Brain Copilot",
+        model: "gemini-3.8-flash",
+        kind: "cloud",
+        host: "a",
+      };
+      const sysPrompt =
+        "You are the Suomynona Council Terminal Copilot. Give concise, practical, accurate answers (code, commands, debugging, architecture) directly without unnecessary filler.";
+      const reply = await callSingleBackendEngine(sysPrompt, msg, copilotBackend, []);
+      res.json({ ok: true, reply, output: reply, model: copilotBackend.name });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/save-dir", (req: Request, res: Response) => {
+    try {
+      const rawDir = String(req.body?.save_dir || req.body?.path || "").trim();
+      if (!rawDir) return res.status(400).json({ ok: false, error: "save_dir is required" });
+      const resolved = path.isAbsolute(rawDir) ? rawDir : path.resolve(PROJECT_ROOT, rawDir);
+      fs.mkdirSync(resolved, { recursive: true });
+      saveConf({ SAVE_DIR: resolved });
+      log(`💾 Updated Saved Model Outputs Directory → ${resolved}`);
+      res.json({ ok: true, save_dir: resolved });
+    } catch (e: any) {
+      res.status(400).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.post("/api/agents/run", async (req: Request, res: Response) => {
+    try {
+      const agId = String(req.body?.agent_id || req.body?.id || "").trim();
+      const prompt = String(req.body?.prompt || req.body?.task || "").trim();
+      if (!prompt) return res.status(400).json({ ok: false, error: "Prompt is required" });
+      const agents = loadAgents();
+      const prof = agents.find((a: any) => a.id === agId || a.name === agId) || agents[0] || {
+        id: agId || "general_agent",
+        name: agId || "Specialist Agent",
+        system: "You are a capable technical specialist agent.",
+      };
+      const { backend } = resolveAgentBackend(prof, req.body?.model, req.body?.backend_idx);
+      const t0 = Date.now();
+      const sys = [prof.system || prof.desc || "", buildBackendSystemPrompt(backend, prompt)].filter(Boolean).join("\n\n");
+      const output = await callSingleBackendEngine(sys, prompt, backend, []);
+      const ok = Boolean(output && !output.includes("Live Endpoint Unreachable"));
+      try {
+        recordAgentRunTelemetry({
+          agent_id: prof.id,
+          success: ok,
+          elapsed_ms: Date.now() - t0,
+          tools_attempted: 0,
+          tools_succeeded: 0,
+          mcp_calls: 0,
+          rounds_used: 1,
+          model_used: backend?.name || backend?.model || "auto",
+        });
+      } catch {
+        // ignore telemetry write errors
+      }
+      res.json({ ok: true, agent_id: prof.id, agent_name: prof.name, model: backend?.name, output, text: output });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get("/api/system/onboarding", (_req: Request, res: Response) => {
+    const profile = readJson("onboarding_ng.json", { system_ram_gb: Math.round(os.totalmem() / 1024 / 1024 / 1024) });
+    res.json({ ok: true, profile });
+  });
+
+  app.post("/api/cluster/supercharger", (req: Request, res: Response) => {
+    try {
+      const cfg: any = loadClusterConfig();
+      const b = req.body || {};
+      const next = { ...cfg, supercharger: { ...(cfg.supercharger || {}), ...b } };
+      saveClusterConfig(next);
+      res.json({ ok: true, config: next });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
+  app.get("/api/sessions", (_req: Request, res: Response) => {
+    const snap = computeClusterVramSnapshot();
+    const sessions = snap.hosts_list.map((h) => {
+      const v = HOST_VERIFIED_STATE[h.host_id] || ({} as any);
+      return {
+        id: h.host_id,
+        host: `Host ${h.host_id.toUpperCase()}`,
+        gpu: v.gpu_name || `${h.provider.toUpperCase()} ${h.accelerator}`,
+        vram: `${h.used_vram_gb.toFixed(1)}/${h.vram_gb}GB (${h.pressure_pct}%)`,
+        status: v.online && !v.is_internal_bridge ? "COLAB LIVE" : "STANDBY (Cloud/Gemini)",
+        url: v.tunnel_url || "",
+      };
+    });
+    res.json({ ok: true, sessions });
+  });
+
+  app.post("/api/swarm/adjustable-ram-run", async (req: Request, res: Response) => {
+    try {
+      const goal = String(req.body?.goal || req.body?.prompt || "").trim();
+      if (!goal) return res.status(400).json({ ok: false, error: "Goal is required" });
+      if (!BACKENDS.length) refreshBackends();
+      const workers = BACKENDS.slice(0, Math.min(3, BACKENDS.length));
+      const workerOutputs = await Promise.all(
+        workers.map(async (bk) => {
+          const out = await callSingleBackendEngine(buildBackendSystemPrompt(bk, goal), goal, bk, []);
+          return { model: bk.name, host: bk.host, output: out };
+        })
+      );
+      const queenBackend = BACKENDS[0] || workers[0];
+      const synthPrompt =
+        `Synthesize the best unified solution for: "${goal}"\n\n` +
+        workerOutputs.map((w, i) => `### Worker ${i + 1} (${w.model}):\n${w.output.slice(0, 1500)}`).join("\n\n");
+      const queenSynthesis = await callSingleBackendEngine(
+        "You are the Council Queen Synthesizer. Merge the strongest original insights from all workers into one clear, actionable final answer.",
+        synthPrompt,
+        queenBackend,
+        []
+      );
+      res.json({
+        ok: true,
+        queen_boss_model: req.body?.queen_boss_model || queenBackend?.name || "Council Queen",
+        queen_rotation_attempts: 1,
+        worker_outputs: workerOutputs,
+        queen_synthesis: queenSynthesis,
+      });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
+    }
+  });
+
 }
