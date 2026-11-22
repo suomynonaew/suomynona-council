@@ -685,7 +685,7 @@ export async function runComprehensiveDoctor(opts: {
     }
 
     const confNow = readConf();
-    const rawGem = confNow.GEMINI_API_KEY || process.env.GEMINI_API_KEY || "";
+    const rawGem = getValidGeminiApiKey() || process.env.GEMINI_API_KEY || confNow.GEMINI_API_KEY || "";
     const gemHealth = inspectGeminiKeyHealth(rawGem);
     const hasOrca = Boolean(confNow.ORCAROUTER_API_KEY);
     const hasOpenRouter = Boolean(confNow.OPENROUTER_API_KEY);

@@ -2143,7 +2143,8 @@ export async function tryLocalOpenAiEngines(
     try {
       const u = new URL(base);
       const port = Number(u.port || (u.protocol === "https:" ? 443 : 80));
-      if ((u.hostname === "127.0.0.1" || u.hostname === "localhost") && INTERNAL_BRIDGE_PORTS.has(port)) {
+      const selfPort = Number(process.env.PORT) || 3000;
+      if ((u.hostname === "127.0.0.1" || u.hostname === "localhost") && (INTERNAL_BRIDGE_PORTS.has(port) || port === selfPort)) {
         continue;
       }
       if ((u.hostname === "127.0.0.1" || u.hostname === "localhost") && !(await probeLocalTcpPortFast(port))) {

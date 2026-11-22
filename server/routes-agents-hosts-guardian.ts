@@ -3547,13 +3547,19 @@ export function registerAgentsHostsGuardianRoutes(app: Express): void {
       if (!clean) return { online: false, models: [] };
       const u = new URL(clean);
       const port = Number(u.port || (u.protocol === "https:" ? 443 : 80));
-      if ((u.hostname === "127.0.0.1" || u.hostname === "localhost") && INTERNAL_BRIDGE_PORTS.has(port)) {
+      const selfPort = Number(process.env.PORT) || 3000;
+      if ((u.hostname === "127.0.0.1" || u.hostname === "localhost") && (INTERNAL_BRIDGE_PORTS.has(port) || port === selfPort)) {
         return { online: false, models: [] };
       }
       const r = await fetch(`${clean}/models`, { signal: AbortSignal.timeout(750) });
       if (!r.ok) return { online: false, models: [] };
-      const j: any = await r.json().catch(() => ({}));
-      const models = Array.isArray(j?.data) ? j.data.map((m: any) => String(m?.id || "")).filter(Boolean).slice(0, 8) : [];
+      const ct = String(r.headers.get("content-type") || "").toLowerCase();
+      if (!ct.includes("json")) return { online: false, models: [] };
+      const j: any = await r.json().catch(() => null);
+      if (!j || (!Array.isArray(j?.data) && !Array.isArray(j?.models))) {
+        return { online: false, models: [] };
+      }
+      const models = (Array.isArray(j?.data) ? j.data : j.models).map((m: any) => String(m?.id || m?.name || "")).filter(Boolean).slice(0, 8);
       return { online: true, models };
     } catch {
       return { online: false, models: [] };
