@@ -2365,6 +2365,104 @@ function extractCleanGeminiText(resp: any): string {
   return cleanLeakedModelArtifacts(String(resp?.text ?? "").trim());
 }
 
+let _vertexTokenCache: { token: string; expiresAt: number } = { token: "", expiresAt: 0 };
+let _geminiDev429Until = 0;
+
+async function getCloudRunMetadataAccessToken(): Promise<string> {
+  if (_vertexTokenCache.token && Date.now() < _vertexTokenCache.expiresAt) {
+    return _vertexTokenCache.token;
+  }
+  try {
+    const r = await fetch(
+      "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+      {
+        headers: { "Metadata-Flavor": "Google" },
+        signal: AbortSignal.timeout(1500),
+      }
+    );
+    if (!r.ok) return "";
+    const d: any = await r.json();
+    if (d?.access_token) {
+      const ttlMs = Math.max(60_000, (Number(d.expires_in) || 1800) * 1000 - 60_000);
+      _vertexTokenCache = { token: String(d.access_token), expiresAt: Date.now() + ttlMs };
+      return _vertexTokenCache.token;
+    }
+  } catch {
+    // Not running inside GCP Cloud Run / GCE metadata environment
+  }
+  return "";
+}
+
+async function callVertexAiGeminiEngine(
+  systemPrompt: string,
+  userPrompt: string,
+  images: string[],
+  resolvedModel: string,
+  effectiveTemp: number,
+  maxOut: number,
+  timeoutMs: number
+): Promise<string> {
+  const project = String(process.env.VERTEX_AI_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || "").trim();
+  if (!project) return "";
+  const token = await getCloudRunMetadataAccessToken();
+  if (!token) return "";
+
+  const vertexPool = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-3.1-pro-preview",
+  ];
+  const primaryVertex = vertexPool.includes(resolvedModel)
+    ? resolvedModel
+    : vertexPool[Math.floor(effectiveTemp * 100) % vertexPool.length];
+  const fallbackVertex = vertexPool[(vertexPool.indexOf(primaryVertex) + 2) % vertexPool.length];
+
+  const userParts: any[] = [];
+  for (const imgUrl of (images || []).slice(0, 4)) {
+    const m = String(imgUrl || "").match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (m) {
+      userParts.push({ inlineData: { mimeType: m[1], data: m[2] } });
+    }
+  }
+  userParts.push({ text: userPrompt || "Hello" });
+
+  for (const vm of [primaryVertex, fallbackVertex]) {
+    try {
+      const url = `https://aiplatform.googleapis.com/v1/projects/${encodeURIComponent(project)}/locations/global/publishers/google/models/${encodeURIComponent(vm)}:generateContent`;
+      const body: Record<string, any> = {
+        contents: [{ role: "user", parts: userParts }],
+        generationConfig: {
+          temperature: effectiveTemp,
+          maxOutputTokens: maxOut,
+        },
+      };
+      if (systemPrompt && systemPrompt.trim()) {
+        body.systemInstruction = { parts: [{ text: systemPrompt.trim() }] };
+      }
+      const r = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (r.ok) {
+        const d: any = await r.json();
+        const txt = extractCleanGeminiText(d);
+        if (txt && txt.length > 4) return txt;
+      }
+    } catch {
+      // try fallback vertex model
+    }
+  }
+  return "";
+}
+
 export async function callGeminiServerEngine(
   systemPrompt: string,
   userPrompt: string,
@@ -2374,68 +2472,84 @@ export async function callGeminiServerEngine(
   opts: { slotHint?: string; temperature?: number; maxOutputTokens?: number } = {}
 ): Promise<string> {
   const validGemKey = getValidGeminiApiKey();
-  if (!validGemKey) return "";
+  const vertexProject = String(process.env.VERTEX_AI_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || "").trim();
+  if (!validGemKey && !vertexProject) return "";
   const resolved = resolveGeminiModel(modelHint, opts.slotHint || "");
   const effectiveTemp = Number.isFinite(Number(opts.temperature)) ? Number(opts.temperature) : resolved.temperature;
   const maxOut = Number.isFinite(Number(opts.maxOutputTokens)) ? Number(opts.maxOutputTokens) : 4096;
 
-  try {
-    const ai = getGeminiClient(validGemKey);
-    const parts: any[] = [];
-    for (const imgUrl of (images || []).slice(0, 4)) {
-      const m = String(imgUrl || "").match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-      if (m) {
-        parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
-      }
-    }
-    parts.push({ text: userPrompt || "Hello" });
-
-    const configObj: Record<string, any> = {
-      temperature: effectiveTemp,
-      maxOutputTokens: maxOut,
-    };
-    if (systemPrompt && systemPrompt.trim()) {
-      configObj.systemInstruction = systemPrompt.trim();
-    }
-    if (resolved.model === "gemini-3.8-flash" && resolved.thinkingLevel) {
-      configObj.thinkingConfig = {
-        thinkingLevel: timeoutMs <= 25000 ? ThinkingLevel.LOW : resolved.thinkingLevel,
-      };
-    }
-
-    const resp = await Promise.race([
-      ai.models.generateContent({
-        model: resolved.model,
-        contents: parts.length === 1 ? (userPrompt || "Hello") : { parts },
-        config: configObj,
-      }),
-      new Promise<never>((_, rej) => setTimeout(() => rej(new Error("gemini_timeout")), timeoutMs)),
-    ]);
-    const txt = extractCleanGeminiText(resp);
-    if (txt && txt.length > 4) return txt;
-  } catch {
-    // Fallback to a DIFFERENT verified fast model from the pool if primary timed out or errored
+  if (validGemKey && Date.now() >= _geminiDev429Until) {
     try {
       const ai = getGeminiClient(validGemKey);
-      const fallbackPool = VERIFIED_GEMINI_POOL.filter((m) => m !== resolved.model && !m.startsWith("gemma-"));
-      const fallbackModel = fallbackPool[Math.floor(effectiveTemp * 100) % fallbackPool.length] || "gemini-3.5-flash";
-      const resp2 = await Promise.race([
+      const parts: any[] = [];
+      for (const imgUrl of (images || []).slice(0, 4)) {
+        const m = String(imgUrl || "").match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+        if (m) {
+          parts.push({ inlineData: { mimeType: m[1], data: m[2] } });
+        }
+      }
+      parts.push({ text: userPrompt || "Hello" });
+
+      const configObj: Record<string, any> = {
+        temperature: effectiveTemp,
+        maxOutputTokens: maxOut,
+      };
+      if (systemPrompt && systemPrompt.trim()) {
+        configObj.systemInstruction = systemPrompt.trim();
+      }
+      if (resolved.model === "gemini-3.8-flash" && resolved.thinkingLevel) {
+        configObj.thinkingConfig = {
+          thinkingLevel: timeoutMs <= 25000 ? ThinkingLevel.LOW : resolved.thinkingLevel,
+        };
+      }
+
+      const resp = await Promise.race([
         ai.models.generateContent({
-          model: fallbackModel,
-          contents: userPrompt || "Hello",
-          config: {
-            temperature: effectiveTemp,
-            maxOutputTokens: maxOut,
-            ...(systemPrompt?.trim() ? { systemInstruction: systemPrompt.trim() } : {}),
-          },
+          model: resolved.model,
+          contents: parts.length === 1 ? (userPrompt || "Hello") : { parts },
+          config: configObj,
         }),
-        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("gemini_fallback_timeout")), Math.min(timeoutMs, 22000))),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("gemini_timeout")), timeoutMs)),
       ]);
-      const txt2 = extractCleanGeminiText(resp2);
-      if (txt2 && txt2.length > 4) return txt2;
-    } catch {
-      // ignore
+      const txt = extractCleanGeminiText(resp);
+      if (txt && txt.length > 4) return txt;
+    } catch (err: any) {
+      const errMsg = String(err?.message || err || "");
+      if (/\b429\b|RESOURCE_EXHAUSTED|RATE_LIMIT/i.test(errMsg)) {
+        _geminiDev429Until = Date.now() + 60_000;
+      } else {
+        // Fallback to a DIFFERENT verified fast model from the pool if primary timed out or hit transient error
+        try {
+          const ai = getGeminiClient(validGemKey);
+          const fallbackPool = VERIFIED_GEMINI_POOL.filter((m) => m !== resolved.model && !m.startsWith("gemma-"));
+          const fallbackModel = fallbackPool[Math.floor(effectiveTemp * 100) % fallbackPool.length] || "gemini-3.5-flash";
+          const resp2 = await Promise.race([
+            ai.models.generateContent({
+              model: fallbackModel,
+              contents: userPrompt || "Hello",
+              config: {
+                temperature: effectiveTemp,
+                maxOutputTokens: maxOut,
+                ...(systemPrompt?.trim() ? { systemInstruction: systemPrompt.trim() } : {}),
+              },
+            }),
+            new Promise<never>((_, rej) => setTimeout(() => rej(new Error("gemini_fallback_timeout")), Math.min(timeoutMs, 22000))),
+          ]);
+          const txt2 = extractCleanGeminiText(resp2);
+          if (txt2 && txt2.length > 4) return txt2;
+        } catch (err2: any) {
+          if (/\b429\b|RESOURCE_EXHAUSTED|RATE_LIMIT/i.test(String(err2?.message || err2 || ""))) {
+            _geminiDev429Until = Date.now() + 60_000;
+          }
+        }
+      }
     }
+  }
+
+  // Automatic Google Cloud Vertex AI fallback when running on GCP Cloud Run (uses native metadata token)
+  if (vertexProject) {
+    const vTxt = await callVertexAiGeminiEngine(systemPrompt, userPrompt, images, resolved.model, effectiveTemp, maxOut, timeoutMs);
+    if (vTxt) return vTxt;
   }
   return "";
 }
@@ -2897,9 +3011,10 @@ export async function callSingleBackendEngine(
       stageErrors.push(`${prov.label}: ${pRes.error}`);
     }
 
-    // 7. SERVER-SIDE MULTI-MODEL GEMINI & GEMMA ENGINE (Distinct model + temperature per Council slot!):
+    // 7. SERVER-SIDE MULTI-MODEL GEMINI, GEMMA & VERTEX AI ENGINE (Distinct model + temperature per Council slot!):
     const validGemKey = getValidGeminiApiKey();
-    if (validGemKey) {
+    const hasVertexAi = Boolean(process.env.VERTEX_AI_PROJECT || process.env.GOOGLE_CLOUD_PROJECT);
+    if (validGemKey || hasVertexAi) {
       const slotKey = `${backend?.id || ""}:${backend?.host || ""}:${backend?.name || ""}`;
       const gemResolved = resolveGeminiModel(backend?.model || backend?.id || "", slotKey);
       const gemTxt = await callGeminiServerEngine(
