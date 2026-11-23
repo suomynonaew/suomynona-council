@@ -367,11 +367,19 @@ export async function fetchLatestGitHubRelease(
 
     const semverDiff = compareSemver(tag, currentVersion);
     let isNewer = semverDiff > 0;
-    if (!isNewer && semverDiff === 0 && publishedAt && builtAtIso) {
-      const pubMs = Date.parse(publishedAt);
-      const builtMs = Date.parse(builtAtIso);
-      if (Number.isFinite(pubMs) && Number.isFinite(builtMs) && pubMs > builtMs + 5 * 60 * 1000) {
-        isNewer = true;
+    // Same-semver hotfix detection: compare actual running portable .exe SHA-256 against published checksum
+    // (NEVER use timestamps, so slow upload times can never cause a same-version self-update loop!)
+    if (!isNewer && semverDiff === 0 && sha256) {
+      const runningExe = String(process.env.PORTABLE_EXECUTABLE_FILE || "").trim();
+      if (runningExe && fs.existsSync(runningExe)) {
+        try {
+          const runningSha = crypto.createHash("sha256").update(fs.readFileSync(runningExe)).digest("hex").toLowerCase();
+          if (runningSha && runningSha !== sha256.toLowerCase()) {
+            isNewer = true;
+          }
+        } catch {
+          // ignore read error; keep isNewer = false for same semver
+        }
       }
     }
 
