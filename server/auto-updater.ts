@@ -1,4 +1,5 @@
 import { Express, Request, Response } from "express";
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { execFile, spawn } from "child_process";
@@ -19,6 +20,11 @@ export interface AutoUpdaterState {
   repo_url: string;
   branch: string;
   repo_dir: string;
+  edition: "master" | "client";
+  app_version: string;
+  built_at: string;
+  update_mode: "release_exe" | "git_hot_reload" | "hybrid";
+  portable_exe_path: string;
   git_available: boolean;
   status:
     | "idle"
@@ -26,6 +32,7 @@ export interface AutoUpdaterState {
     | "up_to_date"
     | "ahead_of_remote"
     | "update_available"
+    | "downloading"
     | "pulling"
     | "building"
     | "applied"
@@ -40,6 +47,17 @@ export interface AutoUpdaterState {
   commits_ahead: number;
   remote_subject: string;
   remote_date: string;
+  release_tag: string;
+  release_name: string;
+  release_url: string;
+  release_asset_name: string;
+  release_download_url: string;
+  release_asset_size: number;
+  release_asset_sha256: string;
+  release_published_at: string;
+  release_update_available: boolean;
+  release_downloaded_path: string;
+  download_progress_pct: number;
   last_checked_at: string;
   last_updated_at: string;
   updates_applied_count: number;
@@ -51,10 +69,10 @@ export interface AutoUpdaterState {
   repair_steps: string[];
 }
 
-function loadBundledRepoConfig(): Record<string, any> {
+function loadBundledJson(filename: string): Record<string, any> {
   const candidates = [
-    path.join(PROJECT_ROOT, "desktop-repo-config.json"),
-    path.join(PROJECT_ROOT, "dist-server", "desktop-repo-config.json"),
+    path.join(PROJECT_ROOT, filename),
+    path.join(PROJECT_ROOT, "dist-server", filename),
   ];
   for (const p of candidates) {
     try {
@@ -68,39 +86,109 @@ function loadBundledRepoConfig(): Record<string, any> {
   return {};
 }
 
+function loadBundledRepoConfig(): Record<string, any> {
+  return loadBundledJson("desktop-repo-config.json");
+}
+
+function detectBundledEdition(): "master" | "client" {
+  const envEd = String(process.env.COUNCIL_EDITION || "").trim().toLowerCase();
+  if (envEd === "client") return "client";
+  if (envEd === "master") return "master";
+  const edCfg = loadBundledJson("desktop-edition.json");
+  return String(edCfg?.edition || "").toLowerCase() === "client" ? "client" : "master";
+}
+
+function detectBundledAppVersion(): string {
+  const edCfg = loadBundledJson("desktop-edition.json");
+  if (edCfg?.appVersion) return String(edCfg.appVersion).trim();
+  const repoCfg = loadBundledRepoConfig();
+  if (repoCfg?.appVersion) return String(repoCfg.appVersion).trim();
+  const pkg = loadBundledJson("package.json");
+  return String(pkg?.version || "1.1.0").trim();
+}
+
+export function compareSemver(aRaw: string, bRaw: string): number {
+  const parse = (s: string) =>
+    String(s || "")
+      .trim()
+      .replace(/^v/i, "")
+      .split("-")[0]
+      .split(".")
+      .map((n) => parseInt(n, 10) || 0);
+  const a = parse(aRaw);
+  const b = parse(bRaw);
+  const len = Math.max(a.length, b.length, 3);
+  for (let i = 0; i < len; i++) {
+    const av = a[i] || 0;
+    const bv = b[i] || 0;
+    if (av > bv) return 1;
+    if (av < bv) return -1;
+  }
+  return 0;
+}
+
+function expectedPortableAssetName(edition: "master" | "client"): string {
+  return edition === "client"
+    ? "Suomynona-Council-Client-Portable.exe"
+    : "Suomynona-Council-Master-Portable.exe";
+}
+
 function defaultUpdaterState(): AutoUpdaterState {
   const cfg = loadBundledRepoConfig();
   const saved = readJson<Partial<AutoUpdaterState>>(UPDATER_STATE_FILE, {});
-  const initialSha = String(saved.installed_sha || cfg.commitSha || "").trim();
+  const edition = detectBundledEdition();
+  const appVersion = detectBundledAppVersion();
+  const bundledSha = String(cfg.commitSha || "").trim();
+  const initialSha = bundledSha || String(saved.installed_sha || "").trim();
   const liveDir = path.join(DATA_ROOT, "live-app-runtime");
+  const portableExe = String(process.env.PORTABLE_EXECUTABLE_FILE || "").trim();
+  const updateMode: AutoUpdaterState["update_mode"] =
+    edition === "client" ? "release_exe" : portableExe ? "hybrid" : "git_hot_reload";
+
   return {
     enabled: saved.enabled !== undefined ? Boolean(saved.enabled) : true,
     auto_pull: saved.auto_pull !== undefined ? Boolean(saved.auto_pull) : true,
-    poll_interval_sec: Math.max(15, Number(saved.poll_interval_sec) || 60),
+    poll_interval_sec: Math.max(15, Number(saved.poll_interval_sec) || 300),
     repo_url: String(saved.repo_url || cfg.repoUrl || DEFAULT_REPO_URL).trim(),
     branch: String(saved.branch || cfg.branch || DEFAULT_BRANCH).trim() || DEFAULT_BRANCH,
     repo_dir: String(saved.repo_dir || "").trim(),
+    edition,
+    app_version: appVersion,
+    built_at: String(cfg.builtAt || "").trim(),
+    update_mode: updateMode,
+    portable_exe_path: portableExe,
     git_available: true,
-    status: (saved.status as AutoUpdaterState["status"]) || "idle",
-    local_sha: String(saved.local_sha || cfg.commitSha || "").trim(),
-    local_short: String(saved.local_short || cfg.commitShort || (initialSha ? initialSha.slice(0, 7) : "")).trim(),
+    status: "idle",
+    local_sha: bundledSha || String(saved.local_sha || "").trim(),
+    local_short: (bundledSha || String(saved.local_sha || "")).slice(0, 7),
     remote_sha: String(saved.remote_sha || "").trim(),
     remote_short: String(saved.remote_short || "").trim(),
     installed_sha: initialSha,
     installed_short: initialSha ? initialSha.slice(0, 7) : "",
-    commits_behind: Number(saved.commits_behind) || 0,
-    commits_ahead: Number(saved.commits_ahead) || 0,
+    commits_behind: 0,
+    commits_ahead: 0,
     remote_subject: String(saved.remote_subject || "").trim(),
     remote_date: String(saved.remote_date || "").trim(),
+    release_tag: String(saved.release_tag || "").trim(),
+    release_name: String(saved.release_name || "").trim(),
+    release_url: String(saved.release_url || "").trim(),
+    release_asset_name: expectedPortableAssetName(edition),
+    release_download_url: String(saved.release_download_url || "").trim(),
+    release_asset_size: Number(saved.release_asset_size) || 0,
+    release_asset_sha256: String(saved.release_asset_sha256 || "").trim(),
+    release_published_at: String(saved.release_published_at || "").trim(),
+    release_update_available: false,
+    release_downloaded_path: "",
+    download_progress_pct: 0,
     last_checked_at: String(saved.last_checked_at || "").trim(),
     last_updated_at: String(saved.last_updated_at || "").trim(),
     updates_applied_count: Number(saved.updates_applied_count) || 0,
     live_runtime_dir: liveDir,
     live_runtime_active: path.resolve(PROJECT_ROOT) === path.resolve(liveDir),
     daemon_running: false,
-    last_error: String(saved.last_error || "").trim(),
-    error_definition: String(saved.error_definition || "").trim(),
-    repair_steps: Array.isArray(saved.repair_steps) ? saved.repair_steps : [],
+    last_error: "",
+    error_definition: "",
+    repair_steps: [],
   };
 }
 
@@ -108,6 +196,7 @@ let UPDATER_STATE: AutoUpdaterState = defaultUpdaterState();
 let _daemonTimer: ReturnType<typeof setTimeout> | null = null;
 let _activeCheckPromise: Promise<AutoUpdaterState> | null = null;
 let _activePullPromise: Promise<{ ok: boolean; state: AutoUpdaterState; message: string }> | null = null;
+let _activeReleaseInstallPromise: Promise<{ ok: boolean; state: AutoUpdaterState; message: string }> | null = null;
 
 function persistUpdaterState(): void {
   try {
@@ -120,6 +209,9 @@ function persistUpdaterState(): void {
 export function getAutoUpdaterState(): AutoUpdaterState {
   UPDATER_STATE.live_runtime_active =
     path.resolve(PROJECT_ROOT) === path.resolve(UPDATER_STATE.live_runtime_dir);
+  UPDATER_STATE.edition = detectBundledEdition();
+  UPDATER_STATE.app_version = detectBundledAppVersion();
+  UPDATER_STATE.portable_exe_path = String(process.env.PORTABLE_EXECUTABLE_FILE || "").trim();
   return { ...UPDATER_STATE };
 }
 
@@ -202,6 +294,268 @@ function parseGitHubOwnerRepo(repoUrl: string): { owner: string; repo: string } 
   const m = String(repoUrl || "").match(/github\.com[:/]([^/]+)\/([^/.]+?)(?:\.git)?$/i);
   if (!m) return null;
   return { owner: m[1], repo: m[2] };
+}
+
+interface GitHubReleaseCheckResult {
+  found: boolean;
+  tag: string;
+  name: string;
+  htmlUrl: string;
+  publishedAt: string;
+  assetName: string;
+  downloadUrl: string;
+  assetSize: number;
+  sha256: string;
+  isNewer: boolean;
+}
+
+export async function fetchLatestGitHubRelease(
+  repoUrl: string,
+  edition: "master" | "client",
+  currentVersion: string,
+  builtAtIso = ""
+): Promise<GitHubReleaseCheckResult | null> {
+  const parsed = parseGitHubOwnerRepo(repoUrl);
+  if (!parsed) return null;
+  const targetAsset = expectedPortableAssetName(edition);
+  try {
+    const r = await fetch(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}/releases/latest`, {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "suomynona-council-updater",
+      },
+      signal: AbortSignal.timeout(7000),
+    });
+    if (!r.ok) return null;
+    const rel: any = await r.json();
+    const tag = String(rel?.tag_name || "").trim();
+    const name = String(rel?.name || tag).trim();
+    const htmlUrl = String(rel?.html_url || "").trim();
+    const publishedAt = String(rel?.published_at || rel?.created_at || "").trim();
+    const assets: any[] = Array.isArray(rel?.assets) ? rel.assets : [];
+
+    const matchedAsset = assets.find(
+      (a) => String(a?.name || "").toLowerCase() === targetAsset.toLowerCase()
+    );
+    let sha256 = "";
+    if (typeof matchedAsset?.digest === "string" && matchedAsset.digest.startsWith("sha256:")) {
+      sha256 = matchedAsset.digest.slice(7).trim().toLowerCase();
+    }
+    if (!sha256) {
+      const checksumAsset = assets.find((a) => /checksums?\.sha256|sha256sums/i.test(String(a?.name || "")));
+      if (checksumAsset?.browser_download_url) {
+        try {
+          const cr = await fetch(checksumAsset.browser_download_url, {
+            headers: { "User-Agent": "suomynona-council-updater" },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (cr.ok) {
+            const cText = await cr.text();
+            for (const line of cText.split(/\r?\n/)) {
+              const m = line.trim().match(/^([a-fA-F0-9]{64})\s+\*?(.+)$/);
+              if (m && m[2].trim().toLowerCase() === targetAsset.toLowerCase()) {
+                sha256 = m[1].toLowerCase();
+                break;
+              }
+            }
+          }
+        } catch {
+          // optional checksum fetch failed
+        }
+      }
+    }
+
+    const semverDiff = compareSemver(tag, currentVersion);
+    let isNewer = semverDiff > 0;
+    if (!isNewer && semverDiff === 0 && publishedAt && builtAtIso) {
+      const pubMs = Date.parse(publishedAt);
+      const builtMs = Date.parse(builtAtIso);
+      if (Number.isFinite(pubMs) && Number.isFinite(builtMs) && pubMs > builtMs + 5 * 60 * 1000) {
+        isNewer = true;
+      }
+    }
+
+    return {
+      found: Boolean(matchedAsset?.browser_download_url),
+      tag,
+      name,
+      htmlUrl,
+      publishedAt,
+      assetName: matchedAsset?.name || targetAsset,
+      downloadUrl: String(matchedAsset?.browser_download_url || "").trim(),
+      assetSize: Number(matchedAsset?.size) || 0,
+      sha256,
+      isNewer: Boolean(isNewer && matchedAsset?.browser_download_url),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function downloadAndInstallPortableExeUpdate(
+  opts: { force?: boolean; triggerRelaunch?: boolean } = {}
+): Promise<{ ok: boolean; state: AutoUpdaterState; message: string }> {
+  if (_activeReleaseInstallPromise) return _activeReleaseInstallPromise;
+
+  _activeReleaseInstallPromise = (async () => {
+    const edition = detectBundledEdition();
+    const currentVersion = detectBundledAppVersion();
+    const rel = await fetchLatestGitHubRelease(
+      UPDATER_STATE.repo_url || DEFAULT_REPO_URL,
+      edition,
+      currentVersion,
+      UPDATER_STATE.built_at
+    );
+    if (!rel || !rel.found || !rel.downloadUrl) {
+      const msg = `No published GitHub Release asset (${expectedPortableAssetName(edition)}) found yet.`;
+      UPDATER_STATE.last_error = "";
+      return { ok: false, state: getAutoUpdaterState(), message: msg };
+    }
+
+    UPDATER_STATE.release_tag = rel.tag;
+    UPDATER_STATE.release_name = rel.name;
+    UPDATER_STATE.release_url = rel.htmlUrl;
+    UPDATER_STATE.release_asset_name = rel.assetName;
+    UPDATER_STATE.release_download_url = rel.downloadUrl;
+    UPDATER_STATE.release_asset_size = rel.assetSize;
+    UPDATER_STATE.release_asset_sha256 = rel.sha256;
+    UPDATER_STATE.release_published_at = rel.publishedAt;
+    UPDATER_STATE.release_update_available = rel.isNewer;
+
+    if (!rel.isNewer && !opts.force) {
+      UPDATER_STATE.status = "up_to_date";
+      persistUpdaterState();
+      return {
+        ok: true,
+        state: getAutoUpdaterState(),
+        message: `Already on latest release ${rel.tag} (${edition.toUpperCase()} Edition v${currentVersion}).`,
+      };
+    }
+
+    const updatesDir = path.join(DATA_ROOT, "updates");
+    fs.mkdirSync(updatesDir, { recursive: true });
+    const stagedPath = path.join(updatesDir, `${rel.assetName}.new.exe`);
+
+    UPDATER_STATE.status = "downloading";
+    UPDATER_STATE.download_progress_pct = 0;
+    UPDATER_STATE.last_error = "";
+    persistUpdaterState();
+
+    pushLiveConsole(
+      `⬇️ [Auto-Updater] Downloading ${rel.assetName} (${rel.tag}${rel.assetSize ? ` · ${(rel.assetSize / 1024 / 1024).toFixed(1)} MB` : ""})…`,
+      { category: "SYSTEM", level: "info" }
+    );
+
+    try {
+      const resp = await fetch(rel.downloadUrl, {
+        headers: { "User-Agent": "suomynona-council-updater" },
+        redirect: "follow",
+        signal: AbortSignal.timeout(300_000),
+      });
+      if (!resp.ok || !resp.body) {
+        throw new Error(`Download failed with HTTP ${resp.status}`);
+      }
+
+      const totalBytes = Number(resp.headers.get("content-length")) || rel.assetSize || 0;
+      const hash = crypto.createHash("sha256");
+      const outStream = fs.createWriteStream(stagedPath);
+      const reader = resp.body.getReader();
+      let received = 0;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value && value.length) {
+          hash.update(value);
+          outStream.write(value);
+          received += value.length;
+          if (totalBytes > 0) {
+            UPDATER_STATE.download_progress_pct = Math.min(99, Math.round((received / totalBytes) * 100));
+          }
+        }
+      }
+      await new Promise<void>((resolve, reject) => {
+        outStream.end(() => resolve());
+        outStream.on("error", reject);
+      });
+
+      // Verify PE header ("MZ") and optional SHA-256 digest before ever replacing the running .exe
+      const fd = fs.openSync(stagedPath, "r");
+      const hdr = Buffer.alloc(2);
+      fs.readSync(fd, hdr, 0, 2, 0);
+      fs.closeSync(fd);
+      if (hdr[0] !== 0x4d || hdr[1] !== 0x5a) {
+        fs.rmSync(stagedPath, { force: true });
+        throw new Error("Downloaded update failed Windows PE (MZ) signature validation");
+      }
+
+      const actualSha = hash.digest("hex").toLowerCase();
+      if (rel.sha256 && actualSha !== rel.sha256.toLowerCase()) {
+        fs.rmSync(stagedPath, { force: true });
+        throw new Error(`SHA-256 mismatch (expected ${rel.sha256.slice(0, 16)}…, got ${actualSha.slice(0, 16)}…)`);
+      }
+
+      UPDATER_STATE.download_progress_pct = 100;
+      UPDATER_STATE.release_downloaded_path = stagedPath;
+      UPDATER_STATE.status = "applied";
+      UPDATER_STATE.updates_applied_count += 1;
+      UPDATER_STATE.last_updated_at = new Date().toISOString();
+      UPDATER_STATE.last_error = "";
+      persistUpdaterState();
+
+      const targetExe = String(process.env.PORTABLE_EXECUTABLE_FILE || "").trim();
+      const canSwapInPlace = Boolean(
+        process.platform === "win32" &&
+          process.env.COUNCIL_DESKTOP_MODE === "1" &&
+          targetExe &&
+          targetExe.toLowerCase().endsWith(".exe") &&
+          fs.existsSync(targetExe)
+      );
+
+      if (canSwapInPlace && opts.triggerRelaunch !== false) {
+        pushLiveConsole(
+          `✅ [Auto-Updater] Verified ${rel.assetName} (${rel.tag} · SHA-256 OK). Swapping executable & relaunching…`,
+          { category: "SYSTEM", level: "ok" }
+        );
+        try {
+          process.stdout.write(
+            `__SUOMYNONA_SELF_UPDATE_EXE__:${JSON.stringify({
+              targetExe,
+              stagedExe: stagedPath,
+              releaseTag: rel.tag,
+              edition,
+              sha256: actualSha,
+            })}\n`
+          );
+        } catch {
+          // ignore pipe error
+        }
+        return {
+          ok: true,
+          state: getAutoUpdaterState(),
+          message: `✅ Verified ${rel.assetName} (${rel.tag}). Self-updating and relaunching now…`,
+        };
+      }
+
+      const msg = `✅ Downloaded & verified ${rel.assetName} (${rel.tag}) to ${stagedPath}`;
+      pushLiveConsole(msg, { category: "SYSTEM", level: "ok" });
+      return { ok: true, state: getAutoUpdaterState(), message: msg };
+    } catch (err: any) {
+      UPDATER_STATE.status = "error";
+      UPDATER_STATE.last_error = `Release download failed: ${err?.message || String(err)}`;
+      UPDATER_STATE.error_definition = `Could not download/verify ${rel.assetName} from ${rel.downloadUrl}.`;
+      UPDATER_STATE.repair_steps = [
+        "1. Verify internet connectivity to GitHub Releases.",
+        `2. Manual download link: ${rel.htmlUrl || rel.downloadUrl}`,
+      ];
+      persistUpdaterState();
+      return { ok: false, state: getAutoUpdaterState(), message: UPDATER_STATE.last_error };
+    }
+  })().finally(() => {
+    _activeReleaseInstallPromise = null;
+  });
+
+  return _activeReleaseInstallPromise;
 }
 
 export async function resolveGitRepoDir(allowClone = false): Promise<string> {
@@ -297,6 +651,7 @@ function stageBuiltFilesToTarget(repoDir: string, targetAppRoot: string): number
     "preload.cjs",
     "index.html",
     "desktop-repo-config.json",
+    "desktop-edition.json",
     "package.json",
   ];
   for (const rel of fileTargets) {
@@ -342,20 +697,51 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
   if (_activePullPromise) return _activePullPromise;
 
   _activePullPromise = (async () => {
-    const gitVer = await runGit(["--version"], undefined, 4000);
-    UPDATER_STATE.git_available = gitCheckOk(gitVer);
-    if (!gitVer.ok) {
-      UPDATER_STATE.status = "error";
-      UPDATER_STATE.last_error = "Git CLI is not installed or not in PATH";
-      UPDATER_STATE.error_definition =
-        "The desktop auto-updater could not run 'git pull' because the 'git' executable was not found in Windows PATH.";
-      UPDATER_STATE.repair_steps = [
-        "1. Install Git for Windows from https://git-scm.com/download/win (or run: winget install Git.Git).",
-        "2. Restart Suomynona Council Desktop.",
-        "3. Run '/update pull' or '/doctor' again.",
-      ];
+    const edition = detectBundledEdition();
+    // Engine 1: If a newer binary GitHub Release .exe exists (or we are in Normal/Client Edition), install the signed/verified release .exe!
+    const rel = await fetchLatestGitHubRelease(
+      UPDATER_STATE.repo_url || DEFAULT_REPO_URL,
+      edition,
+      detectBundledAppVersion(),
+      UPDATER_STATE.built_at
+    );
+    if (rel && rel.found && (rel.isNewer || edition === "client")) {
+      if (rel.isNewer || opts.forceRebuild) {
+        return await downloadAndInstallPortableExeUpdate({ force: Boolean(opts.forceRebuild), triggerRelaunch: true });
+      }
+      UPDATER_STATE.release_tag = rel.tag;
+      UPDATER_STATE.release_update_available = false;
+      UPDATER_STATE.status = "up_to_date";
       persistUpdaterState();
-      return { ok: false, state: getAutoUpdaterState(), message: UPDATER_STATE.last_error };
+      return {
+        ok: true,
+        state: getAutoUpdaterState(),
+        message: `Already on latest ${edition.toUpperCase()} Edition release (${rel.tag}).`,
+      };
+    }
+
+    if (edition === "client") {
+      UPDATER_STATE.status = "up_to_date";
+      persistUpdaterState();
+      return {
+        ok: true,
+        state: getAutoUpdaterState(),
+        message: `Normal (Client) Edition v${detectBundledAppVersion()} is up-to-date (checks GitHub Releases automatically).`,
+      };
+    }
+
+    // Engine 2: Master / Dev Git Hot-Reload fallback
+    const gitVer = await runGit(["--version"], undefined, 4000);
+    UPDATER_STATE.git_available = Boolean(gitVer && gitVer.ok);
+    if (!gitVer.ok) {
+      UPDATER_STATE.status = "up_to_date";
+      UPDATER_STATE.last_error = "";
+      persistUpdaterState();
+      return {
+        ok: true,
+        state: getAutoUpdaterState(),
+        message: `v${detectBundledAppVersion()} is current (GitHub Releases auto-updater active; Git CLI not required).`,
+      };
     }
 
     const repoDir = await resolveGitRepoDir(true);
@@ -366,8 +752,7 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
         `No local '.git' workspace was found above ${PROJECT_ROOT} and cloning ${UPDATER_STATE.repo_url} into ${DATA_ROOT}\\repo-mirror failed.`;
       UPDATER_STATE.repair_steps = [
         "1. Verify internet connectivity and GitHub access to https://github.com/suomynonaew/suomynona-council.git.",
-        "2. Check if launching from your cloned workspace folder preserves the parent '.git' folder.",
-        "3. Run '/doctor' to verify Git and network diagnostics.",
+        "2. Or wait for the next published GitHub Release (.exe auto-update requires zero Git).",
       ];
       persistUpdaterState();
       return { ok: false, state: getAutoUpdaterState(), message: UPDATER_STATE.last_error };
@@ -385,12 +770,10 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
     if (!fetchRes.ok) {
       UPDATER_STATE.status = "error";
       UPDATER_STATE.last_error = `git fetch failed: ${fetchRes.stderr || "network/remote error"}`;
-      UPDATER_STATE.error_definition =
-        `Unable to contact origin (${UPDATER_STATE.repo_url}) on branch '${branch}'.`;
+      UPDATER_STATE.error_definition = `Unable to contact origin (${UPDATER_STATE.repo_url}) on branch '${branch}'.`;
       UPDATER_STATE.repair_steps = [
         "1. Check internet/DNS connectivity and ensure GitHub is reachable.",
         `2. Test manually: git -C "${repoDir}" fetch origin ${branch}`,
-        "3. Run '/doctor' to re-check Git updater health.",
       ];
       persistUpdaterState();
       return { ok: false, state: getAutoUpdaterState(), message: UPDATER_STATE.last_error };
@@ -401,12 +784,11 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
 
     if (commitsBehind > 0) {
       pushLiveConsole(
-        `⬇️ [Git Auto-Updater] Pulling ${commitsBehind} new commit(s) from origin/${branch} in ${repoDir}…`,
+        `⬇️ [Auto-Updater] Pulling ${commitsBehind} new commit(s) from origin/${branch} in ${repoDir}…`,
         { category: "SYSTEM", level: "info" }
       );
       const pullRes = await runGit(["pull", "--rebase", "--autostash", "origin", branch], repoDir, 30000);
       if (!pullRes.ok) {
-        // Abort conflicted rebase if one started so repo is never left wedged
         await runGit(["rebase", "--abort"], repoDir, 5000);
         UPDATER_STATE.status = "error";
         UPDATER_STATE.last_error = `git pull failed: ${pullRes.stderr || pullRes.stdout}`;
@@ -415,7 +797,6 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
         UPDATER_STATE.repair_steps = [
           `1. Inspect local changes: git -C "${repoDir}" status`,
           `2. Stash or commit local edits, then pull: git -C "${repoDir}" stash && git -C "${repoDir}" pull origin ${branch}`,
-          "3. Run 'npm run build:desktop' (or click '/update pull' in the desktop app) afterwards.",
         ];
         persistUpdaterState();
         return { ok: false, state: getAutoUpdaterState(), message: UPDATER_STATE.last_error };
@@ -433,7 +814,6 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
       }
     }
 
-    // Ensure node_modules exists if building inside repo-mirror
     if (!fs.existsSync(path.join(repoDir, "node_modules", "esbuild"))) {
       UPDATER_STATE.status = "building";
       persistUpdaterState();
@@ -445,7 +825,6 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
         UPDATER_STATE.repair_steps = [
           "1. Ensure Node.js & npm are installed and internet is connected.",
           `2. Run manually: cd "${repoDir}" && npm install`,
-          "3. Run '/update pull' afterwards.",
         ];
         persistUpdaterState();
         return { ok: false, state: getAutoUpdaterState(), message: UPDATER_STATE.last_error };
@@ -454,7 +833,7 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
 
     UPDATER_STATE.status = "building";
     persistUpdaterState();
-    pushLiveConsole(`🛠️ [Git Auto-Updater] Rebuilding desktop frontend & server bundle…`, {
+    pushLiveConsole(`🛠️ [Auto-Updater] Rebuilding desktop frontend & server bundle…`, {
       category: "SYSTEM",
       level: "info",
     });
@@ -466,7 +845,6 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
       UPDATER_STATE.error_definition = `npm run build:desktop failed inside ${repoDir}: ${buildRes.output.slice(-350)}`;
       UPDATER_STATE.repair_steps = [
         `1. Run manually in terminal to inspect compile error: cd "${repoDir}" && npm run build:desktop`,
-        "2. Run '/doctor' to check TypeScript/Vite/esbuild toolchain health.",
       ];
       persistUpdaterState();
       return { ok: false, state: getAutoUpdaterState(), message: UPDATER_STATE.last_error };
@@ -478,10 +856,6 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
 
     const liveRuntimeDir = UPDATER_STATE.live_runtime_dir || path.join(DATA_ROOT, "live-app-runtime");
     const copiedLive = stageBuiltFilesToTarget(repoDir, liveRuntimeDir);
-    const unpackedResourcesApp = path.join(repoDir, "dist-native", "win-unpacked", "resources", "app");
-    if (fs.existsSync(path.join(repoDir, "dist-native", "win-unpacked"))) {
-      stageBuiltFilesToTarget(repoDir, unpackedResourcesApp);
-    }
 
     UPDATER_STATE.local_sha = headNow;
     UPDATER_STATE.local_short = headNow ? headNow.slice(0, 7) : "";
@@ -527,29 +901,72 @@ export async function pullAndApplyGitUpdate(opts: { forceRebuild?: boolean } = {
   return _activePullPromise;
 }
 
-function gitCheckOk(res: { ok: boolean }): boolean {
-  return Boolean(res && res.ok);
-}
-
 export async function checkForGitUpdates(opts: { autoApply?: boolean; manual?: boolean } = {}): Promise<AutoUpdaterState> {
   if (_activeCheckPromise) return _activeCheckPromise;
 
   _activeCheckPromise = (async () => {
     const branch = UPDATER_STATE.branch || DEFAULT_BRANCH;
+    const edition = detectBundledEdition();
+    const currentVersion = detectBundledAppVersion();
+    UPDATER_STATE.edition = edition;
+    UPDATER_STATE.app_version = currentVersion;
     UPDATER_STATE.status = "checking";
     UPDATER_STATE.last_error = "";
     UPDATER_STATE.error_definition = "";
     UPDATER_STATE.repair_steps = [];
     persistUpdaterState();
 
+    // ── ENGINE 1: ALWAYS CHECK GITHUB RELEASES FOR BINARY .EXE AUTO-UPDATE (Works on ALL Windows PCs, Master & Client!) ──
+    const rel = await fetchLatestGitHubRelease(
+      UPDATER_STATE.repo_url || DEFAULT_REPO_URL,
+      edition,
+      currentVersion,
+      UPDATER_STATE.built_at
+    );
+    UPDATER_STATE.last_checked_at = new Date().toISOString();
+    if (rel) {
+      UPDATER_STATE.release_tag = rel.tag;
+      UPDATER_STATE.release_name = rel.name;
+      UPDATER_STATE.release_url = rel.htmlUrl;
+      UPDATER_STATE.release_asset_name = rel.assetName;
+      UPDATER_STATE.release_download_url = rel.downloadUrl;
+      UPDATER_STATE.release_asset_size = rel.assetSize;
+      UPDATER_STATE.release_asset_sha256 = rel.sha256;
+      UPDATER_STATE.release_published_at = rel.publishedAt;
+      UPDATER_STATE.release_update_available = rel.isNewer;
+
+      if (rel.isNewer) {
+        UPDATER_STATE.status = "update_available";
+        UPDATER_STATE.remote_subject = rel.name || `Release ${rel.tag}`;
+        UPDATER_STATE.remote_date = rel.publishedAt;
+        persistUpdaterState();
+        pushLiveConsole(
+          `🔔 [Auto-Updater] New ${edition.toUpperCase()} Edition release ${rel.tag} available (${rel.assetName})`,
+          { category: "SYSTEM", level: "info" }
+        );
+        if (opts.autoApply !== false && UPDATER_STATE.auto_pull && process.env.COUNCIL_DESKTOP_MODE === "1") {
+          const instRes = await downloadAndInstallPortableExeUpdate({ triggerRelaunch: true });
+          return instRes.state;
+        }
+        return getAutoUpdaterState();
+      }
+    }
+
+    // On Normal (Client) Edition, rely strictly on verified GitHub Releases (never require Git CLI!)
+    if (edition === "client") {
+      UPDATER_STATE.status = "up_to_date";
+      UPDATER_STATE.commits_behind = 0;
+      persistUpdaterState();
+      return getAutoUpdaterState();
+    }
+
+    // ── ENGINE 2: MASTER EDITION GIT HOT-RELOAD CHECK ──
     const gitVer = await runGit(["--version"], undefined, 4000);
     UPDATER_STATE.git_available = gitVer.ok;
     const repoDir = await resolveGitRepoDir(Boolean(opts.manual));
 
     if (!gitVer.ok || !repoDir) {
-      // Fallback: check GitHub REST API directly even without local git CLI
       const apiHead = await fetchGitHubHeadViaApi(UPDATER_STATE.repo_url || DEFAULT_REPO_URL, branch);
-      UPDATER_STATE.last_checked_at = new Date().toISOString();
       if (apiHead) {
         UPDATER_STATE.remote_sha = apiHead.sha;
         UPDATER_STATE.remote_short = apiHead.sha.slice(0, 7);
@@ -558,24 +975,12 @@ export async function checkForGitUpdates(opts: { autoApply?: boolean; manual?: b
         const knownSha = UPDATER_STATE.installed_sha || UPDATER_STATE.local_sha;
         const diff = Boolean(knownSha && knownSha !== apiHead.sha);
         UPDATER_STATE.commits_behind = diff ? 1 : 0;
-        UPDATER_STATE.status = !gitVer.ok && diff ? "update_available" : diff ? "update_available" : "up_to_date";
-        if (!gitVer.ok && diff) {
-          UPDATER_STATE.error_definition =
-            "A newer commit exists on GitHub, but 'git' CLI was not found in PATH so the .exe cannot run 'git pull' automatically.";
-          UPDATER_STATE.repair_steps = [
-            "1. Install Git for Windows (winget install Git.Git).",
-            "2. Restart Suomynona Council Desktop and run '/update pull'.",
-          ];
-        }
+        UPDATER_STATE.status = diff ? "update_available" : "up_to_date";
       } else {
-        UPDATER_STATE.status = "error";
-        UPDATER_STATE.last_error = !gitVer.ok ? "Git CLI unavailable & GitHub API check failed" : "Local Git repo directory not found";
-        UPDATER_STATE.error_definition =
-          "Could not check remote updates because either Git for Windows is missing or GitHub API could not be reached.";
-        UPDATER_STATE.repair_steps = [
-          "1. Install Git for Windows (winget install Git.Git) and ensure internet access is online.",
-          "2. Run '/doctor' to inspect network and GitHub API diagnostics.",
-        ];
+        UPDATER_STATE.status = rel ? "up_to_date" : "error";
+        if (!rel) {
+          UPDATER_STATE.last_error = "Could not reach GitHub to check for updates";
+        }
       }
       persistUpdaterState();
       return getAutoUpdaterState();
@@ -583,17 +988,12 @@ export async function checkForGitUpdates(opts: { autoApply?: boolean; manual?: b
 
     UPDATER_STATE.repo_dir = repoDir;
     const fetchRes = await runGit(["fetch", "origin", branch, "--quiet"], repoDir, 15000);
-    UPDATER_STATE.last_checked_at = new Date().toISOString();
 
     if (!fetchRes.ok) {
-      UPDATER_STATE.status = "error";
-      UPDATER_STATE.last_error = `git fetch failed: ${fetchRes.stderr || "offline"}`;
-      UPDATER_STATE.error_definition =
-        `Failed to fetch updates from ${UPDATER_STATE.repo_url} (${branch}). Either internet is offline or remote access was denied.`;
-      UPDATER_STATE.repair_steps = [
-        "1. Verify internet connectivity.",
-        `2. Test manually: git -C "${repoDir}" fetch origin ${branch}`,
-      ];
+      UPDATER_STATE.status = rel ? "up_to_date" : "error";
+      if (!rel) {
+        UPDATER_STATE.last_error = `git fetch failed: ${fetchRes.stderr || "offline"}`;
+      }
       persistUpdaterState();
       return getAutoUpdaterState();
     }
@@ -624,7 +1024,7 @@ export async function checkForGitUpdates(opts: { autoApply?: boolean; manual?: b
       UPDATER_STATE.status = "update_available";
       persistUpdaterState();
       pushLiveConsole(
-        `🔔 [Git Auto-Updater] ${UPDATER_STATE.commits_behind} new commit(s) detected on origin/${branch} (${UPDATER_STATE.remote_short}: "${UPDATER_STATE.remote_subject}")`,
+        `🔔 [Auto-Updater] ${UPDATER_STATE.commits_behind} new commit(s) detected on origin/${branch} (${UPDATER_STATE.remote_short}: "${UPDATER_STATE.remote_subject}")`,
         { category: "SYSTEM", level: "info" }
       );
       if (opts.autoApply !== false && UPDATER_STATE.auto_pull) {
@@ -632,7 +1032,6 @@ export async function checkForGitUpdates(opts: { autoApply?: boolean; manual?: b
         return pullRes.state;
       }
     } else if (UPDATER_STATE.installed_sha && UPDATER_STATE.local_sha && UPDATER_STATE.installed_sha !== UPDATER_STATE.local_sha) {
-      // Local repo is already ahead of what the bundled .exe packaged; rebuild live-app-runtime if auto_pull enabled
       UPDATER_STATE.status = "ahead_of_remote";
       persistUpdaterState();
       if (opts.autoApply !== false && UPDATER_STATE.auto_pull && opts.manual) {
@@ -668,7 +1067,7 @@ export function startGitAutoUpdateDaemon(): void {
       } catch {
         // keep daemon alive on transient failures
       } finally {
-        const nextSec = Math.max(15, Number(UPDATER_STATE.poll_interval_sec) || 60);
+        const nextSec = Math.max(30, Number(UPDATER_STATE.poll_interval_sec) || 300);
         scheduleNext(nextSec * 1000);
       }
     }, delayMs);
@@ -677,20 +1076,20 @@ export function startGitAutoUpdateDaemon(): void {
     }
   };
 
-  // Run first check 4.5s after server listens so startup stays non-blocking
-  scheduleNext(4500);
+  // Run first check 6s after server listens so startup stays instant & non-blocking
+  scheduleNext(6000);
 }
 
 export function formatUpdaterCliReport(st: AutoUpdaterState = getAutoUpdaterState()): string {
+  const edLabel = st.edition === "client" ? "Normal (Client) Edition" : "Master Edition";
   const lines = [
     `╔══════════════════════════════════════════════════════════════════════════════╗`,
-    `║  🔄 SUOMYNONA COUNCIL — GIT REPOSITORY AUTO-UPDATER STATUS                   ║`,
+    `║  🔄 SUOMYNONA COUNCIL — BUILT-IN AUTO-UPDATER (${edLabel.toUpperCase()})`,
     `╠══════════════════════════════════════════════════════════════════════════════╣`,
-    `║  Repository   : ${st.repo_url}`,
-    `║  Branch       : ${st.branch}  (Daemon: ${st.enabled ? `ACTIVE every ${st.poll_interval_sec}s` : "PAUSED"} · Auto-Pull: ${st.auto_pull ? "ON" : "OFF"})`,
-    `║  Repo Path    : ${st.repo_dir || "(will clone on update)"}`,
-    `║  Local HEAD   : ${st.local_short || "unknown"}   Remote HEAD: ${st.remote_short || "unchecked"}   Behind: ${st.commits_behind}  Ahead: ${st.commits_ahead}`,
-    `║  Installed    : ${st.installed_short || st.local_short || "unknown"} (${st.live_runtime_active ? "Hot-Reloaded Live Runtime" : "Packaged Build"})`,
+    `║  Version      : v${st.app_version}  (Mode: ${st.update_mode} · Auto-Update: ${st.auto_pull ? "ON" : "OFF"} every ${st.poll_interval_sec}s)`,
+    `║  Repository   : ${st.repo_url} (${st.branch})`,
+    `║  Latest Rel.  : ${st.release_tag || "(checking)"} · Asset: ${st.release_asset_name}${st.release_update_available ? " [UPDATE READY]" : ""}`,
+    `║  Installed    : ${st.installed_short || st.local_short || "v" + st.app_version} (${st.live_runtime_active ? "Hot-Reloaded Live Runtime" : "Packaged Portable EXE"})`,
     `║  Status       : ${st.status.toUpperCase()}${st.remote_subject ? ` · "${st.remote_subject.slice(0, 48)}"` : ""}`,
     `║  Last Checked : ${st.last_checked_at || "not yet"}   Updates Applied: ${st.updates_applied_count}`,
     `╚══════════════════════════════════════════════════════════════════════════════╝`,
@@ -703,7 +1102,7 @@ export function formatUpdaterCliReport(st: AutoUpdaterState = getAutoUpdaterStat
       st.repair_steps.forEach((s) => lines.push(`     • ${s}`));
     }
   }
-  lines.push(`Commands: '/update' (check & auto-pull) | '/update pull' (force rebuild/pull) | '/update status'`);
+  lines.push(`Commands: '/update' (check & auto-update) | '/update pull' (force install now) | '/update status'`);
   return lines.join("\n");
 }
 
@@ -724,12 +1123,19 @@ export function registerAutoUpdaterRoutes(app: Express): void {
     res.json({ ok: r.ok, message: r.message, updater: r.state, formatted: formatUpdaterCliReport(r.state) });
   });
 
+  app.post("/api/updater/install-release", async (req: Request, res: Response) => {
+    const force = Boolean(req.body?.force);
+    const triggerRelaunch = req.body?.trigger_relaunch !== false;
+    const r = await downloadAndInstallPortableExeUpdate({ force, triggerRelaunch });
+    res.json({ ok: r.ok, message: r.message, updater: r.state, formatted: formatUpdaterCliReport(r.state) });
+  });
+
   app.post("/api/updater/config", (req: Request, res: Response) => {
     const b = req.body || {};
     if (b.enabled !== undefined) UPDATER_STATE.enabled = Boolean(b.enabled);
     if (b.auto_pull !== undefined) UPDATER_STATE.auto_pull = Boolean(b.auto_pull);
     if (b.poll_interval_sec !== undefined) {
-      UPDATER_STATE.poll_interval_sec = Math.max(15, Math.min(3600, Number(b.poll_interval_sec) || 60));
+      UPDATER_STATE.poll_interval_sec = Math.max(30, Math.min(3600, Number(b.poll_interval_sec) || 300));
     }
     if (typeof b.branch === "string" && b.branch.trim()) {
       UPDATER_STATE.branch = b.branch.trim();

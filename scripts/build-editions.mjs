@@ -1,4 +1,5 @@
 import { execSync } from "child_process";
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 
@@ -109,6 +110,22 @@ for (const edition of editions) {
       fs.rmSync(tmpConfigPath, { force: true });
     }
   }
+}
+
+// Write dist-native/checksums.sha256 for SHA-256 verified auto-updates across both editions
+const checksumLines = [];
+for (const exeName of ["Suomynona-Council-Master-Portable.exe", "Suomynona-Council-Client-Portable.exe"]) {
+  const exePath = path.resolve("dist-native", exeName);
+  if (fs.existsSync(exePath)) {
+    const hash = crypto.createHash("sha256").update(fs.readFileSync(exePath)).digest("hex");
+    checksumLines.push(`${hash}  ${exeName}`);
+  }
+}
+if (checksumLines.length > 0) {
+  const checksumPath = path.resolve("dist-native", "checksums.sha256");
+  fs.writeFileSync(checksumPath, checksumLines.join("\n") + "\n", "utf-8");
+  console.log(`\n🔐 Wrote SHA-256 update verification manifest: ${checksumPath}`);
+  for (const line of checksumLines) console.log(`   ${line}`);
 }
 
 // Always restore workspace to Master Edition after packaging so local dev/admin work stays unlocked

@@ -16,5 +16,6 @@ contextBridge.exposeInMainWorld("suomynonaNative", {
   getUpdaterStatus: () => ipcRenderer.invoke("updater-status"),
   checkForUpdates: (opts) => ipcRenderer.invoke("updater-check", opts),
   pullUpdatesNow: (opts) => ipcRenderer.invoke("updater-pull", opts),
+  installReleaseUpdate: (opts) => ipcRenderer.invoke("updater-install-release", opts),
   runDoctor: (opts) => ipcRenderer.invoke("run-doctor", opts),
 });

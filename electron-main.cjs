@@ -6,6 +6,7 @@
 // ============================================================================
 
 const { app, BrowserWindow, ipcMain, Menu, nativeTheme, screen, shell } = require("electron");
+const os = require("os");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
@@ -405,6 +406,8 @@ function startEmbeddedBackend(port) {
           ...(EDITION_CONFIG.ed25519PublicKeyPem ? { COUNCIL_PUBLIC_KEY_PEM: EDITION_CONFIG.ed25519PublicKeyPem } : {}),
           COUNCIL_APP_ROOT: activeAppRoot,
           COUNCIL_DATA_ROOT: DATA_ROOT,
+          ...(process.env.PORTABLE_EXECUTABLE_FILE ? { PORTABLE_EXECUTABLE_FILE: process.env.PORTABLE_EXECUTABLE_FILE } : {}),
+          ...(process.env.PORTABLE_EXECUTABLE_DIR ? { PORTABLE_EXECUTABLE_DIR: process.env.PORTABLE_EXECUTABLE_DIR } : {}),
           ...(gitRepoDir ? { COUNCIL_GIT_REPO_DIR: gitRepoDir } : {}),
           PORT: String(port),
         },
@@ -446,6 +449,11 @@ function startEmbeddedBackend(port) {
             try {
               const info = JSON.parse(line.slice("__SUOMYNONA_HOT_RELOAD_RUNTIME__:".length));
               handleRuntimeHotReload(info);
+            } catch (_) { }
+          } else if (line.startsWith("__SUOMYNONA_SELF_UPDATE_EXE__:")) {
+            try {
+              const info = JSON.parse(line.slice("__SUOMYNONA_SELF_UPDATE_EXE__:".length));
+              handlePortableExeSelfUpdate(info);
             } catch (_) { }
           }
           nlIdx = stdoutBuf.indexOf("\n");
@@ -513,6 +521,84 @@ async function handleRuntimeHotReload(info) {
     console.error("[SUOMYNONA NATIVE] Runtime hot-reload failed:", err);
   } finally {
     hotReloadInProgress = false;
+  }
+}
+
+// ── Atomic Self-Replacing Portable .EXE Updater (Master & Normal/Client Editions) ──
+let exeSelfUpdateInProgress = false;
+function handlePortableExeSelfUpdate(info) {
+  if (exeSelfUpdateInProgress || process.platform !== "win32") return;
+  const targetExe = String(info?.targetExe || process.env.PORTABLE_EXECUTABLE_FILE || "").trim();
+  const stagedExe = String(info?.stagedExe || "").trim();
+  if (!targetExe || !stagedExe || !fs.existsSync(stagedExe) || !fs.existsSync(targetExe)) {
+    console.warn("[SUOMYNONA NATIVE] Self-update skipped: missing target or staged executable.");
+    return;
+  }
+  try {
+    const fd = fs.openSync(stagedExe, "r");
+    const hdr = Buffer.alloc(2);
+    fs.readSync(fd, hdr, 0, 2, 0);
+    fs.closeSync(fd);
+    if (hdr[0] !== 0x4d || hdr[1] !== 0x5a) {
+      console.error("[SUOMYNONA NATIVE] Refusing self-update: staged file is not a valid Windows PE executable.");
+      return;
+    }
+
+    exeSelfUpdateInProgress = true;
+    const backupExe = `${targetExe}.bak`;
+    const swapScriptPath = path.join(os.tmpdir(), `suomynona-self-update-${process.pid}.cmd`);
+    const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
+
+    const cmdBody = [
+      "@echo off",
+      "setlocal enabledelayedexpansion",
+      `set "PID=${process.pid}"`,
+      `set "TARGET=${targetExe}"`,
+      `set "STAGED=${stagedExe}"`,
+      `set "BACKUP=${backupExe}"`,
+      "for /L %%i in (1,1,40) do (",
+      "  tasklist /FI \"PID eq %PID%\" 2>NUL | find /I \"%PID%\" >NUL",
+      "  if errorlevel 1 goto :ready",
+      "  timeout /t 1 /nobreak >NUL",
+      ")",
+      ":ready",
+      "timeout /t 1 /nobreak >NUL",
+      "if exist \"%BACKUP%\" del /F /Q \"%BACKUP%\" >NUL 2>&1",
+      "for /L %%j in (1,1,10) do (",
+      "  move /Y \"%TARGET%\" \"%BACKUP%\" >NUL 2>&1",
+      "  if not errorlevel 1 goto :moved_old",
+      "  timeout /t 1 /nobreak >NUL",
+      ")",
+      "goto :launch_old",
+      ":moved_old",
+      "move /Y \"%STAGED%\" \"%TARGET%\" >NUL 2>&1",
+      "if errorlevel 1 (",
+      "  move /Y \"%BACKUP%\" \"%TARGET%\" >NUL 2>&1",
+      "  goto :launch_old",
+      ")",
+      "del /F /Q \"%BACKUP%\" >NUL 2>&1",
+      "start \"\" \"%TARGET%\"",
+      "goto :cleanup",
+      ":launch_old",
+      "if exist \"%TARGET%\" start \"\" \"%TARGET%\"",
+      ":cleanup",
+      "del /F /Q \"%~f0\" >NUL 2>&1",
+    ].join("\r\n");
+
+    fs.writeFileSync(swapScriptPath, cmdBody, "utf-8");
+    console.log(`[SUOMYNONA NATIVE] Launching atomic portable .exe self-updater for ${info?.releaseTag || "latest"}...`);
+    stopEmbeddedBackend();
+    const updaterProc = spawn("cmd.exe", ["/c", q(swapScriptPath)], {
+      detached: true,
+      windowsHide: true,
+      stdio: "ignore",
+      windowsVerbatimArguments: true,
+    });
+    updaterProc.unref();
+    app.quit();
+  } catch (err) {
+    exeSelfUpdateInProgress = false;
+    console.error("[SUOMYNONA NATIVE] Portable .exe self-update failed:", err);
   }
 }
 
@@ -603,7 +689,7 @@ function buildApplicationMenu() {
         },
         { type: "separator" },
         {
-          label: "Check & Pull Git Updates Now",
+          label: "Check & Install App Updates Now",
           accelerator: "CmdOrCtrl+Shift+U",
           click: () => {
             if (mainWindow && !mainWindow.isDestroyed()) {
@@ -957,6 +1043,7 @@ ipcMain.handle("open-data-folder", () => {
 ipcMain.handle("updater-status", () => requestLocalApi("GET", "/api/updater/status"));
 ipcMain.handle("updater-check", (_event, opts) => requestLocalApi("POST", "/api/updater/check", opts || { auto_apply: true }));
 ipcMain.handle("updater-pull", (_event, opts) => requestLocalApi("POST", "/api/updater/pull", opts || {}));
+ipcMain.handle("updater-install-release", (_event, opts) => requestLocalApi("POST", "/api/updater/install-release", opts || {}));
 ipcMain.handle("run-doctor", (_event, opts) => requestLocalApi("POST", "/api/doctor", opts || { auto_fix: true }));
 
 // ── App Lifecycle with Single-Instance Lock ──

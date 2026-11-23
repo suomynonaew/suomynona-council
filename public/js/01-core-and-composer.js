@@ -4150,28 +4150,37 @@ async function refreshTopbarGitUpdaterBadge() {
     const res = await fetch("/api/updater/status", { cache: "no-store" }).then((r) => r.json());
     const st = res?.updater;
     if (!st) return;
-    if (st.status === "pulling" || st.status === "building") {
+    const verTag = st.app_version ? `v${st.app_version}` : (st.installed_short || "");
+    if (st.status === "downloading") {
+      lbl.textContent = `DL ${st.download_progress_pct || 0}%`;
+      btn.style.color = "#38bdf8";
+      btn.style.borderColor = "rgba(56,189,248,0.45)";
+    } else if (st.status === "pulling" || st.status === "building") {
       lbl.textContent = "Updating…";
       btn.style.color = "#38bdf8";
       btn.style.borderColor = "rgba(56,189,248,0.45)";
     } else if (st.status === "applied") {
-      lbl.textContent = `Updated ${st.installed_short || ""}`.trim();
+      lbl.textContent = `Updated ${st.release_tag || verTag}`.trim();
       btn.style.color = "#2ee6a6";
       btn.style.borderColor = "rgba(46,230,166,0.45)";
+    } else if (st.release_update_available) {
+      lbl.textContent = `Update ${st.release_tag || "Ready"}`;
+      btn.style.color = "#fbbf24";
+      btn.style.borderColor = "rgba(251,191,36,0.55)";
     } else if (st.commits_behind > 0) {
       lbl.textContent = `${st.commits_behind} Update`;
       btn.style.color = "#fbbf24";
       btn.style.borderColor = "rgba(251,191,36,0.5)";
     } else if (st.status === "error") {
-      lbl.textContent = "Git Err";
+      lbl.textContent = "Upd Err";
       btn.style.color = "#ff6b8b";
       btn.style.borderColor = "rgba(255,107,139,0.45)";
     } else {
-      lbl.textContent = st.installed_short ? `Sync ${st.installed_short}` : "Git Sync ✓";
+      lbl.textContent = verTag ? `Auto-Upd ${verTag}` : "Auto-Upd ✓";
       btn.style.color = "#2ee6a6";
       btn.style.borderColor = "rgba(46,230,166,0.28)";
     }
-    btn.title = `Git Auto-Updater: ${st.repo_url} (${st.branch}) · Status: ${st.status} · Installed: ${st.installed_short || "?"} · Remote: ${st.remote_short || "checking"} (Click to check & pull)`;
+    btn.title = `Built-In Auto-Updater (${String(st.edition || "master").toUpperCase()} ${verTag}) · Status: ${st.status} · Latest Release: ${st.release_tag || "checking"} · Git: ${st.installed_short || "?"} (Click to check & auto-update)`;
   } catch (_) {}
 }
 
@@ -4384,16 +4393,22 @@ window.runInteractiveUpdaterInWorkspace = async function (subCmd = "check") {
          </div>`
       : "";
 
+    const editionLabel = String(st.edition || "master").toLowerCase() === "client" ? "Normal (Client) Edition" : "Master Edition";
+    const relLine = st.release_tag
+      ? `<div><strong>GitHub Release:</strong> <code>${esc(st.release_tag)}</code> (${esc(st.release_asset_name || "portable exe")})${st.release_update_available ? ` · <strong style="color:#fbbf24">NEW VERSION READY</strong>` : ` · <span style="color:#2ee6a6">Latest</span>`}</div>`
+      : `<div><strong>GitHub Release:</strong> <span class="muted">No binary release published yet (Git/Cloud auto-sync active)</span></div>`;
+
     body.innerHTML = `
       <div style="padding:6px 4px;font-size:12.5px;color:#e2e8f0">
+        <div><strong>Edition &amp; Version:</strong> <code>${esc(editionLabel)}</code> · <code>v${esc(st.app_version || "1.1.0")}</code> · Mode: <code>${esc(st.update_mode || "hybrid")}</code></div>
         <div><strong>Repository:</strong> <code>${esc(st.repo_url || "https://github.com/suomynonaew/suomynona-council.git")}</code> (branch <code>${esc(st.branch || "main")}</code>)</div>
-        <div><strong>Repo Folder:</strong> <code>${esc(st.repo_dir || "(auto-clone on pull)")}</code></div>
-        <div><strong>Local HEAD:</strong> <code>${esc(st.local_short || "?")}</code> · <strong>Remote HEAD:</strong> <code>${esc(st.remote_short || "?")}</code> · <strong>Installed:</strong> <code>${esc(st.installed_short || "?")}</code> · <strong>Behind:</strong> ${Number(st.commits_behind || 0)}</div>
-        <div><strong>Status:</strong> <strong style="color:${st.status === "error" ? "#ff6b8b" : "#2ee6a6"}">${esc(String(st.status || "idle").toUpperCase())}</strong> · Auto-Pull: <strong>${st.auto_pull ? "ON" : "OFF"}</strong> (every ${st.poll_interval_sec || 60}s)${st.remote_subject ? ` · "${esc(st.remote_subject)}"` : ""}</div>
+        ${relLine}
+        <div><strong>Installed Build:</strong> <code>${esc(st.installed_short || st.local_short || "?")}</code> · <strong>Remote HEAD:</strong> <code>${esc(st.remote_short || "?")}</code> · <strong>Behind:</strong> ${Number(st.commits_behind || 0)}</div>
+        <div><strong>Status:</strong> <strong style="color:${st.status === "error" ? "#ff6b8b" : "#2ee6a6"}">${esc(String(st.status || "idle").toUpperCase())}</strong> · Auto-Update: <strong>${st.auto_pull ? "ON" : "OFF"}</strong> (every ${st.poll_interval_sec || 60}s)${st.remote_subject ? ` · "${esc(st.remote_subject)}"` : ""}</div>
         ${errBlock}
         <div class="btn-row" style="margin-top:10px;gap:6px;flex-wrap:wrap">
-          <button type="button" class="primary xs updater-pull-now-btn">⬇️ Pull &amp; Rebuild Now</button>
-          <button type="button" class="ghost xs updater-check-now-btn">🔍 Check Remote</button>
+          <button type="button" class="primary xs updater-pull-now-btn">⬇️ Install / Update Now</button>
+          <button type="button" class="ghost xs updater-check-now-btn">🔍 Check for Updates</button>
           <button type="button" class="ghost xs updater-doctor-btn">🩺 Run /doctor</button>
         </div>
       </div>

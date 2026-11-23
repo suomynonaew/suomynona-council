@@ -118,8 +118,11 @@ console.log(
 );
 
 // Write desktop-edition.json (contains ONLY the Ed25519 public key — never the private key!)
+const pkgJson = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf-8"));
+const appVersion = String(pkgJson?.version || "1.1.0").trim();
 const editionConfig = {
   edition,
+  appVersion,
   ed25519PublicKeyPem: masterVault.publicKeyPem,
   publicKeyFingerprint: masterVault.fingerprint,
   serverBundleSha256,
@@ -163,6 +166,8 @@ const builtTimestamp = Date.now();
 const repoConfig = {
   repoUrl,
   branch,
+  edition,
+  appVersion,
   commitSha,
   commitShort: commitSha ? commitSha.slice(0, 7) : "",
   sourceRepoDir: edition === "master" ? path.resolve(".") : "",

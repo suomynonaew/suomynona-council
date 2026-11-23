@@ -717,6 +717,11 @@ export function createLicenseEnforcementMiddleware() {
     "/api/license/deactivate",
     "/api/onboarding/state",
     "/api/brain/state",
+    "/api/updater/status",
+    "/api/updater/check",
+    "/api/updater/pull",
+    "/api/updater/install-release",
+    "/api/updater/config",
   ]);
 
   const MASTER_ONLY_PREFIXES = [
