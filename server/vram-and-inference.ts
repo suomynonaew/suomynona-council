@@ -520,8 +520,8 @@ export function selectOptimalHostForDispatch(
 
   const originLiveExternal = Boolean(
     HOST_VERIFIED_STATE[origin]?.online &&
-      HOST_VERIFIED_STATE[origin]?.tunnel_ok &&
-      !HOST_VERIFIED_STATE[origin]?.is_internal_bridge
+    HOST_VERIFIED_STATE[origin]?.tunnel_ok &&
+    !HOST_VERIFIED_STATE[origin]?.is_internal_bridge
   );
   const workersCap = Math.max(2, Number(clusterCfg?.batch_shard?.workers_per_host) || 4);
   const originOverloaded =
@@ -2691,7 +2691,7 @@ export async function callSingleBackendEngine(
     if (backend?.kind === "runtime" && backend?.host) {
       // On-demand Gist tunnel discovery if no live tunnel is cached yet for this Colab host
       if (!LIVE_HOST_TUNNELS[executionHostId] && conf.GIST_ID && Date.now() - lastSyncGistTime > 20000) {
-        await syncGistTunnels(false).catch(() => {});
+        await syncGistTunnels(false).catch(() => { });
       }
 
       const failoverEnabled = clusterCfgForRoute?.failover?.enabled !== false;

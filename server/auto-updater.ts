@@ -27,16 +27,16 @@ export interface AutoUpdaterState {
   portable_exe_path: string;
   git_available: boolean;
   status:
-    | "idle"
-    | "checking"
-    | "up_to_date"
-    | "ahead_of_remote"
-    | "update_available"
-    | "downloading"
-    | "pulling"
-    | "building"
-    | "applied"
-    | "error";
+  | "idle"
+  | "checking"
+  | "up_to_date"
+  | "ahead_of_remote"
+  | "update_available"
+  | "downloading"
+  | "pulling"
+  | "building"
+  | "applied"
+  | "error";
   local_sha: string;
   local_short: string;
   remote_sha: string;
@@ -514,10 +514,10 @@ export async function downloadAndInstallPortableExeUpdate(
       const targetExe = String(process.env.PORTABLE_EXECUTABLE_FILE || "").trim();
       const canSwapInPlace = Boolean(
         process.platform === "win32" &&
-          process.env.COUNCIL_DESKTOP_MODE === "1" &&
-          targetExe &&
-          targetExe.toLowerCase().endsWith(".exe") &&
-          fs.existsSync(targetExe)
+        process.env.COUNCIL_DESKTOP_MODE === "1" &&
+        targetExe &&
+        targetExe.toLowerCase().endsWith(".exe") &&
+        fs.existsSync(targetExe)
       );
 
       if (canSwapInPlace && opts.triggerRelaunch !== false) {
